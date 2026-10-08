@@ -1,6 +1,7 @@
 package firewall
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ type RiskPortInfo struct {
 
 // RiskBlockStatus summarizes the high-risk port block preset.
 type RiskBlockStatus struct {
+	Unknown    bool
 	AllBlocked bool
 	Partial    bool
 	None       bool
@@ -37,8 +39,16 @@ func riskRuleName(port uint32) string {
 
 // GetRiskBlockStatus reports which preset high-risk ports are blocked by WinToolbox rules.
 // Uses a single PowerShell probe for all ports to stay within LoadStatus timeout.
-func GetRiskBlockStatus() RiskBlockStatus {
-	blockedMap := probeRiskBlocks()
+func GetRiskBlockStatus() RiskBlockStatus { return GetRiskBlockStatusContext(context.Background()) }
+
+func GetRiskBlockStatusContext(ctx context.Context) RiskBlockStatus {
+	return riskStatus(probeRiskBlocksContext(ctx))
+}
+
+func riskStatus(blockedMap map[uint32]bool) RiskBlockStatus {
+	if len(blockedMap) != len(riskPorts) {
+		return RiskBlockStatus{Unknown: true, Detail: "无法可靠读取高危端口规则"}
+	}
 	ports := make([]RiskPortInfo, 0, len(riskPorts))
 	blocked := 0
 	for _, p := range riskPorts {
@@ -67,7 +77,9 @@ func GetRiskBlockStatus() RiskBlockStatus {
 	return st
 }
 
-func probeRiskBlocks() map[uint32]bool {
+func probeRiskBlocks() map[uint32]bool { return probeRiskBlocksContext(context.Background()) }
+
+func probeRiskBlocksContext(ctx context.Context) map[uint32]bool {
 	out := make(map[uint32]bool, len(riskPorts))
 	var names []string
 	for _, p := range riskPorts {
@@ -90,7 +102,7 @@ foreach($name in $names){
   if($en -and $blk -and $portOk){ Write-Output ($name + '=1') } else { Write-Output ($name + '=0') }
 }
 `, strings.Join(names, "','"))
-	text, err := syscmd.RunPSQuick(ps)
+	text, err := syscmd.RunPSQuickContext(ctx, ps)
 	if err == nil && strings.TrimSpace(text) != "" {
 		for _, line := range strings.Split(text, "\n") {
 			line = strings.TrimSpace(line)
@@ -114,9 +126,11 @@ foreach($name in $names){
 		p := p
 		go func() {
 			defer wg.Done()
-			ok := hasRiskBlockRuleNetsh(p)
+			blocked, known := readRiskBlockRuleNetshContext(ctx, p)
 			mu.Lock()
-			out[p] = ok
+			if known {
+				out[p] = blocked
+			}
 			mu.Unlock()
 		}()
 	}
@@ -158,6 +172,9 @@ func UnblockRiskPorts() error {
 		_, _ = syscmd.Run("netsh", "advfirewall", "firewall", "delete", "rule", "name="+name)
 	}
 	st := GetRiskBlockStatus()
+	if st.Unknown {
+		return fmt.Errorf("已提交移除规则，但复查状态未知")
+	}
 	if st.None {
 		return nil
 	}
@@ -231,19 +248,27 @@ func hasRiskBlockRule(port uint32) bool {
 }
 
 func hasRiskBlockRuleNetsh(port uint32) bool {
+	blocked, _ := readRiskBlockRuleNetsh(port)
+	return blocked
+}
+
+func readRiskBlockRuleNetsh(port uint32) (blocked, known bool) {
+	return readRiskBlockRuleNetshContext(context.Background(), port)
+}
+
+func readRiskBlockRuleNetshContext(ctx context.Context, port uint32) (blocked, known bool) {
 	name := riskRuleName(port)
-	portStr := strconv.FormatUint(uint64(port), 10)
-	out, err := syscmd.RunQuick("netsh", "advfirewall", "firewall", "show", "rule", "name="+name, "verbose")
-	if err != nil || !strings.Contains(out, name) {
-		return false
+	out, err := syscmd.RunQuickContext(ctx, "netsh", "advfirewall", "firewall", "show", "rule", "name="+name, "verbose")
+	if err != nil {
+		return false, false
+	}
+	if !strings.Contains(out, name) {
+		return false, true
 	}
 	if !(strings.Contains(strings.ToLower(out), "block") || strings.Contains(out, "阻止")) {
-		return false
+		return false, true
 	}
-	if !netshRuleEnabled(out) {
-		return false
-	}
-	return netshRulePortMatches(out, portStr)
+	return netshRuleEnabled(out) && netshRulePortMatches(out, strconv.FormatUint(uint64(port), 10)), true
 }
 
 // RiskPortsList returns the preset port numbers for UI display.

@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -25,13 +25,13 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 步骤
 
-1. **远程桌面** → 填写端口（①）→ **保存端口**（②）  
-2. 未开启则点 **开启**（③）→ **强制 NLA**（④）  
-3. 客户端使用 `IP:新端口`；云主机请同步安全组  
+1. **远程桌面** → 填写端口（①）→ **保存端口**（②）
+2. 未开启则点 **开启**（③）→ **强制 NLA**（④）
+3. 客户端使用 `IP:新端口`；云主机请同步安全组
 
 ## 注意
 
-- 公网请确认安全组是否仍放行旧 3389  
+- 公网请确认安全组是否仍放行旧 3389
 - 状态异常时先点右上角 **刷新**
 
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [02 · 本地账户](./02-local-account.md)

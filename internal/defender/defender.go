@@ -1,11 +1,13 @@
 package defender
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"golang.org/x/sys/windows/registry"
 
+	"wintoolbox/internal/win/snapshot"
 	"wintoolbox/internal/win/syscmd"
 )
 
@@ -22,8 +24,10 @@ type Status struct {
 }
 
 // GetStatus reports whether realtime monitoring appears disabled.
-func GetStatus() Status {
-	rtOff, hasPref := readRealtimeDisabled()
+func GetStatus() Status { return GetStatusContext(context.Background()) }
+
+func GetStatusContext(ctx context.Context) Status {
+	rtOff, hasPref := readRealtimeDisabledContext(ctx)
 	policyOff, hasPolicy := readPolicyDisabled()
 
 	parts := []string{}
@@ -36,8 +40,8 @@ func GetStatus() Status {
 		parts = append(parts, fmt.Sprintf("策略禁用=%v", policyOff))
 	}
 
-	unknown := !hasPref && !hasPolicy
-	disabled := (hasPref && rtOff) || (hasPolicy && policyOff)
+	unknown := !hasPref
+	disabled := hasPref && rtOff
 	detail := strings.Join(parts, " · ")
 	return Status{Disabled: disabled, Unknown: unknown, Detail: detail}
 }
@@ -82,8 +86,8 @@ try {
 		// Preference succeeded; policy is best-effort.
 		_ = err
 	}
-	if rtOff, ok := readRealtimeDisabled(); ok && !rtOff {
-		return fmt.Errorf("已提交关闭实时防护，但复查仍显示运行中（可能被篡改防护或组策略覆盖）")
+	if rtOff, ok := readRealtimeDisabled(); !ok || !rtOff {
+		return fmt.Errorf("已提交关闭实时防护，但无法确认已关闭（可能被篡改防护或组策略覆盖）")
 	}
 	return nil
 }
@@ -120,11 +124,10 @@ try {
 		return fmt.Errorf("恢复实时防护失败: %s", msg)
 	}
 
-	if rtOff, ok := readRealtimeDisabled(); ok && rtOff {
-		return fmt.Errorf("已提交恢复实时防护，但复查仍显示已关闭")
+	if rtOff, ok := readRealtimeDisabled(); !ok || rtOff {
+		return fmt.Errorf("已提交启用实时防护，但无法确认已开启")
 	}
-	_ = clearBackup()
-	return nil
+	return clearBackupIfPresent()
 }
 
 type defenderSnap struct {
@@ -135,7 +138,11 @@ type defenderSnap struct {
 }
 
 func readRealtimeDisabled() (disabled bool, ok bool) {
-	out, err := syscmd.RunPSQuick(`
+	return readRealtimeDisabledContext(context.Background())
+}
+
+func readRealtimeDisabledContext(ctx context.Context) (disabled bool, ok bool) {
+	out, err := syscmd.RunPSQuickContext(ctx, `
 try {
   $p = Get-MpPreference -ErrorAction Stop
   Write-Output ('RT=' + [string]$p.DisableRealtimeMonitoring)
@@ -191,37 +198,27 @@ func saveSnapshotIfNeeded() error {
 	if backupExists() {
 		return nil
 	}
-	k, _, err := registry.CreateKey(registry.LOCAL_MACHINE, backupKeyPath, registry.SET_VALUE|registry.QUERY_VALUE)
+	rtOff, ok := readRealtimeDisabled()
+	if !ok {
+		return fmt.Errorf("无法读取实时防护，已中止以避免保存未知配置")
+	}
+	policy, present, err := snapshot.ReadOptional(policyKeyPath, "DisableRealtimeMonitoring")
+	if err != nil {
+		return err
+	}
+	values := map[string]uint32{"HadPref": 1, "DisableRealtimeMonitoring": 0, "HadPolicy": 0, "PolicyDisableRealtimeMonitoring": policy}
+	if rtOff {
+		values["DisableRealtimeMonitoring"] = 1
+	}
+	if present {
+		values["HadPolicy"] = 1
+	}
+	k, _, err := registry.CreateKey(registry.LOCAL_MACHINE, backupKeyPath, registry.SET_VALUE)
 	if err != nil {
 		return err
 	}
 	defer k.Close()
-
-	rtOff, hasPref := readRealtimeDisabled()
-	if hasPref {
-		_ = k.SetDWordValue("HadPref", 1)
-		v := uint32(0)
-		if rtOff {
-			v = 1
-		}
-		_ = k.SetDWordValue("DisableRealtimeMonitoring", v)
-	} else {
-		_ = k.SetDWordValue("HadPref", 0)
-	}
-
-	polOff, hasPol := readPolicyDisabled()
-	if hasPol {
-		_ = k.SetDWordValue("HadPolicy", 1)
-		v := uint32(0)
-		if polOff {
-			v = 1
-		}
-		_ = k.SetDWordValue("PolicyDisableRealtimeMonitoring", v)
-	} else {
-		_ = k.SetDWordValue("HadPolicy", 0)
-	}
-
-	return k.SetDWordValue("Saved", 1)
+	return snapshot.Commit(k, values)
 }
 
 func backupExists() bool {
@@ -235,29 +232,22 @@ func backupExists() bool {
 }
 
 func loadSnapshot() (defenderSnap, bool, error) {
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, backupKeyPath, registry.QUERY_VALUE)
+	fields := []string{"HadPref", "HadPolicy"}
+	v, exists, err := snapshot.Load(backupKeyPath, fields)
+	if err != nil || !exists {
+		return defenderSnap{}, exists, err
+	}
+	if v["HadPref"] == 1 {
+		fields = append(fields, "DisableRealtimeMonitoring")
+	}
+	if v["HadPolicy"] == 1 {
+		fields = append(fields, "PolicyDisableRealtimeMonitoring")
+	}
+	v, _, err = snapshot.Load(backupKeyPath, fields)
 	if err != nil {
-		return defenderSnap{}, false, nil
+		return defenderSnap{}, true, err
 	}
-	defer k.Close()
-	saved, _, err := k.GetIntegerValue("Saved")
-	if err != nil || saved != 1 {
-		return defenderSnap{}, false, nil
-	}
-	var s defenderSnap
-	hadPref, _, _ := k.GetIntegerValue("HadPref")
-	s.hadPref = hadPref == 1
-	if s.hadPref {
-		v, _, _ := k.GetIntegerValue("DisableRealtimeMonitoring")
-		s.rtOff = v == 1
-	}
-	hadPol, _, _ := k.GetIntegerValue("HadPolicy")
-	s.hadPolicy = hadPol == 1
-	if s.hadPolicy {
-		v, _, _ := k.GetIntegerValue("PolicyDisableRealtimeMonitoring")
-		s.policyOff = v == 1
-	}
-	return s, true, nil
+	return defenderSnap{hadPref: v["HadPref"] == 1, rtOff: v["DisableRealtimeMonitoring"] == 1, hadPolicy: v["HadPolicy"] == 1, policyOff: v["PolicyDisableRealtimeMonitoring"] == 1}, true, nil
 }
 
 func clearBackup() error {
@@ -271,4 +261,12 @@ func looksLikeTamper(msg string) bool {
 		strings.Contains(lower, "access is denied") ||
 		strings.Contains(msg, "拒绝访问") ||
 		strings.Contains(lower, "0x80070005")
+}
+
+func clearBackupIfPresent() error {
+	err := clearBackup()
+	if err == registry.ErrNotExist {
+		return nil
+	}
+	return err
 }

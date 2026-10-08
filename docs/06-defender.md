@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -21,8 +21,8 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 注意
 
-- 若开启 **篡改防护**，关闭可能失败，需先在 Windows 安全中心处理  
-- 仅在明确需要的运维窗口关闭，用完立即 **恢复实时防护**  
+- 若开启 **篡改防护**，关闭可能失败，需先在 Windows 安全中心处理
+- 仅在明确需要的运维窗口关闭，用完立即 **恢复实时防护**
 - 状态显示「未知」时先点 **刷新**
 
 相关：[文档首页](./README.md) · [09 · 系统更新](./09-windows-update.md)

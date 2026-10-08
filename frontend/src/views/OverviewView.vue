@@ -33,12 +33,17 @@ function memText() {
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">本机概览</h2>
+  <div data-view="overview">
     <p class="page-desc">快速查看这台计算机的系统与硬件信息</p>
 
     <el-card shadow="never" header="系统" class="wt-card">
-      <el-descriptions :column="1" border size="small" class="wt-desc" :label-style="descLabelStyle">
+      <el-descriptions
+        :column="1"
+        border
+        size="small"
+        class="wt-desc"
+        :label-style="descLabelStyle"
+      >
         <el-descriptions-item label="主机名">{{ overview?.hostname || '—' }}</el-descriptions-item>
         <el-descriptions-item label="架构">{{ overview?.arch || '—' }}</el-descriptions-item>
         <el-descriptions-item label="操作系统">
@@ -48,15 +53,29 @@ function memText() {
         <el-descriptions-item label="激活状态">
           <el-tag :type="actType" size="small">{{ overview?.activationStatus || '—' }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="分辨率">{{ overview?.resolution || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="IP 地址">{{ (overview?.ips || []).join(', ') || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="磁盘">{{ (overview?.disks || []).join('  ·  ') || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="分辨率">{{
+          overview?.resolution || '—'
+        }}</el-descriptions-item>
+        <el-descriptions-item label="IP 地址">{{
+          (overview?.ips || []).join(', ') || '—'
+        }}</el-descriptions-item>
+        <el-descriptions-item label="磁盘">{{
+          (overview?.disks || []).join('  ·  ') || '—'
+        }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
     <el-card shadow="never" header="硬件" class="wt-card" v-loading="detailLoading">
-      <el-descriptions :column="1" border size="small" class="wt-desc" :label-style="descLabelStyle">
-        <el-descriptions-item label="制造商">{{ overview?.manufacturer || '—' }}</el-descriptions-item>
+      <el-descriptions
+        :column="1"
+        border
+        size="small"
+        class="wt-desc"
+        :label-style="descLabelStyle"
+      >
+        <el-descriptions-item label="制造商">{{
+          overview?.manufacturer || '—'
+        }}</el-descriptions-item>
         <el-descriptions-item label="型号">{{ overview?.model || '—' }}</el-descriptions-item>
         <el-descriptions-item label="主板">{{ overview?.board || '—' }}</el-descriptions-item>
         <el-descriptions-item label="BIOS">{{ overview?.bios || '—' }}</el-descriptions-item>
@@ -65,9 +84,15 @@ function memText() {
           <template v-if="overview?.cpuCores">（{{ overview.cpuCores }} 逻辑处理器）</template>
         </el-descriptions-item>
         <el-descriptions-item label="内存">{{ memText() }}</el-descriptions-item>
-        <el-descriptions-item label="内存条">{{ overview?.memoryModules || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="硬盘">{{ (overview?.physicalDisks || []).join('  ·  ') || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="显卡">{{ (overview?.gpus || []).join('  ·  ') || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="内存条">{{
+          overview?.memoryModules || '—'
+        }}</el-descriptions-item>
+        <el-descriptions-item label="硬盘">{{
+          (overview?.physicalDisks || []).join('  ·  ') || '—'
+        }}</el-descriptions-item>
+        <el-descriptions-item label="显卡">{{
+          (overview?.gpus || []).join('  ·  ') || '—'
+        }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
   </div>

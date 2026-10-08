@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	lsaKeyPath    = `SYSTEM\CurrentControlSet\Control\Lsa`
-	smb1KeyPath   = `SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters`
-	winRMService  = "WinRM"
-	winRMBlockV4  = "WinToolbox-Block-WinRM-5985"
-	winRMBlockV6  = "WinToolbox-Block-WinRM-5986"
+	lsaKeyPath   = `SYSTEM\CurrentControlSet\Control\Lsa`
+	smb1KeyPath  = `SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters`
+	winRMService = "WinRM"
+	winRMBlockV4 = "WinToolbox-Block-WinRM-5985"
+	winRMBlockV6 = "WinToolbox-Block-WinRM-5986"
 )
 
 // Status aggregates SMBv1 / WinRM / anonymous enumeration hardening state.

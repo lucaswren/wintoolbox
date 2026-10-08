@@ -4,13 +4,13 @@ import "wintoolbox/internal/wintime"
 
 const (
 	AppName    = "WinToolbox" // synced from version.json via scripts/sync-version.ps1
-	AppVersion = "v1.2.0"       // synced from version.json via scripts/sync-version.ps1
+	AppVersion = "v1.0.0"     // synced from version.json via scripts/sync-version.ps1
 )
 
 // AppInfo is version metadata for the UI.
 type AppInfo struct {
 	Name    string `json:"name"`    // WinToolbox
-	Version string `json:"version"` // v1.2.0
+	Version string `json:"version"` // v1.0.0
 }
 
 // Status is a full app snapshot for UI.
@@ -23,6 +23,7 @@ type Status struct {
 	RdpNLA           bool                 `json:"rdpNLA"`
 	RdpNLAUnknown    bool                 `json:"rdpNLAUnknown"`
 	UpdateDisabled   bool                 `json:"updateDisabled"`
+	UpdateHasBackup  bool                 `json:"updateHasBackup"`
 	UpdateUnknown    bool                 `json:"updateUnknown"`
 	UpdateDetail     string               `json:"updateDetail"`
 	FirewallSummary  string               `json:"firewallSummary"`

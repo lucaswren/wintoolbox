@@ -124,14 +124,14 @@ MOCK_JS = r"""
     winrmHardened: false, winrmUnknown: false, winrmDetail: 'WinRM not hardened',
     anonymousOK: false, anonymousUnknown: false, anonymousDetail: 'Anonymous enum allowed'
   };
-  const appInfo = { name: 'WinToolbox', version: 'v1.2.0' };
+  const appInfo = { name: 'WinToolbox', version: 'v1.0.0' };
   const rules = [{ name: 'WinToolbox-Allow-8080', port: '8080', enabled: true }];
   const history = [{ kind: 'mru', host: '10.0.0.8', username: 'Administrator', source: 'MRU', detail: '', sid: '' }];
-  const upd = { currentVersion: 'v1.2.0', latestVersion: 'v1.2.0', hasUpdate: false, assetName: '', assetURL: '', assetSize: 0, assetSHA256: '', notes: '', downloaded: false, downloadPath: '', verified: false, error: '' };
+  const upd = { currentVersion: 'v1.0.0', latestVersion: 'v1.0.0', hasUpdate: false, assetName: '', assetURL: '', assetSize: 0, assetSHA256: '', notes: '', downloaded: false, downloadPath: '', verified: false, error: '' };
   const ok = (v) => Promise.resolve(v);
   const noop = () => ok(null);
   const app = {
-    GetAppInfo: () => ok(appInfo), GetStatus: () => ok(status),
+    GetAppInfo: () => ok(appInfo), GetStatus: () => ok(status), GetModuleStatus: () => ok(status), CancelAppUpdateDownload: noop,
     GetOverviewDetail: () => ok({ memoryModules: status.overview.memoryModules, physicalDisks: status.overview.physicalDisks, gpus: status.overview.gpus, activated: true, activationStatus: 'Licensed' }),
     GetTimeZones: () => ok(status.timeZones), GetFirewallRules: () => ok(rules), GetRdpHistory: () => ok(history),
     CheckAppUpdate: () => ok(upd), DownloadAppUpdate: () => ok(upd), GetAppUpdateInfo: () => ok(upd), ApplyAppUpdate: noop,

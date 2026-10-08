@@ -13,6 +13,7 @@ import (
 	"wintoolbox/internal/rdp"
 	"wintoolbox/internal/sysinfo"
 	"wintoolbox/internal/update"
+	"wintoolbox/internal/win/probe"
 	"wintoolbox/internal/wintime"
 )
 
@@ -23,6 +24,10 @@ const (
 
 // LoadStatus gathers a fast snapshot for first paint.
 func LoadStatus(invalidateOverview bool) (Status, error) {
+	return loadStatus(context.Background(), "", invalidateOverview)
+}
+
+func loadStatus(parent context.Context, module string, invalidateOverview bool) (Status, error) {
 	if invalidateOverview {
 		sysinfo.InvalidateOverviewCache()
 	}
@@ -39,11 +44,6 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 		pol account.LockoutPolicy
 		err error
 	}
-	type fwBundleRes struct {
-		fw   firewall.ProfileStatus
-		ping firewall.PingBlockStatus
-		risk firewall.RiskBlockStatus
-	}
 	type guestRes struct {
 		st account.GuestStatus
 	}
@@ -57,7 +57,7 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 		st harden.Status
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), statusCollectorTimeout)
+	ctx, cancel := context.WithTimeout(parent, statusCollectorTimeout)
 	defer cancel()
 
 	var (
@@ -117,7 +117,9 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 	chRdp := make(chan rdpRes, 1)
 	chUpdate := make(chan update.Status, 1)
 	chDef := make(chan defender.Status, 1)
-	chFwBundle := make(chan fwBundleRes, 1)
+	chFw := make(chan firewall.ProfileStatus, 1)
+	chPing := make(chan firewall.PingBlockStatus, 1)
+	chRisk := make(chan firewall.RiskBlockStatus, 1)
 	chTime := make(chan wintime.Status, 1)
 	chLockout := make(chan lockoutRes, 1)
 	chGuest := make(chan guestRes, 1)
@@ -125,36 +127,43 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 	chPwd := make(chan pwdRes, 1)
 	chHarden := make(chan hardenRes, 1)
 
-	go func() { chOverview <- sysinfo.GetOverviewFast() }()
-	go func() {
-		a, err := account.ListAccounts()
-		chAcc <- accRes{accounts: a, err: err}
-	}()
-	go func() {
-		s, err := rdp.GetStatus()
-		chRdp <- rdpRes{st: s, err: err}
-	}()
-	go func() { chUpdate <- update.GetStatus() }()
-	go func() { chDef <- defender.GetStatus() }()
-	// Serialize firewall probes to avoid PowerShell contention (faster + more reliable under 15s).
-	go func() {
-		chFwBundle <- fwBundleRes{
-			fw:   firewall.GetProfiles(),
-			ping: firewall.GetPingBlockStatus(),
-			risk: firewall.GetRiskBlockStatus(),
+	wanted := func(key string) bool { return module == "" || module == key }
+	moduleCount := 0
+	launch := func(key string, fn func()) {
+		if wanted(key) {
+			moduleCount++
+			go fn()
 		}
-	}()
-	go func() { chTime <- wintime.GetStatus() }()
-	go func() {
-		p, err := account.GetLockoutPolicy()
-		chLockout <- lockoutRes{pol: p, err: err}
-	}()
-	go func() { chGuest <- guestRes{st: account.GetGuestStatus()} }()
-	go func() { chAuto <- autoRes{st: account.GetAutoLogonStatus()} }()
-	go func() { chPwd <- pwdRes{st: account.GetPasswordPolicy()} }()
-	go func() { chHarden <- hardenRes{st: harden.GetStatus()} }()
-
-	const moduleCount = 12
+	}
+	gotOverview = !wanted("overview")
+	gotAcc, gotLockout, gotGuest, gotAuto, gotPwd = !wanted("account"), !wanted("account"), !wanted("account"), !wanted("account"), !wanted("account")
+	gotRdp, gotUpdate, gotDefender = !wanted("rdp"), !wanted("update"), !wanted("defender")
+	gotFw, gotPing, gotRisk = !wanted("firewall"), !wanted("firewall"), !wanted("firewall")
+	gotTime, gotHarden = !wanted("time"), !wanted("harden")
+	launch("overview", func() { sendProbe(ctx, "overview", chOverview, sysinfo.GetOverviewFast) })
+	launch("account", func() {
+		sendProbe(ctx, "accounts", chAcc, func() accRes { a, e := account.ListAccounts(); return accRes{a, e} })
+	})
+	launch("rdp", func() { sendProbe(ctx, "rdp", chRdp, func() rdpRes { v, e := rdp.GetStatus(); return rdpRes{v, e} }) })
+	launch("update", func() { sendContextProbe(ctx, "update", chUpdate, update.GetStatusContext) })
+	launch("defender", func() { sendContextProbe(ctx, "defender", chDef, defender.GetStatusContext) })
+	launch("firewall", func() { sendContextProbe(ctx, "profiles", chFw, firewall.GetProfilesContext) })
+	launch("firewall", func() { sendContextProbe(ctx, "ping", chPing, firewall.GetPingBlockStatusContext) })
+	launch("firewall", func() { sendContextProbe(ctx, "risk", chRisk, firewall.GetRiskBlockStatusContext) })
+	launch("time", func() { sendContextProbe(ctx, "time", chTime, wintime.GetStatusContext) })
+	launch("account", func() {
+		sendProbe(ctx, "lockout", chLockout, func() lockoutRes { v, e := account.GetLockoutPolicy(); return lockoutRes{v, e} })
+	})
+	launch("account", func() {
+		sendProbe(ctx, "guest", chGuest, func() guestRes { return guestRes{account.GetGuestStatus()} })
+	})
+	launch("account", func() {
+		sendProbe(ctx, "autologon", chAuto, func() autoRes { return autoRes{account.GetAutoLogonStatus()} })
+	})
+	launch("account", func() {
+		sendProbe(ctx, "password", chPwd, func() pwdRes { return pwdRes{account.GetPasswordPolicy()} })
+	})
+	launch("harden", func() { sendProbe(ctx, "harden", chHarden, func() hardenRes { return hardenRes{harden.GetStatus()} }) })
 	received := 0
 	for received < moduleCount {
 		select {
@@ -177,9 +186,14 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 		case defSt = <-chDef:
 			gotDefender = true
 			received++
-		case r := <-chFwBundle:
-			gotFw, gotPing, gotRisk = true, true, true
-			fwSt, pingSt, riskSt = r.fw, r.ping, r.risk
+		case fwSt = <-chFw:
+			gotFw = true
+			received++
+		case pingSt = <-chPing:
+			gotPing = true
+			received++
+		case riskSt = <-chRisk:
+			gotRisk = true
 			received++
 		case timeSt = <-chTime:
 			gotTime = true
@@ -210,31 +224,31 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 	pingTimedOut := !gotPing
 
 	st := Status{
-		Overview:         overviewFrom(overview),
-		RdpAvailable:     rdpErr == nil && gotRdp,
-		TimeZones:        wintime.EnsureZoneOption(wintime.CommonZones(), timeSt.TimeZone),
-		FirewallSummary:  fwSt.Summary(),
-		FirewallDomain:   fwSt.Domain,
-		FirewallPrivate:  fwSt.Private,
-		FirewallPublic:   fwSt.Public,
-		FirewallAllOn:    fwSt.AllEnabled(),
-		FirewallAllOff:   fwSt.AllDisabled(),
-		PingBlocked:      pingSt.IPv4 && pingSt.IPv6,
-		PingIPv4Blocked:  pingSt.IPv4,
-		PingIPv6Blocked:  pingSt.IPv6,
-		PingState:        pingSt.Mode(),
-		UpdateDisabled:   upd.Disabled,
-		UpdateDetail:     upd.Detail,
-		DefenderDisabled: defSt.Disabled,
-		DefenderDetail:   defSt.Detail,
-		TimeZone:         timeSt.TimeZone,
-		NTPServer:        timeSt.NTPServer,
-		TimeText:         fmt.Sprintf("%s  ·  %s  ·  NTP %s", timeSt.LocalTime, timeSt.TimeZone, timeSt.NTPServer),
-		LockoutThreshold: -1,
-		LockoutDuration:  -1,
-		LockoutWindow:    -1,
-		PasswordMinLength: -1,
-		PasswordUnknown:   true,
+		Overview:                  overviewFrom(overview),
+		RdpAvailable:              rdpErr == nil && gotRdp,
+		TimeZones:                 wintime.EnsureZoneOption(wintime.CommonZones(), timeSt.TimeZone),
+		FirewallSummary:           fwSt.Summary(),
+		FirewallDomain:            fwSt.Domain,
+		FirewallPrivate:           fwSt.Private,
+		FirewallPublic:            fwSt.Public,
+		FirewallAllOn:             fwSt.AllEnabled(),
+		FirewallAllOff:            fwSt.AllDisabled(),
+		PingBlocked:               pingSt.IPv4 && pingSt.IPv6,
+		PingIPv4Blocked:           pingSt.IPv4,
+		PingIPv6Blocked:           pingSt.IPv6,
+		PingState:                 pingSt.Mode(),
+		UpdateDisabled:            upd.Disabled,
+		UpdateDetail:              upd.Detail,
+		DefenderDisabled:          defSt.Disabled,
+		DefenderDetail:            defSt.Detail,
+		TimeZone:                  timeSt.TimeZone,
+		NTPServer:                 timeSt.NTPServer,
+		TimeText:                  fmt.Sprintf("%s  ·  %s  ·  NTP %s", timeSt.LocalTime, timeSt.TimeZone, timeSt.NTPServer),
+		LockoutThreshold:          -1,
+		LockoutDuration:           -1,
+		LockoutWindow:             -1,
+		PasswordMinLength:         -1,
+		PasswordUnknown:           true,
 		PasswordComplexityUnknown: true,
 		PasswordPolicyDetail:      "读取超时",
 	}
@@ -250,7 +264,7 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 	if gotRisk {
 		st.RiskPortsBlocked = riskSt.AllBlocked
 		st.RiskPortsPartial = riskSt.Partial
-		st.RiskPortsUnknown = false
+		st.RiskPortsUnknown = riskSt.Unknown
 		st.RiskPortsDetail = riskSt.Detail
 	} else {
 		st.RiskPortsBlocked = false
@@ -314,7 +328,7 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 		st.Warnings = append(st.Warnings, "安全加固状态读取超时")
 	}
 
-	if !gotFw || fwSt.Domain == "超时" || fwSt.Private == "超时" || fwSt.Public == "超时" {
+	if wanted("firewall") && (!gotFw || fwSt.Domain == "超时" || fwSt.Private == "超时" || fwSt.Public == "超时") {
 		st.Warnings = append(st.Warnings, "防火墙配置文件状态读取超时")
 	}
 	if pingTimedOut {
@@ -332,7 +346,9 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 		st.Warnings = append(st.Warnings, "远程桌面状态读取超时")
 	}
 
-	if gotLockout && lockoutEr == nil {
+	if !wanted("account") {
+		// No account collector ran for a different module; do not report a failure.
+	} else if gotLockout && lockoutEr == nil {
 		st.LockoutDisabled = lockout.Disabled
 		st.LockoutUnknown = lockout.Unknown
 		st.LockoutDetail = lockout.Detail
@@ -361,7 +377,8 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 	}
 
 	if gotUpdate {
-		st.UpdateUnknown = false
+		st.UpdateUnknown = upd.Unknown
+		st.UpdateHasBackup = upd.HasBackup
 	} else {
 		st.UpdateDisabled = false
 		st.UpdateUnknown = true
@@ -380,7 +397,7 @@ func LoadStatus(invalidateOverview bool) (Status, error) {
 		st.Warnings = append(st.Warnings, "防病毒状态读取超时")
 	}
 	if gotTime {
-		st.TimeUnknown = false
+		st.TimeUnknown = timeSt.Unknown
 	} else {
 		st.TimeUnknown = true
 		st.TimeZone = ""
@@ -506,4 +523,26 @@ func formatPhysicalDisks(disks []sysinfo.PhysicalDisk) []string {
 		}
 	}
 	return physTexts
+}
+
+func sendProbe[T any](ctx context.Context, key string, ch chan<- T, fn func() T) {
+	value, err := probe.Do(ctx, key, fn)
+	if err != nil {
+		return
+	}
+	select {
+	case ch <- value:
+	case <-ctx.Done():
+	}
+}
+
+func sendContextProbe[T any](ctx context.Context, key string, ch chan<- T, fn func(context.Context) T) {
+	value, err := probe.DoContext(ctx, key, fn)
+	if err != nil {
+		return
+	}
+	select {
+	case ch <- value:
+	case <-ctx.Done():
+	}
 }

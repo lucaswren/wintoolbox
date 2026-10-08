@@ -1,5 +1,5 @@
 <script setup>
-import {computed, defineAsyncComponent, onMounted, reactive, ref, watch} from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import {
   Monitor,
@@ -13,10 +13,11 @@ import {
   Download,
   Key,
 } from '@element-plus/icons-vue'
-import {APP_VERSION as APP_VERSION_FALLBACK, MENUS} from './constants.js'
-import {api} from './api/index.js'
-import {useAppState} from './composables/useAppState.js'
-import {useActions} from './composables/useActions.js'
+import { APP_VERSION as APP_VERSION_FALLBACK, MENUS } from './constants.js'
+import { api } from './api/index.js'
+import { useAppState } from './composables/useAppState.js'
+import { useSystemActions } from './composables/useSystemActions.js'
+import { appendBoundedLog } from './composables/logBuffer.js'
 import OpLog from './components/OpLog.vue'
 
 const OverviewView = defineAsyncComponent(() => import('./views/OverviewView.vue'))
@@ -30,7 +31,18 @@ const PowerView = defineAsyncComponent(() => import('./views/PowerView.vue'))
 const UpdateView = defineAsyncComponent(() => import('./views/UpdateView.vue'))
 const SelfUpdateView = defineAsyncComponent(() => import('./views/SelfUpdateView.vue'))
 
-const ICONS = {Monitor, User, Connection, Lock, Clock, SwitchButton, Refresh, FirstAidKit, Download, Key}
+const ICONS = {
+  Monitor,
+  User,
+  Connection,
+  Lock,
+  Clock,
+  SwitchButton,
+  Refresh,
+  FirstAidKit,
+  Download,
+  Key,
+}
 
 const active = ref('overview')
 const busy = ref(false)
@@ -48,16 +60,26 @@ const appUpdate = reactive({
   downloadPath: '',
   verified: false,
   error: '',
+  downloading: false,
+  downloadedBytes: 0,
+  bytesPerSecond: 0,
 })
 const appUpdateChecking = ref(false)
+const autoDownload = ref(localStorage.getItem('wintoolbox.autoDownload') !== 'false')
+watch(autoDownload, (value) => {
+  localStorage.setItem('wintoolbox.autoDownload', String(value))
+})
 
-function appendLog(msg) {
-  const t = new Date().toLocaleTimeString('zh-CN', {hour12: false})
-  logs.value.push(`[${t}] ${msg}`)
+function appendLog(msg, module = active.value) {
+  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false })
+  const title = MENUS.find((menu) => menu.key === module)?.title || module
+  appendBoundedLog(logs.value, `[${t}] [${title}] ${msg}`)
 }
 
+let updateInfoRevision = 0
 function applyAppUpdateInfo(info) {
   if (!info) return
+  updateInfoRevision++
   appUpdate.currentVersion = info.currentVersion || ''
   appUpdate.latestVersion = info.latestVersion || ''
   appUpdate.hasUpdate = !!info.hasUpdate
@@ -70,10 +92,14 @@ function applyAppUpdateInfo(info) {
   appUpdate.downloadPath = info.downloadPath || ''
   appUpdate.verified = !!info.verified
   appUpdate.error = info.error || ''
+  appUpdate.downloading = !!info.downloading
+  appUpdate.downloadedBytes = info.downloadedBytes || 0
+  appUpdate.bytesPerSecond = info.bytesPerSecond || 0
 }
 
 const {
   loading,
+  updatedAt,
   overviewDetailLoading,
   state,
   form,
@@ -85,12 +111,13 @@ const {
   ensureFirewallRules,
   ensureTimeZones,
   ensureRdpHistory,
-} = useAppState({appendLog})
+} = useAppState({ appendLog })
 
-const actions = useActions({
+const actions = useSystemActions({
   busy,
   appendLog,
-  refresh,
+  refresh: (showLog, module) => refreshActive(showLog, false, false, module),
+  getModule: () => active.value,
   form,
   state,
   ensureFirewallRules,
@@ -104,6 +131,7 @@ const status = computed(() => ({
   rdpNLA: state.rdpNLA,
   rdpNLAUnknown: state.rdpNLAUnknown,
   updateDisabled: state.updateDisabled,
+  updateHasBackup: state.updateHasBackup,
   updateUnknown: state.updateUnknown,
   updateDetail: state.updateDetail,
   defenderDisabled: state.defenderDisabled,
@@ -157,12 +185,12 @@ async function onCheckAppUpdate(showToast = true) {
     applyAppUpdateInfo(info)
     if (info?.hasUpdate) {
       appendLog(`发现新版本 v${info.latestVersion}`)
-      if (!info.downloaded || !info.verified) {
+      if (autoDownload.value && (!info.downloaded || !info.verified)) {
         const dl = await api.downloadAppUpdate()
         applyAppUpdateInfo(dl)
         appendLog(`已自动下载并校验 v${dl.latestVersion}`)
         if (showToast) ElMessage.success(`已下载并校验 v${dl.latestVersion}，可安装并重启`)
-      } else if (showToast) {
+      } else if (showToast && info.downloaded && info.verified) {
         ElMessage.success(`已有校验通过的 v${info.latestVersion}，可安装并重启`)
       }
     } else if (showToast) {
@@ -201,9 +229,9 @@ async function onApplyAppUpdate() {
   busy.value = true
   try {
     await ElMessageBox.confirm(
-        `确认安装 v${appUpdate.latestVersion || ''} 并重启 WinToolbox？`,
-        '安装更新',
-        {type: 'warning', confirmButtonText: '安装并重启', cancelButtonText: '取消'},
+      `确认安装 v${appUpdate.latestVersion || ''} 并重启 WinToolbox？`,
+      '安装更新',
+      { type: 'warning', confirmButtonText: '安装并重启', cancelButtonText: '取消' },
     )
   } catch {
     busy.value = false
@@ -227,7 +255,7 @@ async function backgroundAppUpdate() {
   try {
     const info = await api.checkAppUpdate()
     applyAppUpdateInfo(info)
-    if (!info?.hasUpdate) return
+    if (!info?.hasUpdate || !autoDownload.value) return
     appendLog(`后台发现新版本 v${info.latestVersion}，开始下载并校验`)
     if (!info.downloaded || !info.verified) {
       const dl = await api.downloadAppUpdate()
@@ -261,14 +289,45 @@ onMounted(async () => {
 async function onRefresh() {
   try {
     const queueDetail = active.value === 'overview'
-    await refresh(true, true, queueDetail)
-    if (active.value === 'firewall') await ensureFirewallRules()
+    await refreshActive(true, true, queueDetail)
     if (active.value === 'time') await ensureTimeZones()
-    if (active.value === 'rdp') await ensureRdpHistory()
     if (active.value === 'selfupdate') await onCheckAppUpdate(false)
   } catch {
     /* refresh already reported */
   }
+}
+let updatePoll
+let pollPending = false
+onMounted(() => {
+  updatePoll = setInterval(async () => {
+    if (pollPending || (!appUpdateChecking.value && !appUpdate.downloading && !busy.value)) return
+    pollPending = true
+    const revision = updateInfoRevision
+    try {
+      const info = await api.getAppUpdateInfo()
+      if (info?.currentVersion && revision === updateInfoRevision) applyAppUpdateInfo(info)
+    } catch {
+      /* next poll retries */
+    } finally {
+      pollPending = false
+    }
+  }, 750)
+})
+onUnmounted(() => clearInterval(updatePoll))
+async function refreshActive(
+  showLog = false,
+  invalidate = false,
+  queueDetail = false,
+  module = '',
+) {
+  const key = module || active.value
+  if (['power', 'selfupdate'].includes(key)) return
+  await refresh(showLog, invalidate, queueDetail || key === 'overview', key)
+  if (key === 'firewall') await ensureFirewallRules()
+  if (key === 'rdp') await ensureRdpHistory()
+}
+async function cancelUpdateDownload() {
+  await api.cancelAppUpdateDownload()
 }
 </script>
 
@@ -277,7 +336,7 @@ async function onRefresh() {
     <el-container class="app-shell">
       <el-aside width="232px" class="app-aside">
         <div class="brand">
-          <img class="brand__logo" src="/logo.svg" width="40" height="40" alt="WinToolbox"/>
+          <img class="brand__logo" src="/logo.svg" width="40" height="40" alt="WinToolbox" />
           <div class="brand__text">
             <div class="brand__title">WinToolbox</div>
             <div class="brand__sub">本地运维工具箱</div>
@@ -288,16 +347,16 @@ async function onRefresh() {
         </div>
 
         <el-menu
-            :default-active="active"
-            class="side-menu"
-            background-color="transparent"
-            text-color="#c5d0dc"
-            active-text-color="#ffffff"
-            @select="(k) => (active = k)"
+          :default-active="active"
+          class="side-menu"
+          background-color="transparent"
+          text-color="#c5d0dc"
+          active-text-color="#ffffff"
+          @select="(k) => (active = k)"
         >
           <el-menu-item v-for="m in MENUS" :key="m.key" :index="m.key">
             <el-icon>
-              <component :is="ICONS[m.icon]"/>
+              <component :is="ICONS[m.icon]" />
             </el-icon>
             <span>{{ m.title }}</span>
           </el-menu-item>
@@ -312,18 +371,24 @@ async function onRefresh() {
         <el-header class="app-header" height="60px">
           <div class="header-left">
             <div class="header-title">{{ activeMenu?.title }}</div>
-            <div class="header-desc">{{ activeMenu?.desc }}</div>
+            <div class="header-desc">
+              {{ activeMenu?.desc
+              }}<span v-if="updatedAt[active] || updatedAt.all">
+                · 状态采集 {{ updatedAt[active] || updatedAt.all }}</span
+              >
+            </div>
           </div>
           <el-button type="primary" round :loading="loading" @click="onRefresh">刷新</el-button>
         </el-header>
 
-        <el-main class="app-main" v-loading="loading">
-          <OverviewView
+        <el-main class="app-main" :aria-busy="loading">
+          <KeepAlive :max="10">
+            <OverviewView
               v-if="active === 'overview'"
               :overview="state.overview"
               :detail-loading="overviewDetailLoading"
-          />
-          <AccountView
+            />
+            <AccountView
               v-else-if="active === 'account'"
               :accounts="state.accounts"
               :form="form"
@@ -355,8 +420,8 @@ async function onRefresh() {
               @disable-guest="actions.onDisableGuest"
               @disable-autologon="actions.onDisableAutoLogon"
               @enable-password-policy="actions.onEnablePasswordPolicy"
-          />
-          <RdpView
+            />
+            <RdpView
               v-else-if="active === 'rdp'"
               :status="status"
               :form="form"
@@ -370,8 +435,8 @@ async function onRefresh() {
               @clear-history-kind="actions.onRdpClearHistoryByKind"
               @delete-history="actions.onRdpDeleteHistory"
               @refresh-history="ensureRdpHistory"
-          />
-          <FirewallView
+            />
+            <FirewallView
               v-else-if="active === 'firewall'"
               :status="status"
               :rules="firewallRules"
@@ -387,23 +452,23 @@ async function onRefresh() {
               @clear-allow-all="actions.onFwClearAllAllowRules"
               @block-risk="actions.onFwBlockRisk"
               @unblock-risk="actions.onFwUnblockRisk"
-          />
-          <HardenView
+            />
+            <HardenView
               v-else-if="active === 'harden'"
               :status="status"
               :busy="busy"
               @disable-smb1="actions.onDisableSMBv1"
               @harden-winrm="actions.onHardenWinRM"
               @restrict-anonymous="actions.onRestrictAnonymous"
-          />
-          <DefenderView
+            />
+            <DefenderView
               v-else-if="active === 'defender'"
               :status="status"
               :busy="busy"
               @disable="actions.onDisableDefender"
               @enable="actions.onEnableDefender"
-          />
-          <TimeView
+            />
+            <TimeView
               v-else-if="active === 'time'"
               :status="status"
               :zones="timeZones"
@@ -412,9 +477,9 @@ async function onRefresh() {
               @apply-tz="actions.onApplyTZ"
               @save-ntp="actions.onSaveNTP"
               @sync="actions.onSyncNTP"
-               @test-ntp="actions.onTestNTP"
-          />
-          <PowerView
+              @test-ntp="actions.onTestNTP"
+            />
+            <PowerView
               v-else-if="active === 'power'"
               :form="form"
               :busy="busy"
@@ -422,26 +487,30 @@ async function onRefresh() {
               @restart="actions.onRestart"
               @shutdown="actions.onShutdown"
               @abort="actions.onAbortPower"
-          />
-          <UpdateView
+            />
+            <UpdateView
               v-else-if="active === 'update'"
               :status="status"
               :busy="busy"
               @disable="actions.onDisableUpdate"
               @enable="actions.onEnableUpdate"
-          />
-          <SelfUpdateView
+            />
+            <SelfUpdateView
               v-else-if="active === 'selfupdate'"
               :info="appUpdate"
               :busy="busy"
               :checking="appUpdateChecking"
+              :auto-download="autoDownload"
+              @update:auto-download="(value) => (autoDownload = value)"
               @check="() => onCheckAppUpdate(true)"
               @download="onDownloadAppUpdate"
               @apply="onApplyAppUpdate"
-          />
+              @cancel="cancelUpdateDownload"
+            />
+          </KeepAlive>
         </el-main>
 
-        <OpLog :lines="logs" @clear="logs = []"/>
+        <OpLog :lines="logs" @clear="logs = []" />
       </el-container>
     </el-container>
   </el-config-provider>
@@ -454,8 +523,9 @@ async function onRefresh() {
 }
 
 .app-aside {
-  background: radial-gradient(120% 80% at 0% 0%, rgba(59, 130, 246, 0.16), transparent 55%),
-  linear-gradient(180deg, var(--wt-sidebar-bg-2), var(--wt-sidebar-bg));
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(59, 130, 246, 0.16), transparent 55%),
+    linear-gradient(180deg, var(--wt-sidebar-bg-2), var(--wt-sidebar-bg));
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -515,7 +585,9 @@ async function onRefresh() {
   border-radius: 10px;
   margin-bottom: 4px;
   height: 44px;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
 }
 
 .side-menu :deep(.el-menu-item.is-active) {

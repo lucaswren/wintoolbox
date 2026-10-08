@@ -1,0 +1,30 @@
+name: Windows checks
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run check
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: go run ./scripts/genbindings -check
+      - run: go test ./...
+      - run: go vet ./...
+      - name: Go formatting
+        shell: pwsh
+        run: |
+          $files = gofmt -l internal scripts main.go
+          if ($files) { throw "Unformatted Go files: $files" }
+      - run: ./scripts/build.ps1 -SkipInstall

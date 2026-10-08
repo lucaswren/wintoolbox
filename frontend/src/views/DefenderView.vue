@@ -23,9 +23,8 @@ const tagText = computed(() => {
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">防病毒</h2>
-    <p class="page-desc">一键关闭或恢复 Windows Defender 实时防护（若开启篡改防护可能失败）</p>
+  <div data-view="defender">
+    <p class="page-desc">一键关闭或启用 Windows Defender 实时防护（若开启篡改防护可能失败）</p>
 
     <el-card shadow="never" header="实时防护" class="wt-card">
       <div class="wt-status-block">
@@ -42,7 +41,7 @@ const tagText = computed(() => {
           关闭实时防护
         </el-button>
         <el-button type="success" :disabled="!canEnable" @click="$emit('enable')">
-          恢复实时防护
+          启用实时防护
         </el-button>
       </div>
     </el-card>

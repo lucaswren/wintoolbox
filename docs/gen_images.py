@@ -77,13 +77,13 @@ def make_download():
     d.text((40, 56), "从 GitHub Release 下载 WinToolbox-v*.exe。未签名文件常被浏览器拦截。", fill=MUTED, font=F13)
     round_rect(d, (40, 96, 920, 196), 14, CARD, LINE)
     round_rect(d, (60, 120, 900, 172), 10, (27, 27, 31))
-    d.text((80, 138), "WinToolbox-v1.2.0.exe · 已阻止", fill=(255, 255, 255), font=F14)
+    d.text((80, 138), "WinToolbox-v1.0.0-windows-amd64.exe · 已阻止", fill=(255, 255, 255), font=F14)
     button(d, (700, 130, 788, 162), "保留", BLUE)
     badge(d, 690, 146, "1")
     round_rect(d, (40, 220, 920, 320), 14, (255, 247, 237), (253, 186, 116))
     d.text((64, 240), "说明", fill=(154, 52, 18), font=F16)
     d.text((64, 270), "① 点「保留 / 保持 / Keep」。② 运行若再被 SmartScreen 拦截：更多信息 → 仍要运行。", fill=MUTED, font=F13)
-    d.text((64, 294), "下载页：https://github.com/datuzi-vip/wintoolbox/releases/latest", fill=MUTED, font=F12)
+    d.text((64, 294), "下载页：https://github.com/lucaswren/wintoolbox/releases/latest", fill=MUTED, font=F12)
     save(img, "00-download-keep.png")
 
 

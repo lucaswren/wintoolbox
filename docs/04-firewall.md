@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -25,9 +25,9 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 步骤
 
-1. **防火墙** → 确认配置文件为开启（必要时 ①）  
-2. 运维需要时用 ② 放行业务端口  
-3. 加固：③ 禁 ping → ④ 拦高危端口  
+1. **防火墙** → 确认配置文件为开启（必要时 ①）
+2. 运维需要时用 ② 放行业务端口
+3. 加固：③ 禁 ping → ④ 拦高危端口
 
 依赖文件共享 / WinRM 时慎用 ④。云主机还需在安全组同步策略。
 

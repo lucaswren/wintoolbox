@@ -1,0 +1,4 @@
+src/api/wails.d.ts
+package-lock.json
+dist
+node_modules

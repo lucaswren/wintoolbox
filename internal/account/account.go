@@ -10,18 +10,19 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/windows"
-
-	"wintoolbox/internal/win/syscmd"
 )
 
 var (
-	modNetapi32          = windows.NewLazySystemDLL("netapi32.dll")
-	procNetUserEnum      = modNetapi32.NewProc("NetUserEnum")
-	procNetUserGetInfo   = modNetapi32.NewProc("NetUserGetInfo")
-	procNetUserSetInfo   = modNetapi32.NewProc("NetUserSetInfo")
-	procNetUserModalsGet = modNetapi32.NewProc("NetUserModalsGet")
-	procNetUserModalsSet = modNetapi32.NewProc("NetUserModalsSet")
-	procNetApiBufferFree = modNetapi32.NewProc("NetApiBufferFree")
+	modNetapi32                 = windows.NewLazySystemDLL("netapi32.dll")
+	procNetLocalGroupGetMembers = modNetapi32.NewProc("NetLocalGroupGetMembers")
+	procNetLocalGroupAddMembers = modNetapi32.NewProc("NetLocalGroupAddMembers")
+	procNetLocalGroupDelMembers = modNetapi32.NewProc("NetLocalGroupDelMembers")
+	procNetUserEnum             = modNetapi32.NewProc("NetUserEnum")
+	procNetUserGetInfo          = modNetapi32.NewProc("NetUserGetInfo")
+	procNetUserSetInfo          = modNetapi32.NewProc("NetUserSetInfo")
+	procNetUserModalsGet        = modNetapi32.NewProc("NetUserModalsGet")
+	procNetUserModalsSet        = modNetapi32.NewProc("NetUserModalsSet")
+	procNetApiBufferFree        = modNetapi32.NewProc("NetApiBufferFree")
 )
 
 type userInfo0 struct {
@@ -167,38 +168,63 @@ func Get(username string) (Info, error) {
 	}, nil
 }
 
-func localAdminSet() (map[string]bool, bool) {
-	out, err := syscmd.Run("net", "localgroup", "Administrators")
+type localGroupMember2 struct {
+	SID   *windows.SID
+	Usage uint32
+	Name  *uint16
+}
+type localGroupMember3 struct{ Name *uint16 }
+
+func adminGroupName() (string, error) {
+	sid, err := windows.CreateWellKnownSid(windows.WinBuiltinAdministratorsSid)
 	if err != nil {
-		out, err = syscmd.Run("net", "localgroup", "管理员")
-		if err != nil {
-			return map[string]bool{}, false
-		}
+		return "", err
 	}
-	set := map[string]bool{}
-	for _, line := range strings.Split(out, "\n") {
-		name := strings.TrimSpace(line)
-		if name == "" || strings.HasPrefix(name, "-") || strings.Contains(name, "命令成功") {
-			continue
-		}
-		lower := strings.ToLower(name)
-		if strings.HasPrefix(lower, "the command") || strings.HasPrefix(lower, "alias") ||
-			strings.HasPrefix(lower, "comment") || strings.HasPrefix(lower, "members") ||
-			strings.Contains(name, "别名") || strings.Contains(name, "注释") || strings.Contains(name, "成员") {
-			continue
-		}
-		if i := strings.LastIndex(name, `\`); i >= 0 {
-			domain := name[:i]
-			user := name[i+1:]
-			// Only treat DOMAIN\user as a local admin match when domain is this machine.
-			if !isLocalAdminDomain(domain) {
-				continue
+	name, _, _, err := sid.LookupAccount("")
+	return name, err
+}
+
+func localAdminSet() (map[string]bool, bool) {
+	name, err := adminGroupName()
+	if err != nil {
+		return nil, false
+	}
+	group, err := windows.UTF16PtrFromString(name)
+	if err != nil {
+		return nil, false
+	}
+	result := map[string]bool{}
+	var resume uintptr
+	for {
+		var buffer *localGroupMember2
+		var read, total uint32
+		code, _, _ := procNetLocalGroupGetMembers.Call(0, uintptr(unsafe.Pointer(group)), 2, uintptr(unsafe.Pointer(&buffer)), maxPreferredLength, uintptr(unsafe.Pointer(&read)), uintptr(unsafe.Pointer(&total)), uintptr(unsafe.Pointer(&resume)))
+		if code != 0 && code != 234 {
+			if buffer != nil {
+				procNetApiBufferFree.Call(uintptr(unsafe.Pointer(buffer)))
 			}
-			name = user
+			return nil, false
 		}
-		set[strings.ToLower(name)] = true
+		if buffer != nil {
+			for _, entry := range unsafe.Slice(buffer, read) {
+				if entry.Name == nil {
+					continue
+				}
+				full := windows.UTF16PtrToString(entry.Name)
+				if i := strings.LastIndex(full, `\`); i >= 0 {
+					if !isLocalAdminDomain(full[:i]) {
+						continue
+					}
+					full = full[i+1:]
+				}
+				result[strings.ToLower(full)] = true
+			}
+			procNetApiBufferFree.Call(uintptr(unsafe.Pointer(buffer)))
+		}
+		if code == 0 {
+			return result, true
+		}
 	}
-	return set, true
 }
 
 func isEnabled(username string) (bool, error) {
@@ -221,35 +247,8 @@ func isEnabled(username string) (bool, error) {
 }
 
 func isLocalAdmin(username string) bool {
-	out, err := syscmd.Run("net", "localgroup", "Administrators")
-	if err != nil {
-		out, err = syscmd.Run("net", "localgroup", "管理员")
-		if err != nil {
-			return false
-		}
-	}
-	for _, line := range strings.Split(out, "\n") {
-		name := strings.TrimSpace(line)
-		if name == "" || strings.HasPrefix(name, "-") || strings.Contains(name, "命令成功") {
-			continue
-		}
-		lower := strings.ToLower(name)
-		if strings.HasPrefix(lower, "the command") || strings.HasPrefix(lower, "alias") ||
-			strings.HasPrefix(lower, "comment") || strings.HasPrefix(lower, "members") ||
-			strings.Contains(name, "别名") || strings.Contains(name, "注释") || strings.Contains(name, "成员") {
-			continue
-		}
-		if strings.EqualFold(name, username) {
-			return true
-		}
-		// DOMAIN\user: only treat as local when the domain is this machine (not a real AD domain).
-		if i := strings.LastIndex(name, `\`); i >= 0 && strings.EqualFold(name[i+1:], username) {
-			if isLocalAdminDomain(name[:i]) {
-				return true
-			}
-		}
-	}
-	return false
+	members, ok := localAdminSet()
+	return ok && members[strings.ToLower(username)]
 }
 
 func isLocalAdminDomain(domain string) bool {
@@ -341,18 +340,28 @@ func SetAdmin(username string, admin bool) error {
 		return fmt.Errorf("不能移除当前登录用户的管理员权限")
 	}
 
-	group := "Administrators"
-	action := "/add"
-	if !admin {
-		action = "/delete"
-	}
-	_, err := syscmd.Run("net", "localgroup", group, username, action)
+	groupName, err := adminGroupName()
 	if err != nil {
-		groupCN := "管理员"
-		_, err2 := syscmd.Run("net", "localgroup", groupCN, username, action)
-		if err2 != nil {
-			return fmt.Errorf("调整管理员组成员失败: %v", err)
-		}
+		return fmt.Errorf("解析管理员组失败: %w", err)
+	}
+	group, err := windows.UTF16PtrFromString(groupName)
+	if err != nil {
+		return err
+	}
+	machine, _ := os.Hostname()
+	member, err := windows.UTF16PtrFromString(machine + `\` + username)
+	if err != nil {
+		return err
+	}
+	payload := localGroupMember3{Name: member}
+	proc := procNetLocalGroupAddMembers
+	if !admin {
+		proc = procNetLocalGroupDelMembers
+	}
+	code, _, _ := proc.Call(0, uintptr(unsafe.Pointer(group)), 3, uintptr(unsafe.Pointer(&payload)), 1)
+	// Already present/absent is idempotent; all other failures are surfaced.
+	if code != 0 && code != 1378 && code != 1377 {
+		return fmt.Errorf("调整管理员组成员失败，错误码 %d", code)
 	}
 	admins, ok := localAdminSet()
 	if !ok {

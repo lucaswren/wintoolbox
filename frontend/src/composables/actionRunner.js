@@ -1,12 +1,19 @@
-export function createRunner({ busy, appendLog, refresh }) {
-  return async function run(fn, successMsg, { confirm, confirmType = 'warning', skipRefresh } = {}) {
+export function createRunner({ busy, appendLog, refresh, getModule }) {
+  return async function run(
+    fn,
+    successMsg,
+    { confirm, confirmType = 'warning', skipRefresh } = {},
+  ) {
     if (busy.value) {
       appendLog('上一操作仍在进行，请稍候…')
       ElMessage.info('上一操作仍在进行，请稍候')
       return false
     }
     // Hold busy across confirm + action to prevent stacked dangerous ops.
+    const module = getModule?.()
     busy.value = true
+    let attempted = false
+    let succeeded = false
     try {
       if (confirm) {
         try {
@@ -22,26 +29,29 @@ export function createRunner({ busy, appendLog, refresh }) {
           return false
         }
       }
+      attempted = true
       const result = await fn()
+      succeeded = true
       if (successMsg) {
-        appendLog(successMsg)
+        appendLog(successMsg, module)
         ElMessage.success(successMsg)
-      }
-      if (!skipRefresh) {
-        try {
-          await refresh(false)
-        } catch (e) {
-          appendLog('刷新失败: ' + (e?.message || e))
-          ElMessage.warning('操作成功，但刷新状态失败')
-        }
       }
       return result == null ? true : result
     } catch (e) {
       const msg = e?.message || String(e)
-      appendLog('失败: ' + msg)
+      appendLog('失败: ' + msg, module)
       ElMessage.error(msg)
       return false
     } finally {
+      if (attempted && !skipRefresh) {
+        try {
+          await refresh(false, module)
+        } catch {
+          ElMessage.warning(
+            succeeded ? '操作成功，但状态复查失败' : '操作可能已部分生效，状态复查失败，请手动刷新',
+          )
+        }
+      }
       busy.value = false
     }
   }

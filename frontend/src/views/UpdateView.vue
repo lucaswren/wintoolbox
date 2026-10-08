@@ -11,7 +11,9 @@ defineEmits(['disable', 'enable'])
 const unknown = computed(() => !!props.status?.updateUnknown)
 const disabled = computed(() => !!props.status?.updateDisabled)
 const canDisable = computed(() => !props.busy && !unknown.value && !disabled.value)
-const canEnable = computed(() => !props.busy && !unknown.value && disabled.value)
+const canEnable = computed(
+  () => !props.busy && (props.status?.updateHasBackup || (!unknown.value && disabled.value)),
+)
 const tagType = computed(() => {
   if (unknown.value) return 'info'
   return disabled.value ? 'warning' : 'success'
@@ -23,9 +25,10 @@ const tagText = computed(() => {
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">系统更新</h2>
-    <p class="page-desc">一键暂停或恢复 Windows Update（恢复时优先还原关闭前的策略与服务配置，非整机快照）</p>
+  <div data-view="update">
+    <p class="page-desc">
+      一键暂停或恢复 Windows Update（恢复时优先还原关闭前的策略与服务配置，非整机快照）
+    </p>
 
     <el-card shadow="never" header="Windows Update" class="wt-card">
       <div class="wt-status-block">
@@ -42,7 +45,7 @@ const tagText = computed(() => {
           关闭更新
         </el-button>
         <el-button type="success" :disabled="!canEnable" @click="$emit('enable')">
-          恢复更新
+          还原关闭前配置
         </el-button>
       </div>
     </el-card>

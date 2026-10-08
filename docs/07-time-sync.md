@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 

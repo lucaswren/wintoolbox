@@ -1,6 +1,7 @@
 package selfupdate
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -8,38 +9,41 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"wintoolbox/internal/win/syscmd"
 )
 
 const (
-	repoOwner = "datuzi-vip"
+	repoOwner = "lucaswren"
 	repoName  = "wintoolbox"
 	userAgent = "WinToolbox-SelfUpdate"
 )
 
+var cacheDirectory = os.UserCacheDir
+
 // Info describes the latest release relative to the running app.
 type Info struct {
-	CurrentVersion string `json:"currentVersion"`
-	LatestVersion  string `json:"latestVersion"`
-	HasUpdate      bool   `json:"hasUpdate"`
-	AssetName      string `json:"assetName"`
-	AssetURL       string `json:"assetURL"`
-	AssetSize      int64  `json:"assetSize"`
-	AssetSHA256    string `json:"assetSHA256"`
-	Notes          string `json:"notes"`
-	Downloaded     bool   `json:"downloaded"`
-	DownloadPath   string `json:"downloadPath"`
-	Verified       bool   `json:"verified"`
-	Error          string `json:"error,omitempty"`
+	CurrentVersion  string `json:"currentVersion"`
+	LatestVersion   string `json:"latestVersion"`
+	HasUpdate       bool   `json:"hasUpdate"`
+	AssetName       string `json:"assetName"`
+	AssetURL        string `json:"assetURL"`
+	AssetSize       int64  `json:"assetSize"`
+	AssetSHA256     string `json:"assetSHA256"`
+	Notes           string `json:"notes"`
+	Downloaded      bool   `json:"downloaded"`
+	DownloadPath    string `json:"downloadPath"`
+	Verified        bool   `json:"verified"`
+	Downloading     bool   `json:"downloading"`
+	DownloadedBytes int64  `json:"downloadedBytes"`
+	BytesPerSecond  int64  `json:"bytesPerSecond"`
+	Error           string `json:"error,omitempty"`
 }
 
 type ghAsset struct {
@@ -56,16 +60,18 @@ type ghRelease struct {
 }
 
 var (
-	mu     sync.Mutex
-	cached Info
+	operationMu    sync.Mutex
+	cancelDownload context.CancelFunc
+	mu             sync.Mutex
+	cached         Info
 
 	sha256BodyRe = regexp.MustCompile(`(?i)SHA256\s*[:：]?\s*` + "`?" + `([A-Fa-f0-9]{64})` + "`?")
 )
 
 // Check queries GitHub Releases for a newer version than current.
 func Check(current string) (Info, error) {
-	mu.Lock()
-	defer mu.Unlock()
+	operationMu.Lock()
+	defer operationMu.Unlock()
 	return checkLocked(current)
 }
 
@@ -77,7 +83,7 @@ func checkLocked(current string) (Info, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		info.Error = err.Error()
-		cached = info
+		setCached(info)
 		return info, err
 	}
 	req.Header.Set("User-Agent", userAgent)
@@ -86,7 +92,7 @@ func checkLocked(current string) (Info, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		info.Error = "无法连接更新服务器: " + err.Error()
-		cached = info
+		setCached(info)
 		return info, fmt.Errorf("%s", info.Error)
 	}
 	defer resp.Body.Close()
@@ -94,19 +100,19 @@ func checkLocked(current string) (Info, error) {
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 	if err != nil {
 		info.Error = "读取更新信息失败: " + err.Error()
-		cached = info
+		setCached(info)
 		return info, fmt.Errorf("%s", info.Error)
 	}
 	if resp.StatusCode != http.StatusOK {
 		info.Error = fmt.Sprintf("更新接口返回 %d", resp.StatusCode)
-		cached = info
+		setCached(info)
 		return info, fmt.Errorf("%s", info.Error)
 	}
 
 	var rel ghRelease
 	if err := json.Unmarshal(body, &rel); err != nil {
 		info.Error = "解析更新信息失败"
-		cached = info
+		setCached(info)
 		return info, fmt.Errorf("%s: %w", info.Error, err)
 	}
 
@@ -122,7 +128,7 @@ func checkLocked(current string) (Info, error) {
 		info.AssetSHA256 = resolveAssetSHA256(rel.Assets, asset, rel.Body)
 	} else if info.HasUpdate {
 		info.Error = "最新版本未找到 Windows amd64 安装包"
-		cached = info
+		setCached(info)
 		return info, fmt.Errorf("%s", info.Error)
 	}
 
@@ -136,16 +142,15 @@ func checkLocked(current string) (Info, error) {
 		}
 	}
 
-	cached = info
+	setCached(info)
 	return info, nil
 }
 
 // Download downloads the latest release asset when an update is available.
-func Download(current string) (Info, error) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	info := cached
+func Download(current string) (result Info, downloadErr error) {
+	operationMu.Lock()
+	defer operationMu.Unlock()
+	info := Cached()
 	if info.LatestVersion == "" || info.CurrentVersion == "" {
 		var err error
 		info, err = checkLocked(current)
@@ -159,6 +164,9 @@ func Download(current string) (Info, error) {
 	if info.AssetURL == "" {
 		return info, fmt.Errorf("没有可下载的更新包")
 	}
+	if len(info.AssetSHA256) != 64 || !isHex(info.AssetSHA256) {
+		return info, fmt.Errorf("缺少有效 SHA256，已拒绝下载未校验的更新包")
+	}
 
 	dest := downloadPath(info.LatestVersion, info.AssetName)
 	if ok, verified := fileReadyVerified(dest, info.AssetSize, info.AssetSHA256); ok {
@@ -166,10 +174,30 @@ func Download(current string) (Info, error) {
 		info.DownloadPath = dest
 		info.Verified = verified
 		_ = syscmd.UnblockFile(dest)
-		cached = info
+		setCached(info)
 		return info, nil
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	mu.Lock()
+	cancelDownload = cancel
+	mu.Unlock()
+	info.Downloading = true
+	info.DownloadedBytes = 0
+	info.Error = ""
+	setCached(info)
+	defer func() {
+		cancel()
+		mu.Lock()
+		cancelDownload = nil
+		mu.Unlock()
+		info.Downloading = false
+		if downloadErr != nil {
+			info.Error = downloadErr.Error()
+		}
+		setCached(info)
+		result = info
+	}()
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		return info, fmt.Errorf("创建下载目录失败: %w", err)
 	}
@@ -178,7 +206,7 @@ func Download(current string) (Info, error) {
 	_ = os.Remove(tmp)
 
 	client := &http.Client{Timeout: 10 * time.Minute}
-	req, err := http.NewRequest(http.MethodGet, info.AssetURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, info.AssetURL, nil)
 	if err != nil {
 		return info, err
 	}
@@ -198,7 +226,11 @@ func Download(current string) (Info, error) {
 		return info, fmt.Errorf("创建临时文件失败: %w", err)
 	}
 	h := sha256.New()
-	written, copyErr := io.Copy(io.MultiWriter(f, h), resp.Body)
+	progress := &downloadProgress{info: &info, started: time.Now()}
+	written, copyErr := io.Copy(io.MultiWriter(f, h, progress), io.LimitReader(resp.Body, maxAssetSize(info.AssetSize)+1))
+	if written > maxAssetSize(info.AssetSize) {
+		copyErr = fmt.Errorf("更新包超过大小限制")
+	}
 	closeErr := f.Close()
 	if copyErr != nil {
 		_ = os.Remove(tmp)
@@ -235,76 +267,8 @@ func Download(current string) (Info, error) {
 
 	info.Downloaded = true
 	info.DownloadPath = dest
-	cached = info
+	setCached(info)
 	return info, nil
-}
-
-// Apply replaces the running executable with the downloaded update and restarts.
-func Apply() error {
-	mu.Lock()
-	info := cached
-	mu.Unlock()
-
-	if !info.HasUpdate || !info.Downloaded || info.DownloadPath == "" {
-		return fmt.Errorf("请先检查并下载更新")
-	}
-	if info.AssetSHA256 == "" {
-		return fmt.Errorf("缺少 SHA256，无法安全安装更新")
-	}
-	ok, verified := fileReadyVerified(info.DownloadPath, info.AssetSize, info.AssetSHA256)
-	if !ok || !verified {
-		return fmt.Errorf("更新包校验失败或不存在，请重新下载")
-	}
-
-	exe, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("定位当前程序失败: %w", err)
-	}
-	exe, err = filepath.Abs(exe)
-	if err != nil {
-		return err
-	}
-
-	pid := os.Getpid()
-	script := filepath.Join(os.TempDir(), fmt.Sprintf("wintoolbox-update-%d.ps1", pid))
-	ps := fmt.Sprintf(`$ErrorActionPreference='Stop'
-$target = %s
-$source = %s
-$procId = %d
-while (Get-Process -Id $procId -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }
-Copy-Item -LiteralPath $source -Destination $target -Force
-Unblock-File -LiteralPath $target -ErrorAction SilentlyContinue
-Start-Process -FilePath $target
-Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
-`, psSingleQuote(exe), psSingleQuote(info.DownloadPath), pid)
-
-	if err := os.WriteFile(script, []byte(ps), 0o700); err != nil {
-		return fmt.Errorf("写入更新脚本失败: %w", err)
-	}
-
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("启动更新脚本失败: %w", err)
-	}
-
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case err := <-done:
-		if err != nil {
-			return fmt.Errorf("更新脚本异常退出: %w", err)
-		}
-		// Finished before we exit — still OK if replacement already happened.
-	case <-time.After(800 * time.Millisecond):
-		// Still running: waiting for this process to exit.
-	}
-
-	go func() {
-		time.Sleep(300 * time.Millisecond)
-		os.Exit(0)
-	}()
-	return nil
 }
 
 // Cached returns the last Check/Download result without network I/O.
@@ -367,7 +331,7 @@ func resolveAssetSHA256(assets []ghAsset, exe *ghAsset, notes string) string {
 		a := &assets[i]
 		lower := strings.ToLower(a.Name)
 		if lower == wantSidecar || lower == "sha256.txt" {
-			if sum, err := fetchTextSHA256(a.BrowserDownloadURL); err == nil && sum != "" {
+			if sum, err := fetchTextSHA256(a.BrowserDownloadURL, exe.Name); err == nil && sum != "" {
 				return sum
 			}
 		}
@@ -375,7 +339,7 @@ func resolveAssetSHA256(assets []ghAsset, exe *ghAsset, notes string) string {
 	return ""
 }
 
-func fetchTextSHA256(url string) (string, error) {
+func fetchTextSHA256(url, assetName string) (string, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -394,7 +358,7 @@ func fetchTextSHA256(url string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return parseSHA256Text(string(body)), nil
+	return parseSHA256ForAsset(string(body), assetName), nil
 }
 
 func parseSHA256Text(s string) string {
@@ -424,7 +388,11 @@ func digestSHA256(digest string) string {
 	}
 	lower := strings.ToLower(digest)
 	if strings.HasPrefix(lower, "sha256:") {
-		return strings.TrimPrefix(lower, "sha256:")
+		candidate := strings.TrimPrefix(lower, "sha256:")
+		if len(candidate) == 64 && isHex(candidate) {
+			return candidate
+		}
+		return ""
 	}
 	if len(digest) == 64 && isHex(digest) {
 		return lower
@@ -472,7 +440,7 @@ func psSingleQuote(s string) string {
 }
 
 func downloadDir() string {
-	base, err := os.UserCacheDir()
+	base, err := cacheDirectory()
 	if err != nil || base == "" {
 		base = os.TempDir()
 	}
@@ -527,6 +495,7 @@ func normalizeVersion(v string) string {
 }
 
 func compareVersions(a, b string) int {
+	originalA, originalB := normalizeVersion(a), normalizeVersion(b)
 	as := versionParts(a)
 	bs := versionParts(b)
 	n := len(as)
@@ -548,7 +517,53 @@ func compareVersions(a, b string) int {
 			return -1
 		}
 	}
-	return 0
+	// Stable releases sort after prereleases of the same core version.
+	pre := func(v string) string {
+		v = strings.SplitN(v, "+", 2)[0]
+		parts := strings.SplitN(v, "-", 2)
+		if len(parts) == 2 {
+			return parts[1]
+		}
+		return ""
+	}
+	ap, bp := pre(originalA), pre(originalB)
+	if ap == bp {
+		return 0
+	}
+	if ap == "" {
+		return 1
+	}
+	if bp == "" {
+		return -1
+	}
+	aa, bb := strings.Split(ap, "."), strings.Split(bp, ".")
+	for i := 0; i < len(aa) && i < len(bb); i++ {
+		if aa[i] == bb[i] {
+			continue
+		}
+		an, ae := strconv.Atoi(aa[i])
+		bn, be := strconv.Atoi(bb[i])
+		if ae == nil && be == nil {
+			if an > bn {
+				return 1
+			}
+			return -1
+		}
+		if ae == nil {
+			return -1
+		}
+		if be == nil {
+			return 1
+		}
+		if aa[i] > bb[i] {
+			return 1
+		}
+		return -1
+	}
+	if len(aa) > len(bb) {
+		return 1
+	}
+	return -1
 }
 
 func versionParts(v string) []int {
@@ -573,4 +588,59 @@ func versionParts(v string) []int {
 		out = append(out, n)
 	}
 	return out
+}
+
+func setCached(info Info) { mu.Lock(); cached = info; mu.Unlock() }
+
+func CancelDownload() {
+	mu.Lock()
+	defer mu.Unlock()
+	if cancelDownload != nil {
+		cancelDownload()
+	}
+}
+
+type downloadProgress struct {
+	info    *Info
+	started time.Time
+	last    time.Time
+}
+
+func (p *downloadProgress) Write(data []byte) (int, error) {
+	p.info.DownloadedBytes += int64(len(data))
+	seconds := time.Since(p.started).Seconds()
+	if seconds > 0 {
+		p.info.BytesPerSecond = int64(float64(p.info.DownloadedBytes) / seconds)
+	}
+	if time.Since(p.last) > 200*time.Millisecond {
+		setCached(*p.info)
+		p.last = time.Now()
+	}
+	return len(data), nil
+}
+func maxAssetSize(expected int64) int64 {
+	if expected > 0 && expected < 512<<20 {
+		return expected
+	}
+	return 512 << 20
+}
+
+func parseSHA256ForAsset(text, assetName string) string {
+	lines := strings.Split(strings.TrimSpace(text), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && strings.EqualFold(strings.TrimPrefix(fields[1], "*"), assetName) {
+			return parseSHA256Text(fields[0])
+		}
+	}
+	// A hash-only sidecar is unambiguous; a multi-file manifest is not.
+	if len(lines) == 1 && len(strings.Fields(lines[0])) == 1 {
+		return parseSHA256Text(lines[0])
+	}
+	for _, line := range lines {
+		if strings.Contains(strings.ToLower(line), strings.ToLower(assetName)) {
+			return parseSHA256FromNotes(line, assetName)
+		}
+	}
+	return ""
 }

@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -39,10 +39,10 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 建议步骤
 
-1. 管理员打开 WinToolbox → **本地账户**  
-2. ①②③④ 按需加固  
-3. 选用户 → 填两次密码 → **修改密码**  
-4. 用新密码登录验证一次  
+1. 管理员打开 WinToolbox → **本地账户**
+2. ①②③④ 按需加固
+3. 选用户 → 填两次密码 → **修改密码**
+4. 用新密码登录验证一次
 
 密码建议长度 ≥ 12（服务器 ≥ 14），含大小写、数字与符号。本页只管**本地账户**（域账户受域策略约束）。
 

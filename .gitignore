@@ -32,3 +32,6 @@ docs/__pycache__/
 # OS
 Thumbs.db
 Desktop.ini
+
+# Release output
+artifacts/

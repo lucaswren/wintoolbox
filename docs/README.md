@@ -1,6 +1,6 @@
 # WinToolbox 文档
 
-操作说明。配图中红色数字与文中标注对应。  
+操作说明。配图中红色数字与文中标注对应。
 **下载图为模拟示意**；软件页为 **2× 高清真实界面截图**。
 
 ## 命名规则
@@ -9,7 +9,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截时点 **保留 / 保持**；SmartScreen：**更多信息 → 仍要运行**。详见 [00 · 下载](./00-download.md)。
 

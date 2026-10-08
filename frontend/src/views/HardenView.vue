@@ -36,9 +36,10 @@ const canRestrictAnonymous = computed(
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">安全加固</h2>
-    <p class="page-desc">针对服务器常见暴露面的一键加固：SMBv1、WinRM、匿名枚举（域策略可能覆盖）</p>
+  <div data-view="harden">
+    <p class="page-desc">
+      针对服务器常见暴露面的一键加固：SMBv1、WinRM、匿名枚举（域策略可能覆盖）
+    </p>
 
     <el-card shadow="never" header="禁用 SMBv1" class="wt-card">
       <div class="wt-status-block">
@@ -53,7 +54,9 @@ const canRestrictAnonymous = computed(
           禁用 SMBv1
         </el-button>
       </div>
-      <p class="wt-hint">关闭 SMB 服务器的 SMBv1 协议，降低蠕虫/勒索相关风险。部分极老客户端可能无法访问共享。</p>
+      <p class="wt-hint">
+        关闭 SMB 服务器的 SMBv1 协议，降低蠕虫/勒索相关风险。部分极老客户端可能无法访问共享。
+      </p>
     </el-card>
 
     <el-card shadow="never" header="限制 WinRM" class="wt-card">
@@ -69,7 +72,10 @@ const canRestrictAnonymous = computed(
           关闭并拦截 WinRM
         </el-button>
       </div>
-      <p class="wt-hint">将 WinRM 服务设为禁用，并拦截入站 TCP 5985 / 5986。若本机依赖远程 PowerShell / Ansible，请勿执行。</p>
+      <p class="wt-hint">
+        将 WinRM 服务设为禁用，并拦截入站 TCP 5985 / 5986。若本机依赖远程 PowerShell /
+        Ansible，请勿执行。
+      </p>
     </el-card>
 
     <el-card shadow="never" header="限制匿名枚举" class="wt-card">
@@ -81,11 +87,17 @@ const canRestrictAnonymous = computed(
         </div>
       </div>
       <div class="wt-actions">
-        <el-button type="warning" :disabled="!canRestrictAnonymous" @click="$emit('restrict-anonymous')">
+        <el-button
+          type="warning"
+          :disabled="!canRestrictAnonymous"
+          @click="$emit('restrict-anonymous')"
+        >
           禁匿名枚举
         </el-button>
       </div>
-      <p class="wt-hint">设置 RestrictAnonymous=1 与 RestrictAnonymousSAM=1，减少匿名枚举本地账户与共享信息。</p>
+      <p class="wt-hint">
+        设置 RestrictAnonymous=1 与 RestrictAnonymousSAM=1，减少匿名枚举本地账户与共享信息。
+      </p>
     </el-card>
   </div>
 </template>

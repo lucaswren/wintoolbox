@@ -1,4 +1,5 @@
 # WinToolbox one-click build (Go + Wails + Vue3)
+param([switch]$SkipInstall)
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot\..
 
@@ -16,14 +17,20 @@ Write-Host '==> Syncing version from version.json' -ForegroundColor Cyan
 & $PSScriptRoot\sync-version.ps1
 $cfg = Get-Content .\version.json -Raw -Encoding UTF8 | ConvertFrom-Json
 $displayVersion = "v$($cfg.version)"
-$versionedExe = "WinToolbox-$displayVersion.exe"
+$releaseDir = Join-Path (Get-Location) 'artifacts/releases'
+New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
+$versionedName = "WinToolbox-$displayVersion-windows-amd64.exe"
+$versionedExe = Join-Path $releaseDir $versionedName
+
+go run ./scripts/genbindings
+Assert-LastExitCode 'generate bridge contract'
 
 Write-Host '==> Building frontend (Vue3 + Element Plus)' -ForegroundColor Cyan
 Push-Location frontend
 try {
-  if (-not (Test-Path node_modules)) {
-    npm install
-    Assert-LastExitCode 'npm install'
+  if (-not $SkipInstall) {
+    npm ci
+    Assert-LastExitCode 'npm ci'
   }
   npm run build
   Assert-LastExitCode 'npm run build'
@@ -59,22 +66,22 @@ $size = (Get-Item WinToolbox.exe).Length
 $hash = (Get-FileHash -LiteralPath $versionedExe -Algorithm SHA256).Hash.ToLowerInvariant()
 $sha256File = "$versionedExe.sha256"
 # Common checksum format: "<hash> *<filename>"
-Set-Content -LiteralPath $sha256File -Value ("{0} *{1}" -f $hash, $versionedExe) -Encoding ascii -NoNewline
+Set-Content -LiteralPath $sha256File -Value ("{0} *{1}" -f $hash, $versionedName) -Encoding ascii -NoNewline
 # Also keep a plain hash-only file for quick copy/paste.
-Set-Content -LiteralPath 'SHA256.txt' -Value $hash -Encoding ascii -NoNewline
+Set-Content -LiteralPath (Join-Path $releaseDir 'SHA256.txt') -Value $hash -Encoding ascii -NoNewline
 
-$notesPath = 'RELEASE_NOTES.generated.md'
+$notesPath = Join-Path $releaseDir 'RELEASE_NOTES.generated.md'
 $templatePath = Join-Path $PSScriptRoot 'release-notes.template.md'
 if (-not (Test-Path -LiteralPath $templatePath)) {
   throw "Missing $templatePath"
 }
 $notes = [System.IO.File]::ReadAllText($templatePath, [System.Text.UTF8Encoding]::new($false))
 $notes = $notes.Replace('{{VERSION}}', $displayVersion)
-$notes = $notes.Replace('{{EXE}}', $versionedExe)
+$notes = $notes.Replace('{{EXE}}', $versionedName)
 $notes = $notes.Replace('{{SHA256}}', $hash)
-$notes = $notes.Replace('{{SHA256_FILE}}', $sha256File)
+$notes = $notes.Replace('{{SHA256_FILE}}', (Split-Path $sha256File -Leaf))
 [System.IO.File]::WriteAllText(
-  (Join-Path (Get-Location) $notesPath),
+  $notesPath,
   $notes,
   [System.Text.UTF8Encoding]::new($false)
 )

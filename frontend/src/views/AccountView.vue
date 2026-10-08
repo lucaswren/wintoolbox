@@ -51,7 +51,7 @@ const infoText = computed(() => {
 
 const lockoutTagType = computed(() => {
   if (props.lockoutUnknown) return 'info'
-  return props.lockoutDisabled ? 'success' : 'warning'
+  return props.lockoutDisabled ? 'warning' : 'success'
 })
 
 const lockoutTagText = computed(() => {
@@ -86,6 +86,7 @@ const pwdTag = computed(() => {
   return { text: '可加强', type: 'warning' }
 })
 
+const accountTab = ref('users')
 const customThreshold = ref(10)
 const customDurationMin = ref(30)
 const customWindowMin = ref(30)
@@ -170,187 +171,225 @@ const canSetAdmin = computed(
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">本地账户</h2>
+  <div data-view="account">
     <p class="page-desc">修改密码、启用/禁用、管理员身份，以及账户锁定与密码策略</p>
 
-    <el-card shadow="never" header="来宾账户 / 自动登录" class="wt-card">
-      <div class="wt-status-block">
-        <div class="wt-status-line">
-          <span class="wt-status-label">来宾账户</span>
-          <el-tag :type="guestTag.type" effect="dark">{{ guestTag.text }}</el-tag>
-          <span class="wt-status-sub">{{ guestDetail || '—' }}</span>
-        </div>
-        <div class="wt-status-line" style="margin-top: 8px">
-          <span class="wt-status-label">自动登录</span>
-          <el-tag :type="autoTag.type" effect="dark">{{ autoTag.text }}</el-tag>
-          <span class="wt-status-sub">{{ autoLogonDetail || '—' }}</span>
-        </div>
-      </div>
-      <div class="wt-actions">
-        <el-button type="warning" :disabled="!canDisableGuest" @click="$emit('disable-guest')">
-          禁用来宾账户
-        </el-button>
-        <el-button type="warning" :disabled="!canDisableAutoLogon" @click="$emit('disable-autologon')">
-          关闭自动登录
-        </el-button>
-      </div>
-      <p class="wt-hint">禁用来宾可降低未授权访问面；关闭自动登录会清除 Winlogon 中的 DefaultPassword。</p>
-    </el-card>
-
-    <el-card shadow="never" header="密码策略" class="wt-card">
-      <div class="wt-status-block">
-        <div class="wt-status-line">
-          <span class="wt-status-label">密码策略</span>
-          <el-tag :type="pwdTag.type" effect="dark">{{ pwdTag.text }}</el-tag>
-          <span class="wt-status-sub">{{ passwordPolicyDetail || '—' }}</span>
-        </div>
-      </div>
-      <el-form :label-width="FORM_LABEL_WIDTH_WIDE" class="wt-form-row">
-        <el-form-item label="最短长度">
-          <el-input-number
-            v-model="customMinLen"
-            :min="1"
-            :max="128"
-            controls-position="right"
-            :disabled="busy"
-            @change="markPasswordDirty"
-          />
-        </el-form-item>
-        <el-form-item>
+    <el-tabs v-model="accountTab">
+      <el-tab-pane label="用户管理" name="users">
+        <el-card shadow="never" header="账户操作" class="wt-card">
+          <el-form :label-width="FORM_LABEL_WIDTH" class="wt-form-row">
+            <el-form-item label="用户">
+              <el-select v-model="form.accUser" placeholder="选择用户" style="width: 100%">
+                <el-option
+                  v-for="a in accounts"
+                  :key="a.name"
+                  :label="a.name + (a.current ? ' (当前)' : '')"
+                  :value="a.name"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="新密码">
+              <el-input
+                v-model="form.accPass1"
+                type="password"
+                show-password
+                autocomplete="new-password"
+              />
+            </el-form-item>
+            <el-form-item label="确认密码">
+              <el-input
+                v-model="form.accPass2"
+                type="password"
+                show-password
+                autocomplete="new-password"
+              />
+            </el-form-item>
+            <el-form-item label="当前">
+              <span class="wt-status-sub">{{ infoText }}</span>
+            </el-form-item>
+            <el-form-item>
+              <div class="wt-actions">
+                <el-button type="primary" :disabled="!canChangePass" @click="$emit('change-pass')"
+                  >修改密码</el-button
+                >
+                <el-button
+                  type="success"
+                  :disabled="!canSetEnabled"
+                  @click="$emit('set-enabled', true)"
+                  >启用</el-button
+                >
+                <el-button
+                  type="danger"
+                  :disabled="!canSetEnabled || selected?.current"
+                  @click="$emit('set-enabled', false)"
+                  >禁用</el-button
+                >
+                <el-button type="warning" :disabled="!canSetAdmin" @click="$emit('set-admin', true)"
+                  >设为管理员</el-button
+                >
+                <el-button
+                  :disabled="!canSetAdmin || selected?.current"
+                  @click="$emit('set-admin', false)"
+                  >取消管理员</el-button
+                >
+              </div>
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </el-tab-pane>
+      <el-tab-pane label="安全策略" name="policies">
+        <el-card shadow="never" header="来宾账户 / 自动登录" class="wt-card">
+          <div class="wt-status-block">
+            <div class="wt-status-line">
+              <span class="wt-status-label">来宾账户</span>
+              <el-tag :type="guestTag.type" effect="dark">{{ guestTag.text }}</el-tag>
+              <span class="wt-status-sub">{{ guestDetail || '—' }}</span>
+            </div>
+            <div class="wt-status-line" style="margin-top: 8px">
+              <span class="wt-status-label">自动登录</span>
+              <el-tag :type="autoTag.type" effect="dark">{{ autoTag.text }}</el-tag>
+              <span class="wt-status-sub">{{ autoLogonDetail || '—' }}</span>
+            </div>
+          </div>
           <div class="wt-actions">
+            <el-button type="warning" :disabled="!canDisableGuest" @click="$emit('disable-guest')">
+              禁用来宾账户
+            </el-button>
             <el-button
-              type="primary"
-              :disabled="busy"
-              @click="$emit('enable-password-policy', customMinLen)"
+              type="warning"
+              :disabled="!canDisableAutoLogon"
+              @click="$emit('disable-autologon')"
             >
-              应用密码策略
+              关闭自动登录
             </el-button>
           </div>
-        </el-form-item>
-      </el-form>
-      <p class="wt-hint">
-        将设置密码最短长度，并开启密码复杂度（大小写/数字/符号）。域成员可能被组策略覆盖。
-        <template v-if="passwordUnknown || passwordMinLength < 0">当前策略读取未知时，下方长度为待应用目标值。</template>
-      </p>
-    </el-card>
+          <p class="wt-hint">
+            禁用来宾可降低未授权访问面；关闭自动登录会清除 Winlogon 中的 DefaultPassword。
+          </p>
+        </el-card>
 
-    <el-card shadow="never" header="账户锁定策略" class="wt-card">
-      <div class="wt-status-block">
-        <div class="wt-status-line">
-          <span class="wt-status-label">锁定策略</span>
-          <el-tag :type="lockoutTagType" effect="dark">{{ lockoutTagText }}</el-tag>
-          <span class="wt-status-sub">{{ lockoutDetail || '—' }}</span>
-        </div>
-      </div>
-      <div class="wt-actions">
-        <el-button
-          type="success"
-          :disabled="busy || lockoutUnknown || !lockoutDisabled"
-          @click="$emit('enable-lockout')"
-        >
-          一键开启锁定
-        </el-button>
-        <el-button
-          type="danger"
-          :disabled="busy || lockoutUnknown || lockoutDisabled"
-          @click="$emit('disable-lockout')"
-        >
-          一键关闭锁定
-        </el-button>
-      </div>
-
-      <div style="margin-top: 14px">
-        <el-form :label-width="FORM_LABEL_WIDTH_WIDE" class="wt-form-row">
-          <el-form-item label="自定义阈值（次）">
-            <el-input-number
-              v-model="customThreshold"
-              :min="0"
-              :max="9999"
-              controls-position="right"
-              @change="markLockoutDirty"
-            />
-          </el-form-item>
-          <el-form-item label="锁定时间（分钟）">
-            <el-input-number
-              v-model="customDurationMin"
-              :min="1"
-              :max="9999"
-              controls-position="right"
-              :disabled="customThreshold === 0"
-              @change="markLockoutDirty"
-            />
-          </el-form-item>
-          <el-form-item label="复位窗口（分钟）">
-            <el-input-number
-              v-model="customWindowMin"
-              :min="1"
-              :max="9999"
-              controls-position="right"
-              :disabled="customThreshold === 0"
-              @change="markLockoutDirty"
-            />
-          </el-form-item>
-          <el-form-item>
-            <div class="wt-actions">
-              <el-button
-                type="primary"
-                :disabled="!canApplyCustomLockout"
-                @click="$emit('set-lockout-policy', customThreshold, customDurationMin, customWindowMin)"
-              >
-                应用自定义策略
-              </el-button>
+        <el-card shadow="never" header="密码策略" class="wt-card">
+          <div class="wt-status-block">
+            <div class="wt-status-line">
+              <span class="wt-status-label">密码策略</span>
+              <el-tag :type="pwdTag.type" effect="dark">{{ pwdTag.text }}</el-tag>
+              <span class="wt-status-sub">{{ passwordPolicyDetail || '—' }}</span>
             </div>
-          </el-form-item>
-        </el-form>
-      </div>
-
-      <p class="wt-hint">
-        默认优先回填当前系统策略；若当前值不可用，则使用 10 / 30 / 30。开启：阈值=10、锁定 30 分钟、复位窗口 30 分钟。关闭：阈值=0 并解锁已锁定本地账户。域策略可能被组策略覆盖。
-      </p>
-    </el-card>
-
-    <el-card shadow="never" header="账户操作" class="wt-card">
-      <el-form :label-width="FORM_LABEL_WIDTH" class="wt-form-row">
-        <el-form-item label="用户">
-          <el-select v-model="form.accUser" placeholder="选择用户" style="width: 100%">
-            <el-option
-              v-for="a in accounts"
-              :key="a.name"
-              :label="a.name + (a.current ? ' (当前)' : '')"
-              :value="a.name"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="新密码">
-          <el-input
-            v-model="form.accPass1"
-            type="password"
-            show-password
-            autocomplete="new-password"
-          />
-        </el-form-item>
-        <el-form-item label="确认密码">
-          <el-input
-            v-model="form.accPass2"
-            type="password"
-            show-password
-            autocomplete="new-password"
-          />
-        </el-form-item>
-        <el-form-item label="当前">
-          <span class="wt-status-sub">{{ infoText }}</span>
-        </el-form-item>
-        <el-form-item>
-          <div class="wt-actions">
-            <el-button type="primary" :disabled="!canChangePass" @click="$emit('change-pass')">修改密码</el-button>
-            <el-button type="success" :disabled="!canSetEnabled" @click="$emit('set-enabled', true)">启用</el-button>
-            <el-button type="danger" :disabled="!canSetEnabled || selected?.current" @click="$emit('set-enabled', false)">禁用</el-button>
-            <el-button type="warning" :disabled="!canSetAdmin" @click="$emit('set-admin', true)">设为管理员</el-button>
-            <el-button :disabled="!canSetAdmin || selected?.current" @click="$emit('set-admin', false)">取消管理员</el-button>
           </div>
-        </el-form-item>
-      </el-form>
-    </el-card>
+          <el-form :label-width="FORM_LABEL_WIDTH_WIDE" class="wt-form-row">
+            <el-form-item label="最短长度">
+              <el-input-number
+                v-model="customMinLen"
+                :min="1"
+                :max="128"
+                controls-position="right"
+                :disabled="busy"
+                @change="markPasswordDirty"
+              />
+            </el-form-item>
+            <el-form-item>
+              <div class="wt-actions">
+                <el-button
+                  type="primary"
+                  :disabled="busy"
+                  @click="$emit('enable-password-policy', customMinLen)"
+                >
+                  应用密码策略
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-form>
+          <p class="wt-hint">
+            将设置密码最短长度，并开启密码复杂度（大小写/数字/符号）。域成员可能被组策略覆盖。
+            <template v-if="passwordUnknown || passwordMinLength < 0"
+              >当前策略读取未知时，下方长度为待应用目标值。</template
+            >
+          </p>
+        </el-card>
+
+        <el-card shadow="never" header="账户锁定策略" class="wt-card">
+          <div class="wt-status-block">
+            <div class="wt-status-line">
+              <span class="wt-status-label">锁定策略</span>
+              <el-tag :type="lockoutTagType" effect="dark">{{ lockoutTagText }}</el-tag>
+              <span class="wt-status-sub">{{ lockoutDetail || '—' }}</span>
+            </div>
+          </div>
+          <div class="wt-actions">
+            <el-button
+              type="success"
+              :disabled="busy || lockoutUnknown || !lockoutDisabled"
+              @click="$emit('enable-lockout')"
+            >
+              一键开启锁定
+            </el-button>
+            <el-button
+              type="danger"
+              :disabled="busy || lockoutUnknown || lockoutDisabled"
+              @click="$emit('disable-lockout')"
+            >
+              一键关闭锁定
+            </el-button>
+          </div>
+
+          <div style="margin-top: 14px">
+            <el-form :label-width="FORM_LABEL_WIDTH_WIDE" class="wt-form-row">
+              <el-form-item label="自定义阈值（次）">
+                <el-input-number
+                  v-model="customThreshold"
+                  :min="0"
+                  :max="9999"
+                  controls-position="right"
+                  @change="markLockoutDirty"
+                />
+              </el-form-item>
+              <el-form-item label="锁定时间（分钟）">
+                <el-input-number
+                  v-model="customDurationMin"
+                  :min="1"
+                  :max="9999"
+                  controls-position="right"
+                  :disabled="customThreshold === 0"
+                  @change="markLockoutDirty"
+                />
+              </el-form-item>
+              <el-form-item label="复位窗口（分钟）">
+                <el-input-number
+                  v-model="customWindowMin"
+                  :min="1"
+                  :max="9999"
+                  controls-position="right"
+                  :disabled="customThreshold === 0"
+                  @change="markLockoutDirty"
+                />
+              </el-form-item>
+              <el-form-item>
+                <div class="wt-actions">
+                  <el-button
+                    type="primary"
+                    :disabled="!canApplyCustomLockout"
+                    @click="
+                      $emit(
+                        'set-lockout-policy',
+                        customThreshold,
+                        customDurationMin,
+                        customWindowMin,
+                      )
+                    "
+                  >
+                    应用自定义策略
+                  </el-button>
+                </div>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <p class="wt-hint">
+            默认优先回填当前系统策略；若当前值不可用，则使用 10 / 30 / 30。开启：阈值=10、锁定 30
+            分钟、复位窗口 30 分钟。关闭：阈值=0 并解锁已锁定本地账户。域策略可能被组策略覆盖。
+          </p>
+        </el-card>
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>

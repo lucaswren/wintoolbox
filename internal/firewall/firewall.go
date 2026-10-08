@@ -1,6 +1,7 @@
 package firewall
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -33,13 +34,16 @@ type RuleInfo struct {
 
 // PingBlockStatus describes whether WinToolbox ping block rules are active.
 type PingBlockStatus struct {
-	IPv4 bool
-	IPv6 bool
+	Unknown bool
+	IPv4    bool
+	IPv6    bool
 }
 
 // Mode returns enabled/partial/blocked for UI consumption.
 func (s PingBlockStatus) Mode() string {
 	switch {
+	case s.Unknown:
+		return "unknown"
 	case s.IPv4 && s.IPv6:
 		return "blocked"
 	case s.IPv4 || s.IPv6:
@@ -51,14 +55,16 @@ func (s PingBlockStatus) Mode() string {
 
 // GetProfiles reads firewall profile enable state via netsh / PowerShell.
 // Uses short timeouts so LoadStatus is not blocked for minutes.
-func GetProfiles() ProfileStatus {
+func GetProfiles() ProfileStatus { return GetProfilesContext(context.Background()) }
+
+func GetProfilesContext(ctx context.Context) ProfileStatus {
 	// Prefer PowerShell for robustness against netsh localization differences.
-	ps := profilesViaPowerShellQuick()
+	ps := profilesViaPowerShellQuickContext(ctx)
 	if ps.Domain != "未知" && ps.Private != "未知" && ps.Public != "未知" {
 		return ps
 	}
 
-	out, err := syscmd.RunQuick("netsh", "advfirewall", "show", "allprofiles")
+	out, err := syscmd.RunQuickContext(ctx, "netsh", "advfirewall", "show", "allprofiles")
 	st := ProfileStatus{Domain: "未知", Private: "未知", Public: "未知", Raw: out}
 	if err == nil {
 		st.Domain = profileState(out, "Domain Profile", "域配置文件")
@@ -83,9 +89,13 @@ func GetProfiles() ProfileStatus {
 }
 
 func profilesViaPowerShellQuick() ProfileStatus {
+	return profilesViaPowerShellQuickContext(context.Background())
+}
+
+func profilesViaPowerShellQuickContext(ctx context.Context) ProfileStatus {
 	st := ProfileStatus{Domain: "未知", Private: "未知", Public: "未知"}
 	// Reuse RunPS but the outer LoadStatus also caps wait; keep script tiny.
-	out, err := syscmd.RunPSQuick(`Get-NetFirewallProfile | ForEach-Object { Write-Output ($_.Name + '=' + $_.Enabled) }`)
+	out, err := syscmd.RunPSQuickContext(ctx, `Get-NetFirewallProfile | ForEach-Object { Write-Output ($_.Name + '=' + $_.Enabled) }`)
 	if err != nil {
 		return st
 	}
@@ -328,12 +338,15 @@ func HasPingBlockRule() bool {
 }
 
 // GetPingBlockStatus reports the active state of the WinToolbox ping block rules.
-func GetPingBlockStatus() PingBlockStatus {
-	m := probePingBlockRules()
+func GetPingBlockStatus() PingBlockStatus { return GetPingBlockStatusContext(context.Background()) }
+
+func GetPingBlockStatusContext(ctx context.Context) PingBlockStatus {
+	m := probePingBlockRulesContext(ctx)
 	legacy := m[pingBlockRuleName]
 	return PingBlockStatus{
-		IPv4: m[pingBlockRuleNameV4] || legacy,
-		IPv6: m[pingBlockRuleNameV6],
+		Unknown: len(m) != 3,
+		IPv4:    m[pingBlockRuleNameV4] || legacy,
+		IPv6:    m[pingBlockRuleNameV6],
 	}
 }
 
@@ -342,7 +355,9 @@ func anyPingBlockRulePresent() bool {
 	return m[pingBlockRuleName] || m[pingBlockRuleNameV4] || m[pingBlockRuleNameV6]
 }
 
-func probePingBlockRules() map[string]bool {
+func probePingBlockRules() map[string]bool { return probePingBlockRulesContext(context.Background()) }
+
+func probePingBlockRulesContext(ctx context.Context) map[string]bool {
 	names := []string{pingBlockRuleName, pingBlockRuleNameV4, pingBlockRuleNameV6}
 	out := map[string]bool{}
 	ps := fmt.Sprintf(`
@@ -364,7 +379,7 @@ foreach($it in $items){
   if($en -and $blk -and $protoOk -and $icmpOk){ Write-Output ($name + '=1') } else { Write-Output ($name + '=0') }
 }
 `, pingBlockRuleName, pingBlockRuleNameV4, pingBlockRuleNameV6)
-	text, err := syscmd.RunPSQuick(ps)
+	text, err := syscmd.RunPSQuickContext(ctx, ps)
 	if err == nil && strings.TrimSpace(text) != "" {
 		for _, line := range strings.Split(text, "\n") {
 			line = strings.TrimSpace(line)
@@ -379,7 +394,9 @@ foreach($it in $items){
 		}
 	}
 	for _, name := range names {
-		out[name] = hasPingBlockRuleNameNetsh(name)
+		if blocked, known := readPingBlockRuleNetsh(ctx, name); known {
+			out[name] = blocked
+		}
 	}
 	return out
 }
@@ -390,15 +407,23 @@ func hasPingBlockRuleName(name string) bool {
 }
 
 func hasPingBlockRuleNameNetsh(name string) bool {
-	out, err := syscmd.RunQuick("netsh", "advfirewall", "firewall", "show", "rule", "name="+name, "verbose")
-	if err != nil || !strings.Contains(out, name) {
-		return false
+	blocked, _ := readPingBlockRuleNetsh(context.Background(), name)
+	return blocked
+}
+
+func readPingBlockRuleNetsh(ctx context.Context, name string) (bool, bool) {
+	out, err := syscmd.RunQuickContext(ctx, "netsh", "advfirewall", "firewall", "show", "rule", "name="+name, "verbose")
+	if err != nil {
+		return false, false
+	}
+	if !strings.Contains(out, name) {
+		return false, true
 	}
 	if !(strings.Contains(strings.ToLower(out), "block") || strings.Contains(out, "阻止")) {
-		return false
+		return false, true
 	}
 	if !netshRuleEnabled(out) {
-		return false
+		return false, true
 	}
 	wantIcmp := ""
 	switch name {
@@ -408,9 +433,9 @@ func hasPingBlockRuleNameNetsh(name string) bool {
 		wantIcmp = "128"
 	}
 	if wantIcmp != "" && !netshIcmpTypeMatches(out, wantIcmp) {
-		return false
+		return false, true
 	}
-	return true
+	return true, true
 }
 
 func ruleName(port uint32) string {

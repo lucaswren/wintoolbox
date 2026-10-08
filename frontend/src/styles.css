@@ -189,7 +189,7 @@ body,
 /* —— Actions / forms —— */
 .wt-actions {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin-top: 4px;
@@ -250,4 +250,13 @@ body,
 .wt-count {
   font-size: 13px;
   color: var(--wt-text-secondary);
+}
+
+/* Keep navigation accessible at the smallest desktop window size. */
+.side-menu {
+  overflow-y: auto;
+  min-height: 0;
+}
+.wt-actions > .el-button {
+  margin-left: 0;
 }

@@ -4,9 +4,9 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
-下载 `WinToolbox-v*.exe` → 拦截点 **保留 / 保持** → SmartScreen 选 **仍要运行** → **管理员**打开。  
+下载 `WinToolbox-v*.exe` → 拦截点 **保留 / 保持** → SmartScreen 选 **仍要运行** → **管理员**打开。
 详：[00 · 下载](./00-download.md)
 
 ![下载拦截示意（模拟）](./images/00-download.png)
@@ -93,6 +93,6 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 说明
 
-- 需**管理员权限**；域环境可能被组策略覆盖  
-- 配图中软件页为**真实界面**；下载图为**模拟示意**  
+- 需**管理员权限**；域环境可能被组策略覆盖
+- 配图中软件页为**真实界面**；下载图为**模拟示意**
 - 其它功能：[01 · 概览](./01-overview.md) · [06 · 防病毒](./06-defender.md) · [07 · 时间](./07-time-sync.md) · [08 · 电源](./08-power.md) · [10 · 软件更新](./10-app-update.md)

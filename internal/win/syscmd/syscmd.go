@@ -20,6 +20,17 @@ const (
 	quickPSTimeout    = 12 * time.Second
 )
 
+// Bound command concurrency across overlapping module collectors.
+var commandSlots = make(chan struct{}, 6)
+
+func RunQuickContext(ctx context.Context, name string, args ...string) (string, error) {
+	return runContext(ctx, quickRunTimeout, name, args...)
+}
+
+func RunPSQuickContext(ctx context.Context, script string) (string, error) {
+	return runContext(ctx, quickPSTimeout, "powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script)
+}
+
 // Run runs a command hidden and returns combined stdout/stderr text.
 func Run(name string, args ...string) (string, error) {
 	return runWithTimeout(defaultRunTimeout, name, args...)
@@ -41,8 +52,18 @@ func RunPSQuick(script string) (string, error) {
 }
 
 func runWithTimeout(timeout time.Duration, name string, args ...string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	return runContext(context.Background(), timeout, name, args...)
+}
+
+func runContext(parent context.Context, timeout time.Duration, name string, args ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(parent, timeout)
 	defer cancel()
+	select {
+	case commandSlots <- struct{}{}:
+		defer func() { <-commandSlots }()
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
 
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -51,14 +72,14 @@ func runWithTimeout(timeout time.Duration, name string, args ...string) (string,
 	cmd.Stderr = &buf
 	err := cmd.Run()
 	out := decodeACP(buf.Bytes())
-	if ctx.Err() == context.DeadlineExceeded {
+	if ctx.Err() != nil {
 		msg := strings.TrimSpace(out)
 		if msg == "" {
 			msg = fmt.Sprintf("命令超时（%v）", timeout)
 		} else {
 			msg = fmt.Sprintf("命令超时（%v）: %s", timeout, msg)
 		}
-		return out, fmt.Errorf("%s", msg)
+		return out, fmt.Errorf("%s: %w", msg, ctx.Err())
 	}
 	if err != nil {
 		msg := strings.TrimSpace(out)

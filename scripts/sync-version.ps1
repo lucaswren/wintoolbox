@@ -50,3 +50,10 @@ $readme = [regex]::Replace($readme, '版本：v[\d.]+', "版本：$display")
 Set-FileUtf8 $readmePath $readme
 
 Write-Host "Synced version $display from version.json" -ForegroundColor DarkGray
+
+# Keep both lockfile metadata entries aligned without touching dependency versions.
+$lockPath = Join-Path $Root 'frontend\package-lock.json'
+node -e 'const fs=require("fs"); const [version,path]=process.argv.slice(1); const lock=JSON.parse(fs.readFileSync(path,"utf8")); if(lock.version!==version || lock.packages[""].version!==version){ lock.version=version; lock.packages[""].version=version; fs.writeFileSync(path,JSON.stringify(lock,null,2)+"\n"); }' $ver $lockPath
+if ($LASTEXITCODE -ne 0) { throw 'Failed to synchronize lockfile metadata' }
+gofmt -w $dtoPath
+if ($LASTEXITCODE -ne 0) { throw 'Failed to format version DTO' }

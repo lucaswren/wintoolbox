@@ -1,6 +1,7 @@
 package wintime
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -13,6 +14,7 @@ import (
 
 // Status holds current time zone and clock info.
 type Status struct {
+	Unknown     bool
 	TimeZone    string
 	LocalTime   string
 	UTCTime     string
@@ -21,14 +23,16 @@ type Status struct {
 }
 
 // GetStatus reads timezone, local/UTC time and configured NTP peer.
-func GetStatus() Status {
+func GetStatus() Status { return GetStatusContext(context.Background()) }
+
+func GetStatusContext(ctx context.Context) Status {
 	st := Status{
 		LocalTime: time.Now().Format("2006-01-02 15:04:05"),
 		UTCTime:   time.Now().UTC().Format("2006-01-02 15:04:05"),
-		TimeZone:  currentTimeZone(),
+		TimeZone:  currentTimeZoneContext(ctx),
 		NTPServer: ntpServer(),
 	}
-	out, err := syscmd.Run("sc", "qc", "W32Time")
+	out, err := syscmd.RunQuickContext(ctx, "sc", "qc", "W32Time")
 	if err == nil {
 		lower := strings.ToLower(out)
 		switch {
@@ -42,6 +46,7 @@ func GetStatus() Status {
 			st.ServiceHint = "时间服务=未知"
 		}
 	}
+	st.Unknown = st.TimeZone == "-" || st.NTPServer == "-" || err != nil
 	return st
 }
 
@@ -50,8 +55,10 @@ func CurrentTimeZone() string {
 	return currentTimeZone()
 }
 
-func currentTimeZone() string {
-	out, err := syscmd.Run("tzutil", "/g")
+func currentTimeZone() string { return currentTimeZoneContext(context.Background()) }
+
+func currentTimeZoneContext(ctx context.Context) string {
+	out, err := syscmd.RunQuickContext(ctx, "tzutil", "/g")
 	if err != nil {
 		return "-"
 	}

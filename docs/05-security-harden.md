@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -22,8 +22,8 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 注意
 
-- 极老客户端访问共享时慎用 ①  
-- 依赖远程 PowerShell / Ansible 时**不要**执行 ②  
-- 域环境可能被组策略覆盖；操作后可用右上角 **刷新** 核对状态  
+- 极老客户端访问共享时慎用 ①
+- 依赖远程 PowerShell / Ansible 时**不要**执行 ②
+- 域环境可能被组策略覆盖；操作后可用右上角 **刷新** 核对状态
 
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [04 · 防火墙](./04-firewall.md)

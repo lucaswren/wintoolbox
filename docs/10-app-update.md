@@ -4,8 +4,8 @@
 
 ## 第一步：下载
 
-若尚未安装，请先从 Release 获取安装包：  
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+若尚未安装，请先从 Release 获取安装包：
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -25,9 +25,9 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 步骤
 
-1. **软件更新** → **检查更新**  
-2. 若提示有更新 → **下载更新**（等待校验成功）  
-3. **安装并重启**  
+1. **软件更新** → **检查更新**
+2. 若提示有更新 → **下载更新**（等待校验成功）
+3. **安装并重启**
 
 需能访问 GitHub（或你配置的 Release 源）。网络失败时查看活动日志中的错误信息。
 

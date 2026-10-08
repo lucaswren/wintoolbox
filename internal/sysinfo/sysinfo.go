@@ -20,11 +20,11 @@ import (
 const overviewCacheTTL = 20 * time.Second
 
 var (
-	overviewCacheMu      sync.Mutex
-	overviewCached       Overview
-	overviewCachedAt     time.Time
-	overviewCacheValid   bool
-	overviewDetailReady  bool
+	overviewCacheMu     sync.Mutex
+	overviewCached      Overview
+	overviewCachedAt    time.Time
+	overviewCacheValid  bool
+	overviewDetailReady bool
 )
 
 // Overview holds high-level machine information.
@@ -87,13 +87,13 @@ func GetOverviewFast() Overview {
 
 	var (
 		hostname, arch, osName, osBuild string
-		manufacturer, model, board    string
-		bios, cpu, res                string
-		cpuCores                      int
-		memTotal, memAvail            float64
-		ips                           []string
-		disks                         []Disk
-		wg                            sync.WaitGroup
+		manufacturer, model, board      string
+		bios, cpu, res                  string
+		cpuCores                        int
+		memTotal, memAvail              float64
+		ips                             []string
+		disks                           []Disk
+		wg                              sync.WaitGroup
 	)
 	wg.Add(11)
 	go func() { defer wg.Done(); hostname = hostnameFn() }()
@@ -414,7 +414,7 @@ func memoryModules() string {
 }
 
 var (
-	modUser32          = windows.NewLazySystemDLL("user32.dll")
+	modUser32            = windows.NewLazySystemDLL("user32.dll")
 	procGetSystemMetrics = modUser32.NewProc("GetSystemMetrics")
 )
 

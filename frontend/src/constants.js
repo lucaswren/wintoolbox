@@ -1,5 +1,5 @@
 export const APP_NAME = 'WinToolbox' // synced from version.json
-export const APP_VERSION = 'v1.2.0' // synced from version.json
+export const APP_VERSION = 'v1.0.0' // synced from version.json
 
 export const MENUS = [
   { key: 'overview', title: '本机概览', icon: 'Monitor', desc: '系统与硬件' },

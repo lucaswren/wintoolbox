@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue'
+import { computed, ref } from 'vue'
 import { FORM_LABEL_WIDTH } from '../constants.js'
 
 const props = defineProps({
@@ -10,7 +10,15 @@ const props = defineProps({
   historyLoading: { type: Boolean, default: false },
 })
 
-defineEmits(['save-port', 'toggle', 'set-nla', 'clear-history', 'clear-history-kind', 'delete-history', 'refresh-history'])
+defineEmits([
+  'save-port',
+  'toggle',
+  'set-nla',
+  'clear-history',
+  'clear-history-kind',
+  'delete-history',
+  'refresh-history',
+])
 
 const kindLabel = {
   mru: '最近主机',
@@ -61,7 +69,8 @@ const filteredHistory = computed(() => {
   return normalizedHistory.value.filter((row) => {
     if (kind && row.kind !== kind) return false
     if (!q) return true
-    const haystack = `${row.host || ''} ${row.username || ''} ${row.source || ''} ${row.detail || ''} ${row.kind || ''}`.toLowerCase()
+    const haystack =
+      `${row.host || ''} ${row.username || ''} ${row.source || ''} ${row.detail || ''} ${row.kind || ''}`.toLowerCase()
     return haystack.includes(q)
   })
 })
@@ -73,9 +82,10 @@ const selectedKindCount = computed(() => {
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">远程桌面</h2>
-    <p class="page-desc">开关、端口与 NLA（更改端口会同步防火墙规则）；可查看并清理本机 mstsc 连接记录</p>
+  <div data-view="rdp">
+    <p class="page-desc">
+      开关、端口与 NLA（更改端口会同步防火墙规则）；可查看并清理本机 mstsc 连接记录
+    </p>
 
     <el-alert
       v-if="status && status.rdpAvailable === false"
@@ -104,13 +114,7 @@ const selectedKindCount = computed(() => {
             :type="status?.rdpNLAUnknown ? 'info' : status?.rdpNLA ? 'success' : 'warning'"
             effect="dark"
           >
-            {{
-              status?.rdpNLAUnknown
-                ? '状态未知'
-                : status?.rdpNLA
-                  ? '已强制 NLA'
-                  : '未强制 NLA'
-            }}
+            {{ status?.rdpNLAUnknown ? '状态未知' : status?.rdpNLA ? '已强制 NLA' : '未强制 NLA' }}
           </el-tag>
         </div>
       </div>
@@ -143,13 +147,17 @@ const selectedKindCount = computed(() => {
             </el-button>
             <el-button
               type="success"
-              :disabled="busy || status?.rdpAvailable === false || status?.rdpNLAUnknown || status?.rdpNLA"
+              :disabled="
+                busy || status?.rdpAvailable === false || status?.rdpNLAUnknown || status?.rdpNLA
+              "
               @click="$emit('set-nla', true)"
             >
               强制 NLA
             </el-button>
             <el-button
-              :disabled="busy || status?.rdpAvailable === false || status?.rdpNLAUnknown || !status?.rdpNLA"
+              :disabled="
+                busy || status?.rdpAvailable === false || status?.rdpNLAUnknown || !status?.rdpNLA
+              "
               @click="$emit('set-nla', false)"
             >
               关闭 NLA
@@ -157,22 +165,21 @@ const selectedKindCount = computed(() => {
           </div>
         </el-form-item>
       </el-form>
-      <p class="wt-hint">强制 NLA 可在完成身份验证前拒绝连接，降低未认证爆破面。极旧客户端可能无法连接。NLA 状态未知时请先刷新。</p>
+      <p class="wt-hint">
+        强制 NLA 可在完成身份验证前拒绝连接，降低未认证爆破面。极旧客户端可能无法连接。NLA
+        状态未知时请先刷新。
+      </p>
     </el-card>
 
     <el-card shadow="never" header="连接记录" class="wt-card" v-loading="historyLoading">
       <p class="wt-detail" style="margin-top: 0">
-        下列为本地远程桌面客户端留下的历史主机、用户名提示、TERMSRV 凭据、相关文件与位图缓存。清理不影响远程桌面服务开关与端口。
+        下列为本地远程桌面客户端留下的历史主机、用户名提示、TERMSRV
+        凭据、相关文件与位图缓存。清理不影响远程桌面服务开关与端口。
       </p>
 
       <div class="wt-actions wt-actions--mt">
-        <el-select
-          v-model="selectedKind"
-          placeholder="类型（全部）"
-          clearable
-          style="width: 160px"
-        >
-          <el-option v-for="(label, key) in kindLabel" :key="key" :label="label" :value="key"/>
+        <el-select v-model="selectedKind" placeholder="类型（全部）" clearable style="width: 160px">
+          <el-option v-for="(label, key) in kindLabel" :key="key" :label="label" :value="key" />
         </el-select>
         <el-input
           v-model="searchText"
@@ -183,7 +190,9 @@ const selectedKindCount = computed(() => {
       </div>
 
       <div class="wt-actions wt-actions--mt">
-        <el-button :disabled="busy || historyLoading" @click="$emit('refresh-history')">刷新列表</el-button>
+        <el-button :disabled="busy || historyLoading" @click="$emit('refresh-history')"
+          >刷新列表</el-button
+        >
         <el-button
           type="danger"
           plain
@@ -211,7 +220,9 @@ const selectedKindCount = computed(() => {
       >
         <el-table-column label="类型" width="140">
           <template #default="{ row }">
-            <el-tag :type="tagKind(row.kind)" size="small" style="white-space: nowrap">{{ labelKind(row.kind) }}</el-tag>
+            <el-tag :type="tagKind(row.kind)" size="small" style="white-space: nowrap">{{
+              labelKind(row.kind)
+            }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="host" label="主机 / 名称" min-width="140" show-overflow-tooltip />

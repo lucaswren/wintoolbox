@@ -29,11 +29,11 @@ type userModalsInfo0 struct {
 
 // PasswordPolicy describes local password length and complexity.
 type PasswordPolicy struct {
-	MinLength          int
-	Complexity         bool
-	ComplexityUnknown  bool
-	Unknown            bool
-	Detail             string
+	MinLength         int
+	Complexity        bool
+	ComplexityUnknown bool
+	Unknown           bool
+	Detail            string
 }
 
 // GetPasswordPolicy reads min length via NetUserModalsGet and complexity via secedit export.

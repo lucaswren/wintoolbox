@@ -16,8 +16,7 @@ const canAct = computed(() => !props.busy && !timeUnknown.value)
 </script>
 
 <template>
-  <div>
-    <h2 class="page-title">时间同步</h2>
+  <div data-view="time">
     <p class="page-desc">时区、NTP 源与立即对时（打开本页会自动定位当前时区）</p>
 
     <el-alert
@@ -61,15 +60,32 @@ const canAct = computed(() => !props.busy && !timeUnknown.value)
               class="wt-chip"
               effect="plain"
               @click="canAct && (form.ntpServer = p.id)"
-            >{{ p.label }}</el-tag>
+              >{{ p.label }}</el-tag
+            >
           </div>
         </el-form-item>
         <el-form-item>
           <div class="wt-actions">
-            <el-button type="primary" :disabled="!canAct || !form.timeZone" @click="$emit('apply-tz')">应用时区</el-button>
-            <el-button :disabled="!canAct || !String(form.ntpServer || '').trim()" @click="$emit('save-ntp')">保存 NTP</el-button>
-            <el-button type="success" :disabled="!canAct" @click="$emit('sync')">立即同步</el-button>
-            <el-button type="info" :disabled="!canAct || !String(form.ntpServer || '').trim()" @click="$emit('test-ntp')">测试 NTP</el-button>
+            <el-button
+              type="primary"
+              :disabled="!canAct || !form.timeZone"
+              @click="$emit('apply-tz')"
+              >应用时区</el-button
+            >
+            <el-button
+              :disabled="!canAct || !String(form.ntpServer || '').trim()"
+              @click="$emit('save-ntp')"
+              >保存 NTP</el-button
+            >
+            <el-button type="success" :disabled="!canAct" @click="$emit('sync')"
+              >立即同步</el-button
+            >
+            <el-button
+              type="info"
+              :disabled="!canAct || !String(form.ntpServer || '').trim()"
+              @click="$emit('test-ntp')"
+              >测试 NTP</el-button
+            >
           </div>
         </el-form-item>
       </el-form>

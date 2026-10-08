@@ -1,11 +1,11 @@
 # WinToolbox
 
-Windows 本地运维工具箱：Go + [Wails v2](https://wails.io) + Vue3 + Element Plus。  
-版本：v1.2.0
+Windows 本地运维工具箱：Go + [Wails v2](https://wails.io) + Vue3 + Element Plus。
+版本：v1.0.0
 
 ## 文档
 
-各操作文档**第一步均为下载本软件**：https://github.com/datuzi-vip/wintoolbox/releases/latest  
+各操作文档**第一步均为下载本软件**：https://github.com/lucaswren/wintoolbox/releases/latest
 浏览器拦截时请点 **保留 / 保持**；详见 [00 · 下载](./docs/00-download.md)。
 
 - [文档首页](./docs/README.md)
@@ -18,14 +18,16 @@ Windows 本地运维工具箱：Go + [Wails v2](https://wails.io) + Vue3 + Eleme
 - [09 · 系统更新](./docs/09-windows-update.md)
 - [全部功能文档](./docs/README.md)
 
-## v1.2.0 更新说明
+## v1.0.0 发布说明
 
-- 新增 **安全加固** 页：一键禁用 SMBv1、关闭并拦截 WinRM、限制匿名枚举
-- 新增账户能力：禁用来宾、关闭自动登录、密码策略；锁定策略支持自定义阈值/时长
-- 远程桌面支持 **强制 NLA**；防火墙新增 **高危端口预设**（135/139/445/5985/5986）
-- 全面加固状态探测与操作校验（写后复查、按关闭前配置备份恢复、超时未知态提示）
-- 优化各页状态刷新速度（批量探测、规则列表快速查询、防竞态序号）
-- 新增图文操作文档（全功能编号：`00`–`10` + `90` 加固指南，2× 高清截图标注）
+- 包含本地账户、远程桌面、防火墙、安全加固、Defender、时间、电源及 Windows Update 管理
+- 配置备份仅在全部写入成功后标记有效；恢复前校验备份，操作后复查状态
+- 按模块刷新状态，合并并发查询，为系统写操作增加互斥，减少重复请求和界面等待
+- 软件更新支持 SHA256 校验、下载进度及取消，安装失败可回退并保留日志
+- 优化账户页、操作日志和小窗口布局，增加桥接类型检查、回归测试和 Windows CI
+- 更新请求统一使用 `lucaswren/wintoolbox`，发布附件提供 SHA256 校验文件
+
+本次将版本号重新设为 v1.0.0。已安装 v1.2.0 的用户需手动下载并安装，此版本不会被识别为更高版本。
 
 ## 功能
 
@@ -108,7 +110,7 @@ wintoolbox/
 
 ## 构建
 
-**依赖**：Go 1.22+（开发环境可用 1.27）、Node.js 18+、WebView2 Runtime
+**依赖**：Go 1.27+、Node.js 22+、WebView2 Runtime
 
 ```powershell
 .\scripts\build.ps1
@@ -128,15 +130,30 @@ wails dev
 
 从 GitHub Release 下载的安装包**当前未做 Authenticode 代码签名**。Windows 可能提示 SmartScreen 拦截——多为未签名 + 新文件无下载信誉，不代表文件一定有害。
 
-若确认来自本仓库 [Releases](https://github.com/datuzi-vip/wintoolbox/releases)：
+若确认来自本仓库 [Releases](https://github.com/lucaswren/wintoolbox/releases)：
 
 1. **更多信息** → **仍要运行**
 2. 用 Release / `*.sha256` 中的哈希校验后再运行
 
 ```powershell
-Get-FileHash .\WinToolbox-v1.2.0.exe -Algorithm SHA256
+Get-FileHash .\WinToolbox-v1.0.0-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## 技术栈
 
 Go · Wails v2 · Vue3 · Element Plus · Windows API / netsh / w32tm / tzutil / slmgr / WebView2
+
+## 开发检查
+
+```powershell
+go run ./scripts/genbindings
+cd frontend
+npm ci
+npm run check
+npm run build
+cd ..
+go test ./...
+go vet ./...
+```
+
+生产构建产物位于 `artifacts/releases/`，开发约定和故障验收见 [开发规范](docs/development.md)。

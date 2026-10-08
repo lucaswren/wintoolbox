@@ -4,7 +4,7 @@
 
 ## 第一步：下载
 
-https://github.com/datuzi-vip/wintoolbox/releases/latest  
+https://github.com/lucaswren/wintoolbox/releases/latest
 
 拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
 
@@ -21,8 +21,8 @@ https://github.com/datuzi-vip/wintoolbox/releases/latest
 
 ## 建议
 
-- **常态建议保持更新开启**；仅在临时运维窗口关闭  
-- 关闭后记得用 ② 恢复  
-- 域/组策略环境可能无法被本工具完全覆盖  
+- **常态建议保持更新开启**；仅在临时运维窗口关闭
+- 关闭后记得用 ② 恢复
+- 域/组策略环境可能无法被本工具完全覆盖
 
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [10 · 软件更新](./10-app-update.md)
