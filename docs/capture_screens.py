@@ -404,7 +404,7 @@ def main():
             page = context.new_page()
             page.on("pageerror", lambda err: print("pageerror:", err))
             page.add_init_script(MOCK_JS)
-            page.add_init_script("localStorage.setItem('wintoolbox.language', 'zh-CN')")
+            page.add_init_script("localStorage.setItem('wintoolbox.language', 'zh-Hans')")
             page.goto(BASE, wait_until="networkidle", timeout=60000)
             wait_ready(page)
             page.add_style_tag(content=".op-log, .wt-log { max-height: 64px !important; }")

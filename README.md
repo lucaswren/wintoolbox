@@ -1,19 +1,19 @@
-[English](README.md) | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [繁體中文](README.zh-Hant.md) | [简体中文](README.zh-Hans.md)
 
 # WinToolBox
 
-A local Windows administration toolbox built with Go, [Wails v2](https://wails.io), Vue 3 and Element Plus.
+WinToolBox is a Windows administration toolkit for inspecting system information and managing local accounts, Remote Desktop, firewall rules, Microsoft Defender, time synchronization, power, and updates. Built with Go, Wails, Vue and Element Plus.
 Version: v1.0.0
 
 ## Languages and documentation
 
-English is the default/fallback and primary documentation language. English, Traditional Chinese and Simplified Chinese are supported. First launch follows the user's Windows display language: Taiwan/Hong Kong/Macao select Traditional Chinese, Mainland China/Singapore select Simplified Chinese, and other languages select English. A sidebar selector overrides detection and remembers the choice.
+English is the default/fallback and primary documentation language. English, Traditional Chinese and Simplified Chinese are supported. First launch follows the user's Windows display language and uses English when no supported language matches. A sidebar selector overrides detection and remembers the choice.
 
 WinToolBox runs directly as an EXE. If WebView2 is missing, its automatic installation window follows the Windows display language before the app starts. There is no separate application installation wizard. OS command output, device/user names and release notes retain their source language.
 
 - [English documentation](docs/README.md)
-- [繁體中文文件](docs/zh-TW/README.md)
-- [简体中文文档](docs/zh-CN/README.md)
+- [繁體中文文件](docs/zh-Hant/README.md)
+- [简体中文文档](docs/zh-Hans/README.md)
 - [Download and first launch](docs/00-download.md)
 - [Language selection](docs/localization.md)
 - [Windows hardening guide](docs/90-hardening-guide.md)
@@ -28,7 +28,7 @@ WinToolBox runs directly as an EXE. If WebView2 is missing, its automatic instal
 | Remote Desktop | Service, port with firewall synchronization, NLA and mstsc history cleanup |
 | Firewall | Profiles, ping blocking, high-risk ports and inbound TCP allow rules |
 | Security hardening | SMBv1, WinRM and anonymous enumeration |
-| Antivirus | Disable/enable Defender real-time protection with fallback and verification |
+| Microsoft Defender | Disable/enable Defender real-time protection with fallback and verification |
 | Time synchronization | Time zones, NTP presets, synchronization and NTP testing |
 | Power | Lock, delayed restart/shutdown and schedule cancellation |
 | Windows Update | Disable and restore configuration saved before disabling |
@@ -73,7 +73,7 @@ flowchart LR
   Domain --> Windows[internal/win and Windows APIs]
 ```
 
-`frontend/src/views/` matches the ten sidebar modules. `frontend/src/i18n/` holds translation catalogs. `internal/locale/` detects Windows language and translates native setup prompts. English guides live in `docs/`, with corresponding Chinese guides in `docs/zh-CN/` and `docs/zh-TW/` and shared images.
+`frontend/src/views/` matches the ten sidebar modules. `frontend/src/i18n/` holds translation catalogs. `internal/locale/` detects Windows language and translates native setup prompts. English guides live in `docs/`, with corresponding Chinese guides in `docs/zh-Hans/` and `docs/zh-Hant/` and shared images.
 
 ## Checks
 
@@ -100,3 +100,7 @@ go vet ./...
 The version was reset to v1.0.0. Users running v1.2.0 must install this version manually; it is not recognized as a newer version.
 
 [Product review and license recommendations](docs/product-review-2026-10-11.md)
+
+## License
+
+WinToolBox source code and documentation are licensed under [Apache-2.0](LICENSE). See [NOTICE](NOTICE) for project attribution. Third-party components retain their own licenses.

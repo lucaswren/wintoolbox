@@ -1,4 +1,4 @@
-[English](10-app-update.md) | [繁體中文](zh-TW/10-app-update.md) | [简体中文](zh-CN/10-app-update.md)
+[English](10-app-update.md) | [繁體中文](zh-Hant/10-app-update.md) | [简体中文](zh-Hans/10-app-update.md)
 
 # 10 · App update
 

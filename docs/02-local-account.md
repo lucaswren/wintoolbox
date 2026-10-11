@@ -1,4 +1,4 @@
-[English](02-local-account.md) | [繁體中文](zh-TW/02-local-account.md) | [简体中文](zh-CN/02-local-account.md)
+[English](02-local-account.md) | [繁體中文](zh-Hant/02-local-account.md) | [简体中文](zh-Hans/02-local-account.md)
 
 # 02 · Local accounts
 

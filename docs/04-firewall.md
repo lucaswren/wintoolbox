@@ -1,4 +1,4 @@
-[English](04-firewall.md) | [繁體中文](zh-TW/04-firewall.md) | [简体中文](zh-CN/04-firewall.md)
+[English](04-firewall.md) | [繁體中文](zh-Hant/04-firewall.md) | [简体中文](zh-Hans/04-firewall.md)
 
 # 04 · Firewall
 

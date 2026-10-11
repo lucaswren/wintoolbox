@@ -1,21 +1,31 @@
 import { ref } from 'vue'
 import en from './en.json' with { type: 'json' }
-import zhCN from './zh-CN.json' with { type: 'json' }
-import zhTW from './zh-TW.json' with { type: 'json' }
-import { detectLocale, formatMessage, SUPPORTED_LOCALES } from './locale.js'
+import zhCN from './zh-Hans.json' with { type: 'json' }
+import zhTW from './zh-Hant.json' with { type: 'json' }
+import { detectLocale, resolveLocale, formatMessage, SUPPORTED_LOCALES } from './locale.js'
 
 const storageKey = 'wintoolbox.language'
 function savedLocale() {
   try {
     const saved = globalThis.localStorage?.getItem(storageKey)
-    return SUPPORTED_LOCALES.includes(saved) ? saved : null
+    if (SUPPORTED_LOCALES.includes(saved)) return saved
+    if (saved === 'zh-CN' || saved === 'zh-TW') {
+      const migrated = resolveLocale(saved)
+      try {
+        globalThis.localStorage?.setItem(storageKey, migrated)
+      } catch {
+        // Keep the saved choice even when storage is read-only.
+      }
+      return migrated
+    }
+    return null
   } catch {
     return null
   }
 }
 const explicitLocale = ref(savedLocale())
 export const locale = ref(explicitLocale.value || detectLocale(globalThis.navigator?.languages))
-const catalogs = { en, 'zh-CN': zhCN, 'zh-TW': zhTW }
+const catalogs = { en, 'zh-Hans': zhCN, 'zh-Hant': zhTW }
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const patterns = Object.keys(en)
   .filter((key) => /\{\d+\}/.test(key))

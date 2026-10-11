@@ -44,7 +44,7 @@ $pkg = [regex]::Replace($pkg, '"version":\s*"[^"]*"', "`"version`": `"$ver`"")
 Set-FileUtf8 $pkgPath $pkg
 
 # Keep all language editions aligned (header line only).
-foreach ($readmeName in @('README.md', 'README.zh-CN.md', 'README.zh-TW.md')) {
+foreach ($readmeName in @('README.md', 'README.zh-Hans.md', 'README.zh-Hant.md')) {
   $readmePath = Join-Path $Root $readmeName
   if (-not (Test-Path -LiteralPath $readmePath)) { continue }
   $readme = Get-Content -LiteralPath $readmePath -Raw -Encoding UTF8

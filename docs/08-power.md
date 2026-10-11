@@ -1,4 +1,4 @@
-[English](08-power.md) | [繁體中文](zh-TW/08-power.md) | [简体中文](zh-CN/08-power.md)
+[English](08-power.md) | [繁體中文](zh-Hant/08-power.md) | [简体中文](zh-Hans/08-power.md)
 
 # 08 · Power
 

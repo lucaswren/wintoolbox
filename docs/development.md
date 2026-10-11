@@ -1,4 +1,4 @@
-[English](development.md) | [繁體中文](zh-TW/development.md) | [简体中文](zh-CN/development.md)
+[English](development.md) | [繁體中文](zh-Hant/development.md) | [简体中文](zh-Hans/development.md)
 
 # Development and acceptance
 
@@ -35,9 +35,9 @@ Regenerate `frontend/src/api/wails.d.ts` whenever exported Go methods or DTOs ch
 
 English is the default/fallback. Catalogs in `frontend/src/i18n` contain matching English, Simplified Chinese and Traditional Chinese keys; messages use positional placeholders such as `{0}`. Call `t()` at the presentation layer. Keep backend status tokens raw when using comparisons. Reactive getters/computed values let cached views update when the locale changes.
 
-On native startup, GetAppInfo reports the Windows user display language. The UI uses it unless `wintoolbox.language` contains a supported manual preference. Browser development falls back to navigator.languages. Chinese Taiwan/Hong Kong/Macao or Hant select Traditional Chinese; China/Singapore or Hans select Simplified Chinese; other languages use English. Native setup uses `internal/locale` before WebView2 exists. OS command output, device/user names and release notes remain in their source language.
+On native startup, GetAppInfo reports the Windows user display language. The UI uses it unless `wintoolbox.language` contains a supported manual preference. Browser development falls back to navigator.languages. Normalize OS language tags to the region-neutral identifiers en, zh-Hans and zh-Hant. Existing stored regional identifiers migrate without losing the manual preference. Unsupported languages use English. Native setup uses `internal/locale` before WebView2 exists. OS command output, device/user names and release notes remain in their source language.
 
-Keep English user guides under docs/, with corresponding files under docs/zh-CN/ and docs/zh-TW/. Add language navigation and preserve shared image links. Existing screenshots depict the earlier Simplified Chinese interface.
+Keep English user guides under docs/, with corresponding files under docs/zh-Hans/ and docs/zh-Hant/. Add language navigation and preserve shared image links. Existing screenshots depict the earlier Simplified Chinese interface.
 
 ## Self-update
 

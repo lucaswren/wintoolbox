@@ -7,8 +7,8 @@ const root = path.resolve(__dirname, '..')
 const mock = fs.readFileSync(path.join(root, 'docs/capture_screens.py'), 'utf8').match(/MOCK_JS = r"""([\s\S]*?)"""/)[1]
 const cases = [
   { language: 'en', menus: ['Overview','Local accounts','Remote Desktop','Firewall','Security hardening','Microsoft Defender','Time synchronization','Power','Windows Update','App update'], policy: 'Security policies', guest: 'Disable Guest account' },
-  { language: 'zh-TW', menus: ['本機概覽','本地帳戶','遠端桌面','防火牆','安全加固','Microsoft Defender','時間同步','電源','系統更新','軟體更新'], policy: '安全策略', guest: '停用來賓帳戶' },
-  { language: 'zh-CN', menus: ['本机概览','本地账户','远程桌面','防火墙','安全加固','Microsoft Defender','时间同步','电源','系统更新','软件更新'], policy: '安全策略', guest: '禁用来宾账户' },
+  { language: 'zh-Hant', menus: ['本機概覽','本地帳戶','遠端桌面','防火牆','安全加固','Microsoft Defender','時間同步','電源','系統更新','軟體更新'], policy: '安全策略', guest: '停用來賓帳戶' },
+  { language: 'zh-Hans', menus: ['本机概览','本地账户','远程桌面','防火墙','安全加固','Microsoft Defender','时间同步','电源','系统更新','软件更新'], policy: '安全策略', guest: '禁用来宾账户' },
 ]
 const keys = ['overview','account','rdp','firewall','harden','defender','time','power','update','selfupdate']
 async function main() {

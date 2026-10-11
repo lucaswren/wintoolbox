@@ -49,7 +49,7 @@ const ICONS = {
 }
 
 const active = ref('overview')
-const elementLocale = computed(() => ({ en, 'zh-CN': zhCn, 'zh-TW': zhTw })[locale.value])
+const elementLocale = computed(() => ({ en, 'zh-Hans': zhCn, 'zh-Hant': zhTw })[locale.value])
 const busy = ref(false)
 const logs = ref([])
 const appUpdate = reactive({
@@ -357,8 +357,8 @@ async function cancelUpdateDownload() {
           @update:model-value="setLocale"
         >
           <el-option label="English" value="en" />
-          <el-option label="繁體中文" value="zh-TW" />
-          <el-option label="简体中文" value="zh-CN" />
+          <el-option label="繁體中文" value="zh-Hant" />
+          <el-option label="简体中文" value="zh-Hans" />
         </el-select>
 
         <el-menu

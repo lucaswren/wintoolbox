@@ -1,4 +1,4 @@
-[English](03-remote-desktop.md) | [繁體中文](zh-TW/03-remote-desktop.md) | [简体中文](zh-CN/03-remote-desktop.md)
+[English](03-remote-desktop.md) | [繁體中文](zh-Hant/03-remote-desktop.md) | [简体中文](zh-Hans/03-remote-desktop.md)
 
 # 03 · Remote Desktop
 

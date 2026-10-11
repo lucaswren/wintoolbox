@@ -1,4 +1,4 @@
-[English](90-hardening-guide.md) | [繁體中文](zh-TW/90-hardening-guide.md) | [简体中文](zh-CN/90-hardening-guide.md)
+[English](90-hardening-guide.md) | [繁體中文](zh-Hant/90-hardening-guide.md) | [简体中文](zh-Hans/90-hardening-guide.md)
 
 # 90 · Windows hardening guide
 

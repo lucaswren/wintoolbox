@@ -1,4 +1,4 @@
-[English](01-overview.md) | [繁體中文](zh-TW/01-overview.md) | [简体中文](zh-CN/01-overview.md)
+[English](01-overview.md) | [繁體中文](zh-Hant/01-overview.md) | [简体中文](zh-Hans/01-overview.md)
 
 # 01 · Overview
 

@@ -1,4 +1,4 @@
-[English](09-windows-update.md) | [繁體中文](zh-TW/09-windows-update.md) | [简体中文](zh-CN/09-windows-update.md)
+[English](09-windows-update.md) | [繁體中文](zh-Hant/09-windows-update.md) | [简体中文](zh-Hans/09-windows-update.md)
 
 # 09 · Windows Update
 

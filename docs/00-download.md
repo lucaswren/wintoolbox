@@ -1,4 +1,4 @@
-[English](00-download.md) | [繁體中文](zh-TW/00-download.md) | [简体中文](zh-CN/00-download.md)
+[English](00-download.md) | [繁體中文](zh-Hant/00-download.md) | [简体中文](zh-Hans/00-download.md)
 
 # 00 · Download and first launch
 

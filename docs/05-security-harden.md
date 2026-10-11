@@ -1,4 +1,4 @@
-[English](05-security-harden.md) | [繁體中文](zh-TW/05-security-harden.md) | [简体中文](zh-CN/05-security-harden.md)
+[English](05-security-harden.md) | [繁體中文](zh-Hant/05-security-harden.md) | [简体中文](zh-Hans/05-security-harden.md)
 
 # 05 · Security hardening
 

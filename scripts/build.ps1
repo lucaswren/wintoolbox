@@ -61,6 +61,9 @@ go build -tags 'desktop,production' -trimpath -ldflags='-s -w -H windowsgui' -o 
 Assert-LastExitCode 'go build'
 
 Copy-Item -LiteralPath WinToolBox.exe -Destination $versionedExe -Force
+foreach ($legalFile in @('LICENSE', 'NOTICE')) {
+  Copy-Item -LiteralPath $legalFile -Destination (Join-Path $releaseDir $legalFile) -Force
+}
 
 $size = (Get-Item WinToolBox.exe).Length
 $hash = (Get-FileHash -LiteralPath $versionedExe -Algorithm SHA256).Hash.ToLowerInvariant()

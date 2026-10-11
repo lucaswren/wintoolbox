@@ -21,7 +21,7 @@ with sync_playwright() as p:
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.add_init_script(mock)
-    page.add_init_script("localStorage.setItem('wintoolbox.language', 'zh-CN')")
+    page.add_init_script("localStorage.setItem('wintoolbox.language', 'zh-Hans')")
     page.goto("http://127.0.0.1:5173", wait_until="networkidle")
     page.get_by_role("menuitem", name="本地账户").click()
     page.locator('[data-view="account"]').wait_for(state="visible")

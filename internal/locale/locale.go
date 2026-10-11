@@ -3,8 +3,8 @@ package locale
 
 const (
 	English            = "en"
-	SimplifiedChinese  = "zh-CN"
-	TraditionalChinese = "zh-TW"
+	SimplifiedChinese  = "zh-Hans"
+	TraditionalChinese = "zh-Hant"
 )
 
 // FromLanguageID maps Windows UI language IDs, with English as the fallback.

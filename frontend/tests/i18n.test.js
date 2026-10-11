@@ -7,20 +7,20 @@ import { MENUS, NTP_PRESETS } from '../src/constants.js'
 
 test('display languages map by script and region, with English fallback', () => {
   for (const tag of ['zh-TW', 'zh-HK', 'zh-MO', 'zh-Hant', 'zh-Hant-CN', 'zh_HK']) {
-    assert.equal(resolveLocale(tag), 'zh-TW', tag)
+    assert.equal(resolveLocale(tag), 'zh-Hant', tag)
   }
   for (const tag of ['zh-CN', 'zh-SG', 'zh-Hans', 'zh-Hans-TW', 'zh']) {
-    assert.equal(resolveLocale(tag), 'zh-CN', tag)
+    assert.equal(resolveLocale(tag), 'zh-Hans', tag)
   }
   for (const tag of ['en-US', 'fr-FR', 'ja-JP', 'zh-XX', '', null]) {
     assert.equal(resolveLocale(tag), 'en', tag)
   }
-  assert.equal(detectLocale(['fr-FR', 'zh-CN']), 'en')
+  assert.equal(detectLocale(['fr-FR', 'zh-Hans']), 'en')
   assert.equal(detectLocale([]), 'en')
 })
 
 test('catalogs have identical keys and interpolation placeholders', () => {
-  const catalogs = ['en', 'zh-CN', 'zh-TW'].map((name) =>
+  const catalogs = ['en', 'zh-Hans', 'zh-Hant'].map((name) =>
     JSON.parse(fs.readFileSync(new URL(`../src/i18n/${name}.json`, import.meta.url))),
   )
   const placeholders = (value) => [...value.matchAll(/\{\d+\}/g)].map((m) => m[0]).sort()
@@ -48,21 +48,21 @@ test('manual choice persists, overrides Windows detection and updates navigation
   }
   globalThis.document = { documentElement: {} }
   try {
-    setLocale('zh-TW')
+    setLocale('zh-Hant')
     assert.equal(t('本机概览'), '本機概覽')
     assert.equal(MENUS[0].title, '本機概覽')
-    assert.equal(saved.get('wintoolbox.language'), 'zh-TW')
-    assert.equal(document.documentElement.lang, 'zh-TW')
+    assert.equal(saved.get('wintoolbox.language'), 'zh-Hant')
+    assert.equal(document.documentElement.lang, 'zh-Hant')
     useSystemLocale('en')
-    assert.equal(locale.value, 'zh-TW')
+    assert.equal(locale.value, 'zh-Hant')
     const restarted = await import('../src/i18n/index.js?restart')
-    assert.equal(restarted.locale.value, 'zh-TW')
+    assert.equal(restarted.locale.value, 'zh-Hant')
     setLocale('en')
     assert.equal(MENUS[0].title, 'Overview')
     assert.equal(NTP_PRESETS[1].label, 'Alibaba Cloud')
     setLocale('unsupported')
     assert.equal(locale.value, 'en')
-    setLocale('zh-CN')
+    setLocale('zh-Hans')
     assert.equal(MENUS[0].title, '本机概览')
   } finally {
     globalThis.localStorage = previousStorage
@@ -83,11 +83,11 @@ test('language selection works with blocked storage and system choice applies on
   }
   try {
     const fresh = await import('../src/i18n/index.js?blocked')
-    fresh.useSystemLocale('zh-TW')
-    assert.equal(fresh.locale.value, 'zh-TW')
-    fresh.setLocale('zh-CN')
+    fresh.useSystemLocale('zh-Hant')
+    assert.equal(fresh.locale.value, 'zh-Hant')
+    fresh.setLocale('zh-Hans')
     fresh.useSystemLocale('en')
-    assert.equal(fresh.locale.value, 'zh-CN')
+    assert.equal(fresh.locale.value, 'zh-Hans')
   } finally {
     globalThis.localStorage = previousStorage
   }
@@ -114,6 +114,27 @@ test('formatted diagnostics translate without changing backend tokens or OS outp
     'The system cannot find the file specified.',
   )
   assert.equal(formatMessage('{0} / {1}', [0]), '0 / {1}')
-  setLocale('zh-TW')
+  setLocale('zh-Hant')
   assert.equal(t('SMBv1 状态未知'), 'SMBv1 狀態未知')
+})
+
+test('legacy regional preferences migrate to script identifiers', async () => {
+  const previous = globalThis.localStorage
+  try {
+    for (const [old, value] of [
+      ['zh-CN', 'zh-Hans'],
+      ['zh-TW', 'zh-Hant'],
+    ]) {
+      const saved = new Map([['wintoolbox.language', old]])
+      globalThis.localStorage = {
+        getItem: (key) => saved.get(key),
+        setItem: (key, value) => saved.set(key, value),
+      }
+      const fresh = await import('../src/i18n/index.js?legacy=' + old)
+      assert.equal(fresh.locale.value, value)
+      assert.equal(saved.get('wintoolbox.language'), value)
+    }
+  } finally {
+    globalThis.localStorage = previous
+  }
 })

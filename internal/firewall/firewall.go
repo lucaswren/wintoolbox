@@ -156,7 +156,7 @@ func profileState(raw string, headers ...string) string {
 			continue
 		}
 		if strings.Contains(lower, "state") || strings.Contains(trim, "状态") {
-			// zh-CN: 启用/禁用; some builds: 开/关; EN: on/off.
+			// zh-Hans: 启用/禁用; some builds: 开/关; EN: on/off.
 			fields := strings.Fields(trim)
 			val := ""
 			if len(fields) >= 2 {

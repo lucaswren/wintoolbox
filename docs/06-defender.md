@@ -1,4 +1,4 @@
-[English](06-defender.md) | [繁體中文](zh-TW/06-defender.md) | [简体中文](zh-CN/06-defender.md)
+[English](06-defender.md) | [繁體中文](zh-Hant/06-defender.md) | [简体中文](zh-Hans/06-defender.md)
 
 # 06 · Antivirus
 

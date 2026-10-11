@@ -1,8 +1,8 @@
-[English](README.md) | [繁體中文](zh-TW/README.md) | [简体中文](zh-CN/README.md)
+[English](README.md) | [繁體中文](zh-Hant/README.md) | [简体中文](zh-Hans/README.md)
 
 # WinToolBox documentation
 
-English is the primary documentation language. Complete user guides are also available in [Traditional Chinese](zh-TW/README.md) and [Simplified Chinese](zh-CN/README.md). The application chooses the user's Windows display language on first launch and lets users save a manual preference.
+English is the primary documentation language. Complete user guides are also available in [Traditional Chinese](zh-Hant/README.md) and [Simplified Chinese](zh-Hans/README.md). The application chooses the user's Windows display language on first launch and lets users save a manual preference.
 
 Start with [Download and first launch](00-download.md). Administrator privileges are required; Group Policy may override local changes.
 

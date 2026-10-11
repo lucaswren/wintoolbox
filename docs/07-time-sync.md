@@ -1,4 +1,4 @@
-[English](07-time-sync.md) | [繁體中文](zh-TW/07-time-sync.md) | [简体中文](zh-CN/07-time-sync.md)
+[English](07-time-sync.md) | [繁體中文](zh-Hant/07-time-sync.md) | [简体中文](zh-Hans/07-time-sync.md)
 
 # 07 · Time synchronization
 

@@ -1,11 +1,11 @@
-export const SUPPORTED_LOCALES = ['en', 'zh-CN', 'zh-TW']
+export const SUPPORTED_LOCALES = ['en', 'zh-Hans', 'zh-Hant']
 
 export function resolveLocale(language) {
   const tag = String(language || '')
     .replaceAll('_', '-')
     .toLowerCase()
-  if (/^zh-(hant|tw|hk|mo)(-|$)/.test(tag)) return 'zh-TW'
-  if (tag === 'zh' || /^zh-(hans|cn|sg)(-|$)/.test(tag)) return 'zh-CN'
+  if (/^zh-(hant|tw|hk|mo)(-|$)/.test(tag)) return 'zh-Hant'
+  if (tag === 'zh' || /^zh-(hans|cn|sg)(-|$)/.test(tag)) return 'zh-Hans'
   return 'en'
 }
 

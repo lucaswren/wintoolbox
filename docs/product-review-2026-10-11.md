@@ -1,6 +1,8 @@
-[English](product-review-2026-10-11.md) | [繁體中文](zh-TW/product-review-2026-10-11.md) | [简体中文](zh-CN/product-review-2026-10-11.md)
+[English](product-review-2026-10-11.md) | [繁體中文](zh-Hant/product-review-2026-10-11.md) | [简体中文](zh-Hans/product-review-2026-10-11.md)
 
 # Product review · 2026-10-11
+
+Update: Apache-2.0 has now been adopted; see [LICENSE](../LICENSE) and [NOTICE](../NOTICE). The license recommendations below record the earlier review. Language identifiers now use region-neutral en, zh-Hans and zh-Hant.
 
 Reviewed the Wails shell, all ten Vue views, language catalogs, account/RDP/firewall/hardening actions, status collection, native setup, self-update staging, build scripts and repository metadata.
 
