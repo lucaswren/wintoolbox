@@ -19,7 +19,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 | # | 按鈕 | 說明 |
 |---|------|------|
 | ① | **全部開啟** | 域 / 專用 / 公用設定檔案全部啟用（旁有「全部關閉」） |
-| ② | **放行** | 為填寫的 TCP 連接埠添加入站放行（規則名前綴 WinToolBox） |
+| ② | **放行** | 為填寫的 TCP 連接埠添加入站放行（規則名前綴 `WinToolbox-Allow-`） |
 | ③ | **封鎖 ICMP Echo** | 阻止 ICMPv4/v6 Echo（可 **恢復 ping**） |
 | ④ | **攔高危入站連接埠** | 攔 135 / 139 / 445 / 5985 / 5986（**不含 3389**） |
 
