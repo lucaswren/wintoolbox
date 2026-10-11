@@ -1,4 +1,4 @@
-[English](../localization.md) | [繁體中文](../zh-Hant/localization.md) | [简体中文](localization.md)
+[English](../localization.md) · [繁體中文](../zh-Hant/localization.md) · [简体中文](localization.md)
 
 # 语言选择
 
@@ -9,3 +9,5 @@ WinToolBox 支持英语、繁体中文和简体中文。英语为默认及回退
 软件首次启动也使用上述 Windows 显示语言。侧栏可选择 **English**、**繁體中文** 或 **简体中文**，立即更新界面、Element Plus 对话框和缓存页面，并保存选择供下次启动使用。本地存储不可用时，当前会话仍可切换。浏览器开发模式在没有原生桥接时使用浏览器首选语言。
 
 文档顶部可切换同一主题的语言。现有共享截图展示早期简体中文界面。Windows 命令输出、时区、硬件及用户名、GitHub 发布说明保留其原始语言。
+
+English · 繁體中文 · 简体中文

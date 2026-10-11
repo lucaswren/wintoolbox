@@ -23,6 +23,11 @@ const (
 // Bound command concurrency across overlapping module collectors.
 var commandSlots = make(chan struct{}, 6)
 
+// RunPSContext bounds a mutation by both the caller's budget and 30 seconds.
+func RunPSContext(ctx context.Context, script string) (string, error) {
+	return runContext(ctx, 30*time.Second, "powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script)
+}
+
 func RunQuickContext(ctx context.Context, name string, args ...string) (string, error) {
 	return runContext(ctx, quickRunTimeout, name, args...)
 }

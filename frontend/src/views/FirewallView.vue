@@ -97,13 +97,21 @@ const riskInfo = computed(() => {
     return { text: t('状态未知'), type: 'info' }
   }
   if (props.status?.riskPortsBlocked) {
-    return { text: t('已全部拦截'), type: 'success' }
+    return { text: t('已配置全部拦截规则'), type: 'success' }
   }
   if (props.status?.riskPortsPartial) {
     return { text: t('部分拦截'), type: 'warning' }
   }
   return { text: t('未启用'), type: 'info' }
 })
+const riskRows = computed(() =>
+  [135, 139, 445, 5985, 5986].map((port) => ({
+    port,
+    blocked: props.status?.riskPorts?.find((row) => row.port === port)?.blocked,
+    unknown:
+      props.status?.riskPortsUnknown || !props.status?.riskPorts?.some((row) => row.port === port),
+  })),
+)
 const canBlockRisk = computed(
   () => !props.busy && !props.status?.riskPortsUnknown && !props.status?.riskPortsBlocked,
 )
@@ -199,11 +207,25 @@ const canUnblockRisk = computed(
     <el-card shadow="never" :header="t('高危端口预设')" class="wt-card">
       <div class="wt-status-block">
         <div class="wt-status-line">
-          <span class="wt-status-label">{{ t('拦截状态') }}</span>
+          <span class="wt-status-label">{{ t('规则配置状态') }}</span>
           <el-tag :type="riskInfo.type" effect="dark">{{ riskInfo.text }}</el-tag>
           <span class="wt-status-sub">{{ t(status?.riskPortsDetail || '—') }}</span>
         </div>
       </div>
+      <div class="wt-actions" style="margin-bottom: 10px">
+        <el-tag
+          v-for="row in riskRows"
+          :key="row.port"
+          :type="row.unknown ? 'info' : row.blocked ? 'success' : 'warning'"
+          >TCP {{ row.port }} ·
+          {{ row.unknown ? t('未知') : row.blocked ? t('已配置') : t('未配置') }}</el-tag
+        >
+      </div>
+      <p class="wt-hint">
+        {{
+          t('拦截规则仅代表本地配置；防火墙配置文件关闭、域策略或其他网络设备可能影响实际拦截。')
+        }}
+      </p>
       <p class="wt-detail">
         {{
           t(

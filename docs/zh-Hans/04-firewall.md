@@ -1,4 +1,4 @@
-[English](../04-firewall.md) | [繁體中文](../zh-Hant/04-firewall.md) | [简体中文](../zh-Hans/04-firewall.md)
+[English](../04-firewall.md) · [繁體中文](../zh-Hant/04-firewall.md) · [简体中文](../zh-Hans/04-firewall.md)
 
 # 04 · 防火墙
 
@@ -34,3 +34,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 依赖文件共享 / WinRM 时慎用 ④。云主机还需在安全组同步策略。
 
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [05 · 安全加固](./05-security-harden.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)
+
+确认系统操作后，持续状态栏显示执行中、复查中和耗时，请等待最终结果。复查警告表示命令已返回但状态读取不完整；失败也可能已有部分修改，请勿盲目重复。逐端口检查结果并刷新未知状态；已启用的自定义远程桌面端口若与预设冲突，会中止拦截。本地规则存在不保证网络过滤生效，仍受防火墙配置文件和策略影响。

@@ -25,6 +25,9 @@ async function main() {
       page.on('pageerror', error => errors.push(String(error)))
       await page.goto('http://127.0.0.1:5173', {waitUntil:'networkidle'})
       assert.equal(await page.locator('html').getAttribute('lang'), tc.language)
+      await page.locator('.app-aside .el-select__wrapper').click()
+      assert.deepEqual(await page.getByRole('option').allTextContents(),['English','繁體中文','简体中文'])
+      await page.keyboard.press('Escape')
       for(const selector of ['.app-main','.side-menu']) {
         const size=await page.locator(selector).evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,width:el.clientWidth,scrollWidth:el.scrollWidth}));
         assert.ok(size.scroll<=size.height+2 && size.scrollWidth<=size.width+2, tc.language+selector+JSON.stringify(size));
@@ -38,6 +41,49 @@ async function main() {
         await page.locator(`[data-view="${keys[i]}"]`).waitFor()
         assert.ok(await page.locator('.app-main').evaluate(el => el.scrollWidth <= el.clientWidth + 2), tc.language + ':' + keys[i])
       }
+      const catalog=JSON.parse(fs.readFileSync(path.join(root,'frontend/src/i18n/'+tc.language+'.json'),'utf8'))
+      await page.getByRole('menuitem',{name:tc.menus[3],exact:true}).click()
+      await page.evaluate(() => {
+        const api=window.go.ui.App
+        const original=api.GetModuleStatus
+        window.riskWriteFinished=false
+        api.BlockRiskPorts=()=>new Promise(resolve=>{window.finishRisk=()=>{window.riskWriteFinished=true;resolve()}})
+        api.GetModuleStatus=async (...args)=>{
+          const snapshot=await original(...args)
+          if(args[0]==='firewall' && window.riskWriteFinished) return new Promise(resolve=>{
+            window.finishRiskCheck=()=>{window.riskWriteFinished=false;resolve({...snapshot,riskPortsBlocked:true,riskPortsPartial:false,riskPortsUnknown:false,riskPorts:[135,139,445,5985,5986].map(port=>({port,blocked:true,name:'mock'}))})}
+          })
+          return snapshot
+        }
+      })
+      await page.getByRole('button',{name:catalog['拦高危入站端口'],exact:true}).click()
+      await page.locator('.el-message-box').getByRole('button',{name:catalog['确定'],exact:true}).click()
+      await page.locator('.operation-status.running').waitFor()
+      assert.equal(await page.getByRole('button',{name:catalog['拦高危入站端口'],exact:true}).isDisabled(),true)
+      await page.locator('.el-message-box').waitFor({state:'hidden'})
+      await page.screenshot({path:path.join(out,tc.language+'-risk-running.png')})
+      await page.evaluate(()=>window.finishRisk())
+      await page.locator('.operation-status.verifying').waitFor()
+      await page.evaluate(()=>window.finishRiskCheck())
+      await page.locator('.operation-status.completed').waitFor()
+      assert.equal(await page.locator('[data-view="firewall"] .el-tag').filter({hasText:'TCP 445'}).count(),1)
+      await page.screenshot({path:path.join(out,tc.language+'-risk-completed.png')})
+      await page.evaluate(()=>{window.go.ui.App.UnblockRiskPorts=async()=>{throw Error('simulated failure: port 445')}})
+      await page.getByRole('button',{name:catalog['移除高危拦截'],exact:true}).click()
+      await page.locator('.el-message-box').getByRole('button',{name:catalog['确定'],exact:true}).click()
+      await page.locator('.operation-status.failed').waitFor()
+      assert.ok((await page.locator('.operation-status').innerText()).includes('445'))
+      await page.locator('.operation-status').getByRole('button',{name:catalog['关闭提示'],exact:true}).click()
+      await page.evaluate(()=>{
+        const api=window.go.ui.App
+        const previous=api.GetModuleStatus
+        api.BlockRiskPorts=async()=>{}
+        api.GetModuleStatus=async(...args)=>({...await previous(...args),riskPortsUnknown:true})
+      })
+      await page.getByRole('button',{name:catalog['拦高危入站端口'],exact:true}).click()
+      await page.locator('.el-message-box').getByRole('button',{name:catalog['确定'],exact:true}).click()
+      await page.locator('.operation-status.warning').waitFor()
+      await page.locator('.operation-status').getByRole('button',{name:catalog['关闭提示'],exact:true}).click()
       await page.getByRole('menuitem', {name:tc.menus[1],exact:true}).click()
       await page.getByRole('tab', {name:tc.policy,exact:true}).click()
       const field = page.locator('.el-tab-pane:visible .el-input-number input').first()

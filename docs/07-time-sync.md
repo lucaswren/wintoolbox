@@ -1,4 +1,4 @@
-[English](07-time-sync.md) | [繁體中文](zh-Hant/07-time-sync.md) | [简体中文](zh-Hans/07-time-sync.md)
+[English](07-time-sync.md) · [繁體中文](zh-Hant/07-time-sync.md) · [简体中文](zh-Hans/07-time-sync.md)
 
 # 07 · Time synchronization
 
@@ -16,3 +16,7 @@ An empty NTP server is rejected. Network or Windows Time service errors appear i
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)
+
+Test NTP requires a valid time-offset sample. A Windows error code inside the output is a failure even if the process exited normally. One response does not establish long-term server reliability.

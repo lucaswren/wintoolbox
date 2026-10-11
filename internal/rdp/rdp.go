@@ -278,6 +278,10 @@ func SetPort(port uint32) error {
 	if err := restartTermService(); err != nil {
 		return fmt.Errorf("端口与防火墙已更新，但重启远程桌面服务失败: %w（可稍后手动重启 TermService 或重启电脑）", err)
 	}
+	actual, verifyErr := GetPort()
+	if verifyErr != nil || actual != port {
+		return fmt.Errorf("已提交远程桌面端口修改，但复查不一致: %v", verifyErr)
+	}
 	return nil
 }
 

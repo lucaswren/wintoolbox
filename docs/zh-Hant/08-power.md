@@ -1,4 +1,4 @@
-[English](../08-power.md) | [繁體中文](../zh-Hant/08-power.md) | [簡體中文](../zh-Hans/08-power.md)
+[English](../08-power.md) · [繁體中文](../zh-Hant/08-power.md) · [简体中文](../zh-Hans/08-power.md)
 
 # 08 · 電源
 
@@ -26,3 +26,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 延遲范圍 0–604800 秒（最長 7 天）。遠端操作前請確認不會誤關生產機。
 
 相關：[文件首頁](./README.md) · [07 · 時間同步](./07-time-sync.md)
+
+[操作回饋與功能審查](operation-audit-2026-10-12.md)

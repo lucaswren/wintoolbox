@@ -1,20 +1,32 @@
 import { t } from '../i18n/index.js'
-export function createRunner({ busy, appendLog, refresh, getModule }) {
+export function createRunner({ busy, appendLog, refresh, getModule, operation }) {
   return async function run(
     fn,
     successMsg,
-    { confirm, confirmType = 'warning', skipRefresh } = {},
+    { confirm, confirmType = 'warning', skipRefresh, title } = {},
   ) {
     if (busy.value) {
-      appendLog(t('上一操作仍在进行，请稍候…'))
       ElMessage.info(t('上一操作仍在进行，请稍候'))
       return false
     }
-    // Hold busy across confirm + action to prevent stacked dangerous ops.
     const module = getModule?.()
     busy.value = true
     let attempted = false
-    let succeeded = false
+    let result
+    let error = ''
+    let verificationError = ''
+    let timer
+    let started = Date.now()
+    const update = (phase, detail = '') => {
+      if (operation)
+        Object.assign(operation, {
+          phase,
+          module,
+          title: title || confirm || successMsg || t('系统操作'),
+          detail,
+          elapsed: Math.floor((Date.now() - started) / 1000),
+        })
+    }
     try {
       if (confirm) {
         try {
@@ -30,31 +42,56 @@ export function createRunner({ busy, appendLog, refresh, getModule }) {
           return false
         }
       }
+      started = Date.now()
       attempted = true
-      const result = await fn()
-      succeeded = true
-      if (successMsg) {
-        appendLog(successMsg, module)
-        ElMessage.success(successMsg)
+      update('running')
+      appendLog(t('开始执行：') + (title || confirm || successMsg || t('系统操作')), module)
+      timer = setInterval(() => {
+        if (operation) operation.elapsed++
+      }, 1000)
+      try {
+        result = await fn()
+      } catch (e) {
+        error = t(e?.message || String(e))
       }
-      return result == null ? true : result
-    } catch (e) {
-      const msg = t(e?.message || String(e))
-      appendLog(t('失败: ') + msg, module)
-      ElMessage.error(msg)
-      return false
-    } finally {
-      if (attempted && !skipRefresh) {
+      if (!skipRefresh) {
+        update('verifying')
         try {
-          await refresh(false, module)
-        } catch {
-          ElMessage.warning(
-            succeeded
-              ? t('操作成功，但状态复查失败')
-              : t('操作可能已部分生效，状态复查失败，请手动刷新'),
-          )
+          const snapshot = await refresh(false, module)
+          if (snapshot && stateIsUnknown(snapshot, module)) verificationError = t('部分状态未知')
+          if (snapshot?.warnings?.length)
+            verificationError = snapshot.warnings.map((value) => t(value)).join('; ')
+        } catch (e) {
+          verificationError = t(e?.message || String(e))
         }
       }
+      if (error) {
+        const detail =
+          t('操作可能已部分生效，请查看当前状态。') +
+          ' ' +
+          error +
+          (verificationError ? ' ' + t('状态复查失败：') + verificationError : '')
+        update('failed', detail)
+        appendLog(t('失败: ') + detail, module)
+        ElMessage.error({ message: detail, duration: 8000, showClose: true })
+        return false
+      }
+      if (verificationError) {
+        const detail = t('操作已返回，但状态复查不完整，请手动刷新。') + ' ' + verificationError
+        update('warning', detail)
+        appendLog(detail, module)
+        ElMessage.warning({ message: detail, duration: 8000, showClose: true })
+      } else {
+        update('completed', successMsg || t('操作完成'))
+        if (successMsg) {
+          appendLog(successMsg, module)
+          ElMessage.success(successMsg)
+        }
+      }
+      return result == null ? true : result
+    } finally {
+      clearInterval(timer)
+      if (attempted && operation) operation.elapsed = Math.floor((Date.now() - started) / 1000)
       busy.value = false
     }
   }
@@ -73,4 +110,31 @@ export function normalizePort(value, fallback = 0) {
   const p = Math.floor(n)
   if (p < 1 || p > 65535) return fallback
   return p
+}
+
+function stateIsUnknown(snapshot, module) {
+  const fields = {
+    account: [
+      'lockoutUnknown',
+      'guestUnknown',
+      'autoLogonUnknown',
+      'passwordUnknown',
+      'passwordComplexityUnknown',
+    ],
+    rdp: ['rdpNLAUnknown'],
+    firewall: ['riskPortsUnknown'],
+    harden: ['smb1Unknown', 'winrmUnknown', 'anonymousUnknown'],
+    defender: ['defenderUnknown'],
+    time: ['timeUnknown'],
+    update: ['updateUnknown'],
+  }
+  if ((fields[module] || []).some((key) => snapshot[key] === true)) return true
+  if (module === 'firewall')
+    return (
+      snapshot.pingState === 'unknown' ||
+      ['firewallDomain', 'firewallPrivate', 'firewallPublic'].some(
+        (key) => snapshot[key] && !['开', '关'].includes(snapshot[key]),
+      )
+    )
+  return module === 'rdp' && snapshot.rdpAvailable === false
 }

@@ -1,4 +1,4 @@
-[English](06-defender.md) | [繁體中文](zh-Hant/06-defender.md) | [简体中文](zh-Hans/06-defender.md)
+[English](06-defender.md) · [繁體中文](zh-Hant/06-defender.md) · [简体中文](zh-Hans/06-defender.md)
 
 # 06 · Antivirus
 
@@ -13,3 +13,5 @@ Disabling real-time protection temporarily removes real-time scanning protection
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

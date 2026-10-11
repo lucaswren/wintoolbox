@@ -1,4 +1,4 @@
-[English](../09-windows-update.md) | [繁體中文](../zh-Hant/09-windows-update.md) | [簡體中文](../zh-Hans/09-windows-update.md)
+[English](../09-windows-update.md) · [繁體中文](../zh-Hant/09-windows-update.md) · [简体中文](../zh-Hans/09-windows-update.md)
 
 # 09 · 系統更新
 
@@ -28,3 +28,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 - 域/組策略環境可能無法被本工具完全覆蓋
 
 相關：[90 · 系統加固指南](./90-hardening-guide.md) · [10 · 軟體更新](./10-app-update.md)
+
+[操作回饋與功能審查](operation-audit-2026-10-12.md)

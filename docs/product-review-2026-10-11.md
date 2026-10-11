@@ -1,4 +1,4 @@
-[English](product-review-2026-10-11.md) | [繁體中文](zh-Hant/product-review-2026-10-11.md) | [简体中文](zh-Hans/product-review-2026-10-11.md)
+[English](product-review-2026-10-11.md) · [繁體中文](zh-Hant/product-review-2026-10-11.md) · [简体中文](zh-Hans/product-review-2026-10-11.md)
 
 # Product review · 2026-10-11
 

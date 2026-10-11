@@ -1,4 +1,4 @@
-[English](03-remote-desktop.md) | [繁體中文](zh-Hant/03-remote-desktop.md) | [简体中文](zh-Hans/03-remote-desktop.md)
+[English](03-remote-desktop.md) · [繁體中文](zh-Hant/03-remote-desktop.md) · [简体中文](zh-Hans/03-remote-desktop.md)
 
 # 03 · Remote Desktop
 
@@ -18,3 +18,5 @@ Changing ports alone does not replace access controls or NLA. Confirm that the o
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

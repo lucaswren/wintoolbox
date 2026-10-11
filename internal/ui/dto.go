@@ -1,6 +1,9 @@
 package ui
 
-import "wintoolbox/internal/wintime"
+import (
+	"wintoolbox/internal/firewall"
+	"wintoolbox/internal/wintime"
+)
 
 const (
 	AppName    = "WinToolBox" // synced from version.json via scripts/sync-version.ps1
@@ -16,46 +19,47 @@ type AppInfo struct {
 
 // Status is a full app snapshot for UI.
 type Status struct {
-	Overview         OverviewView         `json:"overview"`
-	Accounts         []AccountView        `json:"accounts"`
-	RdpEnabled       bool                 `json:"rdpEnabled"`
-	RdpPort          uint32               `json:"rdpPort"`
-	RdpAvailable     bool                 `json:"rdpAvailable"`
-	RdpNLA           bool                 `json:"rdpNLA"`
-	RdpNLAUnknown    bool                 `json:"rdpNLAUnknown"`
-	UpdateDisabled   bool                 `json:"updateDisabled"`
-	UpdateHasBackup  bool                 `json:"updateHasBackup"`
-	UpdateUnknown    bool                 `json:"updateUnknown"`
-	UpdateDetail     string               `json:"updateDetail"`
-	FirewallSummary  string               `json:"firewallSummary"`
-	FirewallDomain   string               `json:"firewallDomain"`
-	FirewallPrivate  string               `json:"firewallPrivate"`
-	FirewallPublic   string               `json:"firewallPublic"`
-	FirewallAllOn    bool                 `json:"firewallAllOn"`
-	FirewallAllOff   bool                 `json:"firewallAllOff"`
-	PingBlocked      bool                 `json:"pingBlocked"`
-	PingIPv4Blocked  bool                 `json:"pingIPv4Blocked"`
-	PingIPv6Blocked  bool                 `json:"pingIPv6Blocked"`
-	PingState        string               `json:"pingState"`
-	RiskPortsBlocked bool                 `json:"riskPortsBlocked"`
-	RiskPortsPartial bool                 `json:"riskPortsPartial"`
-	RiskPortsUnknown bool                 `json:"riskPortsUnknown"`
-	RiskPortsDetail  string               `json:"riskPortsDetail"`
-	DefenderDisabled bool                 `json:"defenderDisabled"`
-	DefenderUnknown  bool                 `json:"defenderUnknown"`
-	DefenderDetail   string               `json:"defenderDetail"`
-	TimeText         string               `json:"timeText"`
-	TimeZone         string               `json:"timeZone"`
-	TimeUnknown      bool                 `json:"timeUnknown"`
-	TimeZones        []wintime.ZoneOption `json:"timeZones"`
-	NTPServer        string               `json:"ntpServer"`
-	Warnings         []string             `json:"warnings,omitempty"`
-	LockoutDisabled  bool                 `json:"lockoutDisabled"`
-	LockoutUnknown   bool                 `json:"lockoutUnknown"`
-	LockoutDetail    string               `json:"lockoutDetail"`
-	LockoutThreshold int                  `json:"lockoutThreshold"`
-	LockoutDuration  int                  `json:"lockoutDuration"`
-	LockoutWindow    int                  `json:"lockoutWindow"`
+	Overview         OverviewView            `json:"overview"`
+	Accounts         []AccountView           `json:"accounts"`
+	RdpEnabled       bool                    `json:"rdpEnabled"`
+	RdpPort          uint32                  `json:"rdpPort"`
+	RdpAvailable     bool                    `json:"rdpAvailable"`
+	RdpNLA           bool                    `json:"rdpNLA"`
+	RdpNLAUnknown    bool                    `json:"rdpNLAUnknown"`
+	UpdateDisabled   bool                    `json:"updateDisabled"`
+	UpdateHasBackup  bool                    `json:"updateHasBackup"`
+	UpdateUnknown    bool                    `json:"updateUnknown"`
+	UpdateDetail     string                  `json:"updateDetail"`
+	FirewallSummary  string                  `json:"firewallSummary"`
+	FirewallDomain   string                  `json:"firewallDomain"`
+	FirewallPrivate  string                  `json:"firewallPrivate"`
+	FirewallPublic   string                  `json:"firewallPublic"`
+	FirewallAllOn    bool                    `json:"firewallAllOn"`
+	FirewallAllOff   bool                    `json:"firewallAllOff"`
+	PingBlocked      bool                    `json:"pingBlocked"`
+	PingIPv4Blocked  bool                    `json:"pingIPv4Blocked"`
+	PingIPv6Blocked  bool                    `json:"pingIPv6Blocked"`
+	PingState        string                  `json:"pingState"`
+	RiskPortsBlocked bool                    `json:"riskPortsBlocked"`
+	RiskPortsPartial bool                    `json:"riskPortsPartial"`
+	RiskPortsUnknown bool                    `json:"riskPortsUnknown"`
+	RiskPortsDetail  string                  `json:"riskPortsDetail"`
+	RiskPorts        []firewall.RiskPortInfo `json:"riskPorts"`
+	DefenderDisabled bool                    `json:"defenderDisabled"`
+	DefenderUnknown  bool                    `json:"defenderUnknown"`
+	DefenderDetail   string                  `json:"defenderDetail"`
+	TimeText         string                  `json:"timeText"`
+	TimeZone         string                  `json:"timeZone"`
+	TimeUnknown      bool                    `json:"timeUnknown"`
+	TimeZones        []wintime.ZoneOption    `json:"timeZones"`
+	NTPServer        string                  `json:"ntpServer"`
+	Warnings         []string                `json:"warnings,omitempty"`
+	LockoutDisabled  bool                    `json:"lockoutDisabled"`
+	LockoutUnknown   bool                    `json:"lockoutUnknown"`
+	LockoutDetail    string                  `json:"lockoutDetail"`
+	LockoutThreshold int                     `json:"lockoutThreshold"`
+	LockoutDuration  int                     `json:"lockoutDuration"`
+	LockoutWindow    int                     `json:"lockoutWindow"`
 
 	GuestExists  bool   `json:"guestExists"`
 	GuestEnabled bool   `json:"guestEnabled"`

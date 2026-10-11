@@ -1,4 +1,4 @@
-[English](project-review-2026-10-08.md) | [繁體中文](zh-Hant/project-review-2026-10-08.md) | [简体中文](zh-Hans/project-review-2026-10-08.md)
+[English](project-review-2026-10-08.md) · [繁體中文](zh-Hant/project-review-2026-10-08.md) · [简体中文](zh-Hans/project-review-2026-10-08.md)
 
 # WinToolBox project review
 

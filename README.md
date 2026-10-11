@@ -1,4 +1,4 @@
-[English](README.md) | [繁體中文](README.zh-Hant.md) | [简体中文](README.zh-Hans.md)
+[English](README.md) · [繁體中文](README.zh-Hant.md) · [简体中文](README.zh-Hans.md)
 
 # WinToolBox
 
@@ -104,3 +104,5 @@ The version was reset to v1.0.0. Users running v1.2.0 must install this version 
 ## License
 
 WinToolBox source code and documentation are licensed under [Apache-2.0](LICENSE). See [NOTICE](NOTICE) for project attribution. Third-party components retain their own licenses.
+
+[Functional and UI audit](docs/operation-audit-2026-10-12.md)

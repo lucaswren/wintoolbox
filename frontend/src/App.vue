@@ -1,5 +1,6 @@
 <script setup>
 import { t, locale, setLocale } from './i18n/index.js'
+import { LANGUAGE_OPTIONS } from './i18n/locale.js'
 
 import { computed, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
@@ -23,6 +24,7 @@ import { useAppState } from './composables/useAppState.js'
 import { useSystemActions } from './composables/useSystemActions.js'
 import { appendBoundedLog } from './composables/logBuffer.js'
 import OpLog from './components/OpLog.vue'
+import OperationStatus from './components/OperationStatus.vue'
 
 const OverviewView = defineAsyncComponent(() => import('./views/OverviewView.vue'))
 const AccountView = defineAsyncComponent(() => import('./views/AccountView.vue'))
@@ -51,6 +53,7 @@ const ICONS = {
 const active = ref('overview')
 const elementLocale = computed(() => ({ en, 'zh-Hans': zhCn, 'zh-Hant': zhTw })[locale.value])
 const busy = ref(false)
+const operation = reactive({ phase: 'idle', title: '', detail: '', elapsed: 0, module: '' })
 const logs = ref([])
 const appUpdate = reactive({
   currentVersion: '',
@@ -120,6 +123,7 @@ const {
 
 const actions = useSystemActions({
   busy,
+  operation,
   appendLog,
   refresh: (showLog, module) => refreshActive(showLog, false, false, module),
   getModule: () => active.value,
@@ -156,6 +160,7 @@ const status = computed(() => ({
   riskPortsPartial: state.riskPortsPartial,
   riskPortsUnknown: state.riskPortsUnknown,
   riskPortsDetail: state.riskPortsDetail,
+  riskPorts: state.riskPorts,
   timeText: state.timeText,
   timeUnknown: state.timeUnknown,
   smb1Disabled: state.smb1Disabled,
@@ -327,9 +332,10 @@ async function refreshActive(
 ) {
   const key = module || active.value
   if (['power', 'selfupdate'].includes(key)) return
-  await refresh(showLog, invalidate, queueDetail || key === 'overview', key)
+  const snapshot = await refresh(showLog, invalidate, queueDetail || key === 'overview', key)
   if (key === 'firewall') await ensureFirewallRules()
   if (key === 'rdp') await ensureRdpHistory()
+  return snapshot
 }
 async function cancelUpdateDownload() {
   await api.cancelAppUpdateDownload()
@@ -356,9 +362,12 @@ async function cancelUpdateDownload() {
           style="margin: 0 12px 12px; width: calc(100% - 24px)"
           @update:model-value="setLocale"
         >
-          <el-option label="English" value="en" />
-          <el-option label="繁體中文" value="zh-Hant" />
-          <el-option label="简体中文" value="zh-Hans" />
+          <el-option
+            v-for="language in LANGUAGE_OPTIONS"
+            :key="language.value"
+            :label="language.label"
+            :value="language.value"
+          />
         </el-select>
 
         <el-menu
@@ -393,12 +402,13 @@ async function cancelUpdateDownload() {
               >
             </div>
           </div>
-          <el-button type="primary" round :loading="loading" @click="onRefresh">{{
+          <el-button type="primary" round :loading="loading" :disabled="busy" @click="onRefresh">{{
             t('刷新')
           }}</el-button>
         </el-header>
 
-        <el-main class="app-main" :aria-busy="loading">
+        <OperationStatus :operation="operation" @dismiss="operation.phase = 'idle'" />
+        <el-main class="app-main" :aria-busy="loading || busy">
           <KeepAlive :max="10">
             <OverviewView
               v-if="active === 'overview'"

@@ -327,6 +327,10 @@ func SetEnabled(username string, enabled bool) error {
 	if r0 != 0 {
 		return fmt.Errorf("%s", mapNetError(r0))
 	}
+	actual, verifyErr := isEnabled(username)
+	if verifyErr != nil || actual != enabled {
+		return fmt.Errorf("已提交账户启用状态修改，但复查不一致: %v", verifyErr)
+	}
 	return nil
 }
 

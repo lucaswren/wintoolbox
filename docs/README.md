@@ -1,4 +1,4 @@
-[English](README.md) | [繁體中文](zh-Hant/README.md) | [简体中文](zh-Hans/README.md)
+[English](README.md) · [繁體中文](zh-Hant/README.md) · [简体中文](zh-Hans/README.md)
 
 # WinToolBox documentation
 
@@ -27,3 +27,5 @@ See [Language selection](localization.md) for automatic detection and saved pref
 Existing screenshots show the earlier Simplified Chinese interface. Software screenshots are real captures at 2× resolution; browser download images are illustrations. Numbered filenames match the sidebar modules; 90- is the combined guide.
 
 Historical engineering notes: [Project review, 2026-10-08](project-review-2026-10-08.md) · [Optimization delivery, 2026-10-08](optimization-2026-10-08.md).
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

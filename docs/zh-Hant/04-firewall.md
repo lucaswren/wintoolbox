@@ -1,4 +1,4 @@
-[English](../04-firewall.md) | [繁體中文](../zh-Hant/04-firewall.md) | [簡體中文](../zh-Hans/04-firewall.md)
+[English](../04-firewall.md) · [繁體中文](../zh-Hant/04-firewall.md) · [简体中文](../zh-Hans/04-firewall.md)
 
 # 04 · 防火牆
 
@@ -34,3 +34,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 依賴檔案共享 / WinRM 時慎用 ④。雲主機還需在安全組同步策略。
 
 相關：[90 · 系統加固指南](./90-hardening-guide.md) · [05 · 安全加固](./05-security-harden.md)
+
+[操作回饋與功能審查](operation-audit-2026-10-12.md)
+
+確認系統操作後，持續提示欄顯示執行、複查及耗時，請等待最終結果。複查警告表示命令已返回但讀取不完整；失敗也可能已有部分變更，請勿盲目重複。逐一檢查連接埠結果並重新整理未知狀態；已啟用的自訂遠端桌面連接埠若與預設清單衝突，會中止封鎖。本機規則存在不保證網路過濾生效，仍受設定檔與原則影響。

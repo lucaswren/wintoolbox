@@ -1,4 +1,4 @@
-[English](../README.md) | [繁體中文](../zh-Hant/README.md) | [简体中文](../zh-Hans/README.md)
+[English](../README.md) · [繁體中文](../zh-Hant/README.md) · [简体中文](../zh-Hans/README.md)
 
 # WinToolBox 文档
 
@@ -37,3 +37,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 需**管理员权限**。域环境可能被组策略覆盖。
 
 [语言选择](localization.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)

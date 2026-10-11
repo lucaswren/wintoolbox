@@ -1,4 +1,4 @@
-[English](../07-time-sync.md) | [繁體中文](../zh-Hant/07-time-sync.md) | [簡體中文](../zh-Hans/07-time-sync.md)
+[English](../07-time-sync.md) · [繁體中文](../zh-Hant/07-time-sync.md) · [简体中文](../zh-Hans/07-time-sync.md)
 
 # 07 · 時間同步
 
@@ -28,3 +28,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 打開本頁會盡量自動定位當前時區。狀態讀取失敗時會出現警告，稍後 **刷新** 再試。
 
 相關：[文件首頁](./README.md) · [08 · 電源](./08-power.md)
+
+[操作回饋與功能審查](operation-audit-2026-10-12.md)

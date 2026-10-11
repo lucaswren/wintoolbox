@@ -1,4 +1,4 @@
-[English](../00-download.md) | [繁體中文](../zh-Hant/00-download.md) | [简体中文](../zh-Hans/00-download.md)
+[English](../00-download.md) · [繁體中文](../zh-Hant/00-download.md) · [简体中文](../zh-Hans/00-download.md)
 
 # 00 · 下载 WinToolBox
 
@@ -34,3 +34,5 @@ Get-FileHash .\WinToolBox-v1.0.0-windows-amd64.exe -Algorithm SHA256
 **以管理员身份运行**（或双击后在 UAC 允许）。
 
 返回：[文档首页](./README.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)

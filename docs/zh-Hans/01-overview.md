@@ -1,4 +1,4 @@
-[English](../01-overview.md) | [繁體中文](../zh-Hant/01-overview.md) | [简体中文](../zh-Hans/01-overview.md)
+[English](../01-overview.md) · [繁體中文](../zh-Hant/01-overview.md) · [简体中文](../zh-Hans/01-overview.md)
 
 # 01 · 本机概览
 
@@ -26,3 +26,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 右上角 **刷新** 可重新拉取状态。部分硬件细节可能异步补全。
 
 返回：[文档首页](./README.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)

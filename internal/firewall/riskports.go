@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"wintoolbox/internal/win/syscmd"
 )
@@ -35,6 +36,152 @@ type RiskBlockStatus struct {
 
 func riskRuleName(port uint32) string {
 	return riskRulePrefix + strconv.FormatUint(uint64(port), 10)
+}
+
+// BlockRiskPorts batches all writes and bounds write/fallback/check work together.
+func BlockRiskPorts() error   { return changeRiskPorts(true) }
+func UnblockRiskPorts() error { return changeRiskPorts(false) }
+
+func changeRiskPorts(block bool) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	_, writeErr := syscmd.RunPSContext(ctx, riskMutationScript(block))
+	var targets []uint32
+	if block {
+		st := GetRiskBlockStatusContext(ctx)
+		if st.AllBlocked {
+			return nil
+		}
+		for _, p := range riskPorts {
+			blocked := false
+			for _, info := range st.Ports {
+				if info.Port == p {
+					blocked = info.Blocked
+				}
+			}
+			if !blocked {
+				targets = append(targets, p)
+			}
+		}
+	} else {
+		present := probeRiskPresence(ctx)
+		if riskRulesAbsent(present) {
+			return nil
+		}
+		for _, p := range riskPorts {
+			exists, known := present[p]
+			if !known || exists {
+				targets = append(targets, p)
+			}
+		}
+	}
+	for _, p := range targets {
+		if ctx.Err() != nil {
+			break
+		}
+		name, value := riskRuleName(p), strconv.FormatUint(uint64(p), 10)
+		if !block {
+			_, _ = syscmd.RunQuickContext(ctx, "netsh", "advfirewall", "firewall", "delete", "rule", "name="+name)
+			continue
+		}
+		_, err := syscmd.RunQuickContext(ctx, "netsh", "advfirewall", "firewall", "set", "rule", "name="+name, "new", "dir=in", "action=block", "protocol=TCP", "localport="+value, "profile=any", "enable=yes")
+		if err != nil {
+			_, _ = syscmd.RunQuickContext(ctx, "netsh", "advfirewall", "firewall", "add", "rule", "name="+name, "dir=in", "action=block", "protocol=TCP", "localport="+value, "profile=any", "enable=yes")
+		}
+	}
+	if block {
+		st := GetRiskBlockStatusContext(ctx)
+		if st.AllBlocked {
+			return nil
+		}
+		return fmt.Errorf("已提交拦截，但复查未全部生效: %s; %v", st.Detail, riskFailure(writeErr, ctx.Err()))
+	}
+	if riskRulesAbsent(probeRiskPresence(ctx)) {
+		return nil
+	}
+	return fmt.Errorf("已提交移除规则，但复查仍存在规则或状态未知: %v", riskFailure(writeErr, ctx.Err()))
+}
+
+func riskFailure(writeErr, timeoutErr error) error {
+	if timeoutErr != nil {
+		return timeoutErr
+	}
+	if writeErr != nil {
+		return writeErr
+	}
+	return fmt.Errorf("请刷新后检查当前规则")
+}
+
+func riskRulesAbsent(present map[uint32]bool) bool {
+	if len(present) != len(riskPorts) {
+		return false
+	}
+	for _, exists := range present {
+		if exists {
+			return false
+		}
+	}
+	return true
+}
+
+func probeRiskPresence(ctx context.Context) map[uint32]bool {
+	script := fmt.Sprintf(`$ErrorActionPreference='Stop'; $rules=@(Get-NetFirewallRule -ErrorAction Stop); foreach($name in @('%s')) { if($rules | Where-Object Name -eq $name){ Write-Output ($name+'=1') } else { Write-Output ($name+'=0') } }`, riskNames())
+	out, err := syscmd.RunPSQuickContext(ctx, script)
+	if err != nil {
+		return nil
+	}
+	return parseRiskResults(out)
+}
+
+func parseRiskResults(text string) map[uint32]bool {
+	out := make(map[uint32]bool)
+	for _, line := range strings.Split(text, "\n") {
+		line = strings.TrimSpace(line)
+		for _, p := range riskPorts {
+			if line == riskRuleName(p)+"=0" {
+				out[p] = false
+			}
+			if line == riskRuleName(p)+"=1" {
+				out[p] = true
+			}
+		}
+	}
+	return out
+}
+
+func riskNames() string {
+	names := make([]string, 0, len(riskPorts))
+	for _, p := range riskPorts {
+		names = append(names, riskRuleName(p))
+	}
+	return strings.Join(names, "','")
+}
+
+func riskMutationScript(block bool) string {
+	if !block {
+		return fmt.Sprintf(`$ErrorActionPreference='Stop'; Get-NetFirewallRule -ErrorAction Stop | Where-Object { $_.Name -in @('%s') } | Remove-NetFirewallRule -ErrorAction Stop`, riskNames())
+	}
+	ports := make([]string, 0, len(riskPorts))
+	for _, p := range riskPorts {
+		ports = append(ports, strconv.FormatUint(uint64(p), 10))
+	}
+	return fmt.Sprintf(`
+$ErrorActionPreference='Stop'
+$failures=@()
+foreach($port in @(%s)) {
+ $name='%s'+$port
+ try {
+  $r=Get-NetFirewallRule -Name $name -ErrorAction SilentlyContinue
+  if($r) {
+   Set-NetFirewallRule -Name $name -Direction Inbound -Action Block -Enabled True -Profile Any -LocalAddress Any -RemoteAddress Any -Program Any -Service Any -InterfaceType Any -ErrorAction Stop | Out-Null
+   $r | Get-NetFirewallPortFilter | Set-NetFirewallPortFilter -Protocol TCP -LocalPort $port -RemotePort Any -ErrorAction Stop | Out-Null
+  } else {
+   New-NetFirewallRule -DisplayName $name -Name $name -Direction Inbound -Action Block -Protocol TCP -LocalPort $port -Profile Any -Enabled True -ErrorAction Stop | Out-Null
+  }
+ } catch { $failures += ($name+': '+$_.Exception.Message) }
+}
+if($failures.Count) { throw ($failures -join '; ') }
+`, strings.Join(ports, ","), riskRulePrefix)
 }
 
 // GetRiskBlockStatus reports which preset high-risk ports are blocked by WinToolbox rules.
@@ -86,33 +233,32 @@ func probeRiskBlocksContext(ctx context.Context) map[uint32]bool {
 		names = append(names, riskRuleName(p))
 	}
 	ps := fmt.Sprintf(`
+$ErrorActionPreference='Stop'
 $names=@('%s')
+$rules=@(Get-NetFirewallRule -ErrorAction Stop)
 foreach($name in $names){
-  $r=Get-NetFirewallRule -Name $name -ErrorAction SilentlyContinue
+  $r=@($rules | Where-Object Name -eq $name)
   if(-not $r){ Write-Output ($name + '=0'); continue }
+  if($r.Count -ne 1){ throw ('duplicate rule: '+$name) }
+  $r=$r[0]
   $p=$r|Get-NetFirewallPortFilter
   $en=($r.Enabled -eq $true -or [string]$r.Enabled -eq 'True')
   $blk=([string]$r.Action -eq 'Block' -or [int]$r.Action -eq 4)
   $local=[string]$p.LocalPort
   $want=$name.Substring($name.LastIndexOf('-')+1)
+  $direction=([string]$r.Direction -eq 'Inbound' -or [int]$r.Direction -eq 1)
+  $tcp=([string]$p.Protocol -eq 'TCP' -or [string]$p.Protocol -eq '6')
+  $profiles=([string]$r.Profile -eq 'Any' -or [int]$r.Profile -eq 0)
   $portOk=$false
   foreach($part in ($local -split ',')){
     if($part.Trim() -eq $want){ $portOk=$true }
   }
-  if($en -and $blk -and $portOk){ Write-Output ($name + '=1') } else { Write-Output ($name + '=0') }
+  if($en -and $blk -and $portOk -and $direction -and $tcp -and $profiles){ Write-Output ($name + '=1') } else { Write-Output ($name + '=0') }
 }
 `, strings.Join(names, "','"))
 	text, err := syscmd.RunPSQuickContext(ctx, ps)
 	if err == nil && strings.TrimSpace(text) != "" {
-		for _, line := range strings.Split(text, "\n") {
-			line = strings.TrimSpace(line)
-			for _, p := range riskPorts {
-				prefix := riskRuleName(p) + "="
-				if strings.HasPrefix(line, prefix) {
-					out[p] = strings.HasSuffix(line, "=1")
-				}
-			}
-		}
+		out = parseRiskResults(text)
 		if len(out) == len(riskPorts) {
 			return out
 		}
@@ -138,111 +284,6 @@ foreach($name in $names){
 	return out
 }
 
-// BlockRiskPorts creates inbound block rules for the high-risk TCP port preset.
-func BlockRiskPorts() error {
-	var errs []string
-	for _, p := range riskPorts {
-		if err := ensureRiskBlock(p); err != nil {
-			errs = append(errs, fmt.Sprintf("%d: %v", p, err))
-		}
-	}
-	st := GetRiskBlockStatus()
-	if st.AllBlocked {
-		return nil
-	}
-	if len(errs) > 0 {
-		return fmt.Errorf("拦截高危端口失败: %s；当前: %s", strings.Join(errs, "; "), st.Detail)
-	}
-	return fmt.Errorf("已提交拦截，但复查未全部生效: %s", st.Detail)
-}
-
-// UnblockRiskPorts removes WinToolbox high-risk block rules.
-func UnblockRiskPorts() error {
-	// Batch remove via one PS call, then verify.
-	var names []string
-	for _, p := range riskPorts {
-		names = append(names, riskRuleName(p))
-	}
-	_, _ = syscmd.RunPS(fmt.Sprintf(
-		`Get-NetFirewallRule -Name @('%s') -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue`,
-		strings.Join(names, "','"),
-	))
-	for _, p := range riskPorts {
-		name := riskRuleName(p)
-		_, _ = syscmd.Run("netsh", "advfirewall", "firewall", "delete", "rule", "name="+name)
-	}
-	st := GetRiskBlockStatus()
-	if st.Unknown {
-		return fmt.Errorf("已提交移除规则，但复查状态未知")
-	}
-	if st.None {
-		return nil
-	}
-	var left []string
-	for _, info := range st.Ports {
-		if info.Blocked {
-			left = append(left, strconv.FormatUint(uint64(info.Port), 10))
-		}
-	}
-	return fmt.Errorf("移除高危端口拦截失败，仍存在: %s", strings.Join(left, ", "))
-}
-
-func ensureRiskBlock(port uint32) error {
-	name := riskRuleName(port)
-	portStr := strconv.FormatUint(uint64(port), 10)
-	ps := fmt.Sprintf(`
-$ErrorActionPreference='Stop'
-$name='%s'
-$port=%s
-$r = Get-NetFirewallRule -Name $name -ErrorAction SilentlyContinue
-if ($r) {
-  Set-NetFirewallRule -Name $name -Direction Inbound -Action Block -Enabled True -Profile Any -ErrorAction Stop | Out-Null
-  $r | Get-NetFirewallPortFilter | Set-NetFirewallPortFilter -Protocol TCP -LocalPort $port -ErrorAction Stop | Out-Null
-} else {
-  New-NetFirewallRule -DisplayName $name -Name $name -Direction Inbound -Action Block -Protocol TCP -LocalPort $port -Profile Any -Enabled True -Description 'WinToolbox high-risk port block preset' | Out-Null
-}
-$check = Get-NetFirewallRule -Name $name -ErrorAction Stop
-if ($check.Enabled -ne 'True' -and $check.Enabled -ne $true) { throw 'rule not enabled' }
-if ($check.Action -ne 'Block' -and $check.Action -ne 4) { throw 'rule not blocking' }
-$pf = $check | Get-NetFirewallPortFilter
-$local = [string]$pf.LocalPort
-$ok=$false
-foreach($part in ($local -split ',')){ if($part.Trim() -eq $port){ $ok=$true } }
-if(-not $ok){ throw ('port mismatch: ' + $local) }
-Write-Output 'OK'
-`, name, portStr)
-	out, err := syscmd.RunPS(ps)
-	if err == nil && strings.Contains(out, "OK") {
-		return nil
-	}
-	psMsg := strings.TrimSpace(out)
-	if psMsg == "" && err != nil {
-		psMsg = err.Error()
-	}
-	_, _ = syscmd.Run("netsh", "advfirewall", "firewall", "delete", "rule", "name="+name)
-	out2, err2 := syscmd.Run("netsh", "advfirewall", "firewall", "add", "rule",
-		"name="+name,
-		"dir=in",
-		"action=block",
-		"protocol=TCP",
-		"localport="+portStr,
-		"profile=domain,private,public",
-		"enable=yes",
-		"description=WinToolbox high-risk port block preset",
-	)
-	if err2 != nil {
-		msg2 := strings.TrimSpace(out2)
-		if msg2 == "" {
-			msg2 = err2.Error()
-		}
-		return fmt.Errorf("PowerShell: %s; netsh: %s", psMsg, msg2)
-	}
-	if !hasRiskBlockRuleNetsh(port) && !probeRiskBlocks()[port] {
-		return fmt.Errorf("规则已提交但未校验到生效（%s）", name)
-	}
-	return nil
-}
-
 func hasRiskBlockRule(port uint32) bool {
 	return probeRiskBlocks()[port]
 }
@@ -265,10 +306,36 @@ func readRiskBlockRuleNetshContext(ctx context.Context, port uint32) (blocked, k
 	if !strings.Contains(out, name) {
 		return false, true
 	}
+	if !riskNetshScopeMatches(out) {
+		return false, false // Unrecognized/incomplete scope must not confirm a block.
+	}
 	if !(strings.Contains(strings.ToLower(out), "block") || strings.Contains(out, "阻止")) {
 		return false, true
 	}
 	return netshRuleEnabled(out) && netshRulePortMatches(out, strconv.FormatUint(uint64(port), 10)), true
+}
+
+func riskNetshScopeMatches(text string) bool {
+	field := func(labels ...string) string {
+		for _, line := range strings.Split(text, "\n") {
+			parts := strings.SplitN(strings.ReplaceAll(line, "：", ":"), ":", 2)
+			if len(parts) != 2 {
+				continue
+			}
+			for _, label := range labels {
+				if strings.EqualFold(strings.TrimSpace(parts[0]), label) {
+					return strings.ToLower(strings.TrimSpace(parts[1]))
+				}
+			}
+		}
+		return ""
+	}
+	direction := field("Direction", "方向")
+	protocol := field("Protocol", "协议", "通訊協定", "協定")
+	profiles := field("Profiles", "配置文件", "設定檔")
+	inbound := direction == "in" || direction == "inbound" || direction == "入站" || direction == "輸入"
+	allProfiles := profiles == "any" || (strings.Contains(profiles, "domain") && strings.Contains(profiles, "private") && strings.Contains(profiles, "public")) || (strings.Contains(profiles, "域") && strings.Contains(profiles, "专用") && strings.Contains(profiles, "公用"))
+	return inbound && (protocol == "tcp" || protocol == "6") && allProfiles
 }
 
 // RiskPortsList returns the preset port numbers for UI display.

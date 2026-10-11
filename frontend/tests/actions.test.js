@@ -8,6 +8,70 @@ import { useAppState } from '../src/composables/useAppState.js'
 globalThis.ElMessage = { info() {}, success() {}, warning() {}, error() {} }
 globalThis.ElMessageBox = { async confirm() {} }
 
+test('pending operations expose running and checking phases before success', async () => {
+  const operation = {}
+  const busy = { value: false }
+  let finishWrite, finishCheck
+  const write = new Promise((resolve) => {
+    finishWrite = resolve
+  })
+  const check = new Promise((resolve) => {
+    finishCheck = resolve
+  })
+  const run = createRunner({ busy, operation, appendLog() {}, refresh: () => check })
+  const promise = run(() => write, 'done')
+  assert.equal(operation.phase, 'running')
+  assert.equal(busy.value, true)
+  finishWrite()
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(operation.phase, 'verifying')
+  assert.equal(busy.value, true)
+  finishCheck()
+  assert.equal(await promise, true)
+  assert.equal(operation.phase, 'completed')
+  assert.equal(operation.detail, 'done')
+  assert.equal(busy.value, false)
+})
+
+test('unknown or failed checks remain a persistent warning instead of success', async () => {
+  for (const refresh of [
+    async () => ({ riskPortsUnknown: true }),
+    async () => {
+      throw Error('offline')
+    },
+  ]) {
+    const operation = {}
+    const run = createRunner({
+      busy: { value: false },
+      operation,
+      getModule: () => 'firewall',
+      appendLog() {},
+      refresh,
+    })
+    assert.equal(await run(async () => {}, 'done'), true)
+    assert.equal(operation.phase, 'warning')
+    assert.notEqual(operation.detail, 'done')
+  }
+})
+
+test('partial write failure remains visible after a successful state check', async () => {
+  const operation = {}
+  const run = createRunner({
+    busy: { value: false },
+    operation,
+    appendLog() {},
+    refresh: async () => ({}),
+  })
+  assert.equal(
+    await run(async () => {
+      throw Error('port 445 failed')
+    }, 'done'),
+    false,
+  )
+  assert.equal(operation.phase, 'failed')
+  assert.match(operation.detail, /445/)
+})
+
 test('partial failure triggers state verification and releases busy', async () => {
   const busy = { value: false }
   let refreshed = 0

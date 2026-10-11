@@ -1,4 +1,4 @@
-[English](../10-app-update.md) | [繁體中文](../zh-Hant/10-app-update.md) | [简体中文](../zh-Hans/10-app-update.md)
+[English](../10-app-update.md) · [繁體中文](../zh-Hant/10-app-update.md) · [简体中文](../zh-Hans/10-app-update.md)
 
 # 10 · 软件更新
 
@@ -34,3 +34,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 需能访问 GitHub（或你配置的 Release 源）。网络失败时查看活动日志中的错误信息。
 
 相关：[文档首页](./README.md) · [00 · 下载](./00-download.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)

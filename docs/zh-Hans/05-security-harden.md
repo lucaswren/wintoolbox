@@ -1,4 +1,4 @@
-[English](../05-security-harden.md) | [繁體中文](../zh-Hant/05-security-harden.md) | [简体中文](../zh-Hans/05-security-harden.md)
+[English](../05-security-harden.md) · [繁體中文](../zh-Hant/05-security-harden.md) · [简体中文](../zh-Hans/05-security-harden.md)
 
 # 05 · 安全加固
 
@@ -29,3 +29,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 - 域环境可能被组策略覆盖；操作后可用右上角 **刷新** 核对状态
 
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [04 · 防火墙](./04-firewall.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)

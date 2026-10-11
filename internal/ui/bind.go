@@ -252,6 +252,15 @@ func (a *App) EnablePing() error {
 func (a *App) BlockRiskPorts() error {
 	defer lockResource("network")()
 
+	st, err := rdp.GetStatus()
+	if err != nil {
+		return fmt.Errorf("无法确认远程桌面端口，已中止拦截: %w", err)
+	}
+	for _, p := range firewall.RiskPortsList() {
+		if st.Enabled && st.Port == p {
+			return fmt.Errorf("当前远程桌面端口 %d 位于拦截预设内，已中止以避免断开连接", p)
+		}
+	}
 	return firewall.BlockRiskPorts()
 }
 

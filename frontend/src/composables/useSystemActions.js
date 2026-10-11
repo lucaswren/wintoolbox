@@ -4,6 +4,7 @@ import { createRunner, normalizePort, powerDelayLabel } from './actionRunner.js'
 
 export function useSystemActions({
   busy,
+  operation,
   appendLog,
   refresh,
   form,
@@ -12,7 +13,7 @@ export function useSystemActions({
   ensureRdpHistory,
   getModule,
 }) {
-  const run = createRunner({ busy, appendLog, refresh, getModule })
+  const run = createRunner({ busy, appendLog, refresh, getModule, operation })
 
   function normalizePowerDelay() {
     const n = Number(form.powerDelay)
@@ -81,15 +82,6 @@ export function useSystemActions({
           confirmType: 'warning',
         },
       )
-      // Lockout policy propagation can be slightly delayed on some systems.
-      // Do an extra status refresh to make sure UI shows the updated policy.
-      if (ok) {
-        try {
-          await refresh(false)
-        } catch {
-          appendLog(t('锁定策略更新后：状态刷新失败'))
-        }
-      }
       return ok
     },
     onDisableGuest: () =>
@@ -125,18 +117,9 @@ export function useSystemActions({
       }
       const enabling = !state.rdpEnabled
       const action = enabling ? t('开启') : t('关闭')
-      // Skip blocking full refresh: toggle itself is fast; update UI then soft-refresh.
-      const ok = await run(() => api.toggleRdp(), t('远程桌面已') + action, {
+      return run(() => api.toggleRdp(), t('远程桌面已') + action, {
         confirm: t('确认{0}远程桌面？', [action]),
-        skipRefresh: true,
       })
-      if (!ok) return
-      state.rdpEnabled = enabling
-      try {
-        await refresh(false)
-      } catch {
-        appendLog(t('远程桌面切换后：状态刷新失败'))
-      }
     },
     onRdpNLA: (enabled) => {
       if (!state.rdpAvailable) {
@@ -278,6 +261,7 @@ export function useSystemActions({
       }),
     onFwBlockRisk: () =>
       run(() => api.blockRiskPorts(), t('已拦截高危入站端口'), {
+        title: t('拦高危入站端口'),
         confirm: t(
           '确认拦切入站 TCP 135 / 139 / 445 / 5985 / 5986？不含 3389。若本机依赖 SMB 共享或 WinRM，请谨慎操作。',
         ),
@@ -285,6 +269,7 @@ export function useSystemActions({
       }),
     onFwUnblockRisk: () =>
       run(() => api.unblockRiskPorts(), t('已移除高危端口拦截'), {
+        title: t('移除高危拦截'),
         confirm: t('确认移除 WinToolbox 创建的高危端口拦截规则？'),
       }),
     onDisableSMBv1: () =>

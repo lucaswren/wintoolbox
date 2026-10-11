@@ -3,6 +3,7 @@ package wintime
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -216,6 +217,10 @@ func SetTimeZone(id string) error {
 	if err != nil {
 		return fmt.Errorf("设置时区失败: %w", err)
 	}
+	actual, verifyErr := syscmd.RunQuick("tzutil", "/g")
+	if verifyErr != nil || !strings.EqualFold(strings.TrimSpace(actual), id) {
+		return fmt.Errorf("已提交时区修改，但复查不一致: %s; %v", strings.TrimSpace(actual), verifyErr)
+	}
 	return nil
 }
 
@@ -283,8 +288,16 @@ func TestNTPServer(server string) (string, error) {
 		}
 		return msg, fmt.Errorf("NTP 测试失败: %s", msg)
 	}
-	if msg == "" {
-		msg = "NTP 查询完成"
+	if !validNTPResponse(msg) {
+		return msg, fmt.Errorf("NTP 测试失败: %s", msg)
 	}
 	return msg, nil
+}
+
+// w32tm can exit successfully while individual samples contain a Windows error.
+func validNTPResponse(text string) bool {
+	if regexp.MustCompile(`(?i)0x[0-9a-f]{8}`).MatchString(text) {
+		return false
+	}
+	return regexp.MustCompile(`[+-]\d+(?:[.,]\d+)?s\b`).MatchString(text)
 }

@@ -106,7 +106,7 @@ const selectedKindCount = computed(() => {
             <el-tag :type="status?.rdpEnabled ? 'success' : 'info'" effect="dark">
               {{ status?.rdpEnabled ? t('已开启') : t('已关闭') }}
             </el-tag>
-            <span class="wt-status-sub">{{ t('端口') }} {{ status?.rdpPort || '—' }}</span>
+            <span class="wt-status-sub">{{ t('配置端口') }} {{ status?.rdpPort || '—' }}</span>
           </template>
           <el-tag v-else type="danger" effect="dark">{{ t('不可用') }}</el-tag>
         </div>

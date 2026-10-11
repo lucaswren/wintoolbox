@@ -1,4 +1,4 @@
-[English](02-local-account.md) | [繁體中文](zh-Hant/02-local-account.md) | [简体中文](zh-Hans/02-local-account.md)
+[English](02-local-account.md) · [繁體中文](zh-Hant/02-local-account.md) · [简体中文](zh-Hans/02-local-account.md)
 
 # 02 · Local accounts
 
@@ -33,3 +33,5 @@ Related: [Hardening guide](90-hardening-guide.md) · [Remote Desktop](03-remote-
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

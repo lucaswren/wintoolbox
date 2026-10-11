@@ -266,6 +266,7 @@ func loadStatus(parent context.Context, module string, invalidateOverview bool) 
 		st.RiskPortsPartial = riskSt.Partial
 		st.RiskPortsUnknown = riskSt.Unknown
 		st.RiskPortsDetail = riskSt.Detail
+		st.RiskPorts = riskSt.Ports
 	} else {
 		st.RiskPortsBlocked = false
 		st.RiskPortsPartial = false

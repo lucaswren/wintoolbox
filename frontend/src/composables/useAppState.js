@@ -49,6 +49,7 @@ export function useAppState({ appendLog }) {
     riskPortsPartial: false,
     riskPortsUnknown: false,
     riskPortsDetail: '',
+    riskPorts: [],
     timeText: '',
     timeZone: '',
     timeUnknown: false,
@@ -127,6 +128,7 @@ export function useAppState({ appendLog }) {
     state.riskPortsPartial = !!st.riskPortsPartial
     state.riskPortsUnknown = !!st.riskPortsUnknown
     state.riskPortsDetail = st.riskPortsDetail || ''
+    state.riskPorts = st.riskPorts || []
     state.timeText = st.timeText
     state.timeZone = st.timeZone
     state.timeUnknown = !!st.timeUnknown
@@ -244,6 +246,7 @@ export function useAppState({ appendLog }) {
       updatedAt[module || 'all'] = new Date().toLocaleTimeString(locale.value, { hour12: false })
       if (showLog) appendLog(t('已刷新'))
       if (queueDetail) queueOverviewDetail()
+      return snapshot
     } catch (e) {
       if (seq !== statusSeq) return
       const msg = t(e?.message || String(e))

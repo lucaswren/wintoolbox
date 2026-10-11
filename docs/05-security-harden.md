@@ -1,4 +1,4 @@
-[English](05-security-harden.md) | [繁體中文](zh-Hant/05-security-harden.md) | [简体中文](zh-Hans/05-security-harden.md)
+[English](05-security-harden.md) · [繁體中文](zh-Hant/05-security-harden.md) · [简体中文](zh-Hans/05-security-harden.md)
 
 # 05 · Security hardening
 
@@ -17,3 +17,5 @@ Review dependencies before confirming. Group Policy may override these settings.
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

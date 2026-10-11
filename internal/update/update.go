@@ -146,7 +146,7 @@ func Disable() error {
 
 	setUpdateTasks(false)
 	st := GetStatus()
-	if !st.Disabled {
+	if st.Unknown || !st.Disabled {
 		return fmt.Errorf("已提交关闭更新，但复查仍显示运行中: %s", st.Detail)
 	}
 	return nil

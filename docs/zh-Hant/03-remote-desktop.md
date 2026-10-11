@@ -1,4 +1,4 @@
-[English](../03-remote-desktop.md) | [繁體中文](../zh-Hant/03-remote-desktop.md) | [簡體中文](../zh-Hans/03-remote-desktop.md)
+[English](../03-remote-desktop.md) · [繁體中文](../zh-Hant/03-remote-desktop.md) · [简体中文](../zh-Hans/03-remote-desktop.md)
 
 # 03 · 遠端桌面
 
@@ -37,3 +37,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 - 狀態異常時先點右上角 **刷新**
 
 相關：[90 · 系統加固指南](./90-hardening-guide.md) · [02 · 本地帳戶](./02-local-account.md)
+
+[操作回饋與功能審查](operation-audit-2026-10-12.md)

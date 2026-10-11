@@ -1,5 +1,12 @@
 export const SUPPORTED_LOCALES = ['en', 'zh-Hans', 'zh-Hant']
 
+// Language names are fixed autonyms; never translate them with the active locale.
+export const LANGUAGE_OPTIONS = Object.freeze([
+  { value: 'en', label: 'English' },
+  { value: 'zh-Hant', label: '繁體中文' },
+  { value: 'zh-Hans', label: '简体中文' },
+])
+
 export function resolveLocale(language) {
   const tag = String(language || '')
     .replaceAll('_', '-')

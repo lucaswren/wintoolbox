@@ -1,4 +1,4 @@
-[English](../06-defender.md) | [繁體中文](../zh-Hant/06-defender.md) | [簡體中文](../zh-Hans/06-defender.md)
+[English](../06-defender.md) · [繁體中文](../zh-Hant/06-defender.md) · [简体中文](../zh-Hans/06-defender.md)
 
 # 06 · 防病毒
 
@@ -28,3 +28,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 - 狀態顯示「未知」時先點 **刷新**
 
 相關：[文件首頁](./README.md) · [09 · 系統更新](./09-windows-update.md)
+
+[操作回饋與功能審查](operation-audit-2026-10-12.md)

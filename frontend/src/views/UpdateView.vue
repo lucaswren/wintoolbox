@@ -22,7 +22,7 @@ const tagType = computed(() => {
 })
 const tagText = computed(() => {
   if (unknown.value) return t('未知')
-  return disabled.value ? t('已关闭') : t('运行中')
+  return disabled.value ? t('检测到关闭配置') : t('未检测到关闭配置')
 })
 </script>
 

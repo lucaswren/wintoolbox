@@ -1,4 +1,4 @@
-[English](01-overview.md) | [繁體中文](zh-Hant/01-overview.md) | [简体中文](zh-Hans/01-overview.md)
+[English](01-overview.md) · [繁體中文](zh-Hant/01-overview.md) · [简体中文](zh-Hans/01-overview.md)
 
 # 01 · Overview
 
@@ -13,3 +13,5 @@ Select **Refresh** to collect new information. **Unknown**, **Checking…**, **R
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

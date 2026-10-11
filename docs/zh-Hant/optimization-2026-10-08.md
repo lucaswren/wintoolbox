@@ -1,4 +1,4 @@
-[English](../optimization-2026-10-08.md) | [繁體中文](../zh-Hant/optimization-2026-10-08.md) | [簡體中文](../zh-Hans/optimization-2026-10-08.md)
+[English](../optimization-2026-10-08.md) · [繁體中文](../zh-Hant/optimization-2026-10-08.md) · [简体中文](../zh-Hans/optimization-2026-10-08.md)
 
 # 四階段優化交付記錄
 

@@ -1,4 +1,4 @@
-[English](04-firewall.md) | [繁體中文](zh-Hant/04-firewall.md) | [简体中文](zh-Hans/04-firewall.md)
+[English](04-firewall.md) · [繁體中文](zh-Hant/04-firewall.md) · [简体中文](zh-Hans/04-firewall.md)
 
 # 04 · Firewall
 
@@ -14,7 +14,7 @@ Control Domain / Private / Public profiles, inbound TCP allow rules, ICMP Echo (
 | Block high-risk inbound ports | Blocks TCP 135, 139, 445, 5985 and 5986 |
 | Remove high-risk blocks | Removes the blocks created by WinToolBox |
 
-The high-risk preset excludes 3389 to preserve Remote Desktop access. Blocking SMB/WinRM ports can interrupt file sharing, remote PowerShell or automation. Disabling all profiles removes network filtering protection.
+The high-risk preset excludes 3389. Custom Remote Desktop ports may overlap the preset; conflicts are rejected before blocking. Blocking SMB/WinRM ports can interrupt file sharing, remote PowerShell or automation. Disabling all profiles removes network filtering protection.
 
 Profile and ping status may be partial or unknown. **No WinToolBox block detected** does not guarantee ping responses: other firewall rules and the network also affect them. Refresh unknown state before making changes. Cleanup of allow rules leaves Remote Desktop and ping rules unchanged.
 
@@ -23,3 +23,7 @@ Profile and ping status may be partial or unknown. **No WinToolBox block detecte
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)
+
+After confirming a system action, the persistent panel shows Running and Checking system state with elapsed time. Wait for the final result. A verification warning means the command returned but state could not be fully read; a failure may already have partially changed settings. Do not repeat blindly. Inspect per-port results and refresh unknown state. The preset stops if an enabled custom Remote Desktop port conflicts with its list. Local rule configuration does not guarantee network filtering when firewall profiles are disabled or policies differ.

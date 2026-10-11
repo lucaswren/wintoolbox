@@ -1,4 +1,4 @@
-[English](08-power.md) | [繁體中文](zh-Hant/08-power.md) | [简体中文](zh-Hans/08-power.md)
+[English](08-power.md) · [繁體中文](zh-Hant/08-power.md) · [简体中文](zh-Hans/08-power.md)
 
 # 08 · Power
 
@@ -14,3 +14,5 @@ Use **Lock** to lock the current session, or **Restart / Shut down** to schedule
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

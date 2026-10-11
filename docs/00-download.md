@@ -1,4 +1,4 @@
-[English](00-download.md) | [繁體中文](zh-Hant/00-download.md) | [简体中文](zh-Hans/00-download.md)
+[English](00-download.md) · [繁體中文](zh-Hant/00-download.md) · [简体中文](zh-Hans/00-download.md)
 
 # 00 · Download and first launch
 
@@ -22,3 +22,5 @@ Setup follows your Windows display language: English, Simplified Chinese or Trad
 ![Illustrative keep-download prompt](images/00-download-keep.png)
 
 Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
+
+[Operation feedback and audit](operation-audit-2026-10-12.md)

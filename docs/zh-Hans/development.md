@@ -1,4 +1,4 @@
-[English](../development.md) | [繁體中文](../zh-Hant/development.md) | [简体中文](../zh-Hans/development.md)
+[English](../development.md) · [繁體中文](../zh-Hant/development.md) · [简体中文](../zh-Hans/development.md)
 
 # 开发和验收规范
 

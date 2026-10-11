@@ -1,4 +1,4 @@
-[English](../02-local-account.md) | [繁體中文](../zh-Hant/02-local-account.md) | [简体中文](../zh-Hans/02-local-account.md)
+[English](../02-local-account.md) · [繁體中文](../zh-Hant/02-local-account.md) · [简体中文](../zh-Hans/02-local-account.md)
 
 # 02 · 本地账户
 
@@ -49,3 +49,5 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 密码建议长度 ≥ 12（服务器 ≥ 14），含大小写、数字与符号。本页只管**本地账户**（域账户受域策略约束）。
 
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [03 · 远程桌面](./03-remote-desktop.md)
+
+[操作反馈与功能审查](operation-audit-2026-10-12.md)

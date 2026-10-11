@@ -1,4 +1,4 @@
-[English](README.md) | [繁體中文](README.zh-Hant.md) | [简体中文](README.zh-Hans.md)
+[English](README.md) · [繁體中文](README.zh-Hant.md) · [简体中文](README.zh-Hans.md)
 
 # WinToolBox
 
@@ -169,3 +169,5 @@ go vet ./...
 ## 开源协议
 
 WinToolBox 源代码和文档采用 [Apache-2.0](LICENSE)，项目声明见 [NOTICE](NOTICE)。第三方组件保留各自的许可证。
+
+[全功能与界面审查](docs/zh-Hans/operation-audit-2026-10-12.md)
