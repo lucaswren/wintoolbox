@@ -8,8 +8,7 @@ WinToolBox 是 Windows 本地管理工具箱，用于查看系统信息，管理
 
 ## 文档
 
-各操作文档**第一步均为下载本软件**：https://github.com/lucaswren/wintoolbox/releases/latest
-浏览器拦截时请点 **保留 / 保持**；详见 [00 · 下载](./docs/zh-Hans/00-download.md)。
+从 [GitHub Releases](https://github.com/lucaswren/wintoolbox/releases/latest) 下载。运行前请确认来源并校验 SHA256；下载和启动说明见 [00 · 下载](./docs/zh-Hans/00-download.md)。
 
 - [文档首页](./docs/zh-Hans/README.md)
 - [00 · 下载](./docs/zh-Hans/00-download.md)

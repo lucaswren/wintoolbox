@@ -8,8 +8,7 @@ WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本
 
 ## 文件
 
-各操作文件**第一步均為下載本軟體**：https://github.com/lucaswren/wintoolbox/releases/latest
-瀏覽器攔截時請點 **保留 / 保持**；詳見 [00 · 下載](./docs/zh-Hant/00-download.md)。
+從 [GitHub Releases](https://github.com/lucaswren/wintoolbox/releases/latest) 下載。執行前請確認來源並核對 SHA256；下載與啟動說明請見 [00 · 下載](./docs/zh-Hant/00-download.md)。
 
 - [文件首頁](./docs/zh-Hant/README.md)
 - [00 · 下載](./docs/zh-Hant/00-download.md)
