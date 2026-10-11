@@ -1,34 +1,21 @@
-# 10 · 软件更新
+[English](10-app-update.md) | [繁體中文](zh-TW/10-app-update.md) | [简体中文](zh-CN/10-app-update.md)
 
-检测 GitHub 仓库最新 Release，下载并校验后安装重启 WinToolbox 自身。
+# 10 · App update
 
-## 第一步：下载
+Update WinToolBox itself from the [repository releases](https://github.com/lucaswren/wintoolbox/releases).
 
-若尚未安装，请先从 Release 获取安装包：
-https://github.com/lucaswren/wintoolbox/releases/latest
+1. Open **App update** and select **Check for updates**.
+2. If a new version exists, select **Download update** and wait for SHA256 verification. Automatic download is enabled by default and can be disabled on this page; the preference is saved locally.
+3. Select **Install and restart**, then confirm. Installation replaces the application and restarts it.
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+The page shows current/latest versions, release notes, installer name, SHA256, local path, downloaded amount and transfer speed. **Cancel download** stops an active download. GitHub connectivity is required.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+The updater verifies the file before and after copying, retains the previous executable and attempts rollback if replacement/startup fails. Its limited startup check does not prove that the UI is fully ready. Diagnostic logs are stored under the user cache `WinToolbox/updates/last-install.log`.
 
-## 界面标注
+Version 1.0.0 reset the earlier 1.2.0 version number. Users on 1.2.0 must download and install 1.0.0 manually because it is not considered a newer version.
 
-![软件更新（真实界面）](./images/10-app-update.png)
+![App update](images/10-app-update.png)
 
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **检查更新** | 从 GitHub 拉取最新版本信息 |
-| ② | **下载更新** | 有新版本时下载安装包并校验 |
-| ③ | **安装并重启** | 校验通过后替换并重启应用 |
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-页面会显示当前 / 最新版本、是否有更新、SHA256 与本地路径等信息。
-
-## 步骤
-
-1. **软件更新** → **检查更新**
-2. 若提示有更新 → **下载更新**（等待校验成功）
-3. **安装并重启**
-
-需能访问 GitHub（或你配置的 Release 源）。网络失败时查看活动日志中的错误信息。
-
-相关：[文档首页](./README.md) · [00 · 下载](./00-download.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

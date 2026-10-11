@@ -1,4 +1,4 @@
-# WinToolbox one-click build (Go + Wails + Vue3)
+# WinToolBox one-click build (Go + Wails + Vue3)
 param([switch]$SkipInstall)
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot\..
@@ -19,7 +19,7 @@ $cfg = Get-Content .\version.json -Raw -Encoding UTF8 | ConvertFrom-Json
 $displayVersion = "v$($cfg.version)"
 $releaseDir = Join-Path (Get-Location) 'artifacts/releases'
 New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
-$versionedName = "WinToolbox-$displayVersion-windows-amd64.exe"
+$versionedName = "WinToolBox-$displayVersion-windows-amd64.exe"
 $versionedExe = Join-Path $releaseDir $versionedName
 
 go run ./scripts/genbindings
@@ -55,14 +55,14 @@ if ($needRsrc) {
   Write-Host '==> Skip rsrc: rsrc.syso up-to-date' -ForegroundColor DarkGray
 }
 
-Write-Host '==> Building WinToolbox.exe (Wails)' -ForegroundColor Cyan
+Write-Host '==> Building WinToolBox.exe (Wails)' -ForegroundColor Cyan
 # Wails requires desktop,production tags for a real window (plain go build shows a stub error dialog).
-go build -tags 'desktop,production' -trimpath -ldflags='-s -w -H windowsgui' -o WinToolbox.exe .
+go build -tags 'desktop,production' -trimpath -ldflags='-s -w -H windowsgui' -o WinToolBox.exe .
 Assert-LastExitCode 'go build'
 
-Copy-Item -LiteralPath WinToolbox.exe -Destination $versionedExe -Force
+Copy-Item -LiteralPath WinToolBox.exe -Destination $versionedExe -Force
 
-$size = (Get-Item WinToolbox.exe).Length
+$size = (Get-Item WinToolBox.exe).Length
 $hash = (Get-FileHash -LiteralPath $versionedExe -Algorithm SHA256).Hash.ToLowerInvariant()
 $sha256File = "$versionedExe.sha256"
 # Common checksum format: "<hash> *<filename>"
@@ -86,7 +86,7 @@ $notes = $notes.Replace('{{SHA256_FILE}}', (Split-Path $sha256File -Leaf))
   [System.Text.UTF8Encoding]::new($false)
 )
 
-Write-Host ("Done: WinToolbox.exe + {0} ({1:N0} bytes / {2:N2} MB)" -f $versionedExe, $size, ($size / 1MB)) -ForegroundColor Green
+Write-Host ("Done: WinToolBox.exe + {0} ({1:N0} bytes / {2:N2} MB)" -f $versionedExe, $size, ($size / 1MB)) -ForegroundColor Green
 Write-Host ("SHA256: {0}" -f $hash) -ForegroundColor Green
 Write-Host ("Wrote: {0}, SHA256.txt, {1}" -f $sha256File, $notesPath) -ForegroundColor DarkGray
 Write-Host 'Publish tip: upload the versioned exe (+ .sha256) and paste RELEASE_NOTES.generated.md as the GitHub Release body.' -ForegroundColor Cyan

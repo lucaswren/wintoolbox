@@ -3,14 +3,15 @@ package ui
 import "wintoolbox/internal/wintime"
 
 const (
-	AppName    = "WinToolbox" // synced from version.json via scripts/sync-version.ps1
+	AppName    = "WinToolBox" // synced from version.json via scripts/sync-version.ps1
 	AppVersion = "v1.0.0"     // synced from version.json via scripts/sync-version.ps1
 )
 
 // AppInfo is version metadata for the UI.
 type AppInfo struct {
-	Name    string `json:"name"`    // WinToolbox
-	Version string `json:"version"` // v1.0.0
+	Name     string `json:"name"`     // WinToolBox
+	Version  string `json:"version"`  // v1.0.0
+	Language string `json:"language"` // User's Windows display language, normalized to a supported locale.
 }
 
 // Status is a full app snapshot for UI.

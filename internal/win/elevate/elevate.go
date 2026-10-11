@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"unsafe"
+	"wintoolbox/internal/locale"
 
 	"golang.org/x/sys/windows"
 
@@ -132,6 +133,6 @@ func EnsureAdmin() {
 	if RelaunchAsAdmin() {
 		os.Exit(0)
 	}
-	dialog.MessageBox("WinToolbox", "本工具需要管理员权限才能运行。\n请右键以管理员身份重新打开。", true)
+	dialog.MessageBox("WinToolBox", locale.Text("Administrator privileges are required.\nRight-click and select Run as administrator.", "本工具需要管理员权限才能运行。\n请右键以管理员身份重新打开。", "本工具需要系統管理員權限才能執行。\n請按右鍵以系統管理員身分重新開啟。"), true)
 	os.Exit(1)
 }

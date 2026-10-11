@@ -1,49 +1,35 @@
-# 02 · 本地账户
+[English](02-local-account.md) | [繁體中文](zh-TW/02-local-account.md) | [简体中文](zh-CN/02-local-account.md)
 
-禁用来宾与自动登录、加强密码/锁定策略，以及修改本地用户密码与权限。
+# 02 · Local accounts
 
-## 第一步：下载
+Manage local user passwords, enabled state and administrator membership, or open **Security policies** to manage Guest, automatic logon, password complexity and account lockout. Domain accounts remain governed by domain policy.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+## User management
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+1. Select a user under **User management**.
+2. Enter the same new password twice and select **Change password**; confirm the operation.
+3. Use **Enable / Disable**, **Grant administrator rights** or **Revoke administrator rights** as needed. The backend prevents disabling the current user or removing their administrator rights.
+4. Verify that the new credentials work.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+![Password and permissions](images/02-local-account-password.png)
 
-## 策略与加固入口
+## Security policies
 
-![本地账户策略（真实界面）](./images/02-local-account.png)
+| Action | Effect |
+|---|---|
+| Disable Guest account | Disables the local Guest account |
+| Disable automatic logon | Disables AutoAdminLogon and clears Winlogon DefaultPassword |
+| Apply password policy | Sets the minimum length and enables complexity |
+| Enable lockout | Sets 10 attempts, a 30-minute lockout and a 30-minute reset window |
+| Disable lockout | Sets the threshold to 0 and unlocks locked local accounts |
+| Apply custom policy | Applies your threshold, lockout duration and reset window |
 
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **禁用来宾账户** | 关闭 Guest，降低未授权入口 |
-| ② | **关闭自动登录** | 关 AutoAdminLogon，并清除 DefaultPassword |
-| ③ | **应用密码策略** | 设置最短长度，并开启复杂度 |
-| ④ | **一键开启锁定** | 默认约 10 次失败 / 锁定 30 分钟（可自定义） |
+Current system values are used when available; otherwise lockout fields start at 10 / 30 / 30. When a policy is unknown, editable values represent the target rather than confirmed current settings. Group Policy can override local changes. Use strong passwords (the existing guidance recommends at least 12 characters, or 14 for servers, with mixed character types).
 
-也可在同页填写阈值后点 **应用自定义策略**。
+![Account policies](images/02-local-account.png)
 
-## 修改密码与权限
+Related: [Hardening guide](90-hardening-guide.md) · [Remote Desktop](03-remote-desktop.md)
 
-向下滚动到 **账户操作**：
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-![修改密码（真实界面）](./images/02-local-account-password.png)
-
-| # | 选项 | 说明 |
-|---|------|------|
-| ① | **用户** | 选择本地账户 |
-| ② | **新密码** | 输入新密码 |
-| ③ | **确认密码** | 与 ② 一致 |
-| ④ | **修改密码** | 确认后生效 |
-| ⑤ | **设为管理员** | 将所选用户加入管理员组（旁有启用/禁用、取消管理员） |
-
-## 建议步骤
-
-1. 管理员打开 WinToolbox → **本地账户**
-2. ①②③④ 按需加固
-3. 选用户 → 填两次密码 → **修改密码**
-4. 用新密码登录验证一次
-
-密码建议长度 ≥ 12（服务器 ≥ 14），含大小写、数字与符号。本页只管**本地账户**（域账户受域策略约束）。
-
-相关：[90 · 系统加固指南](./90-hardening-guide.md) · [03 · 远程桌面](./03-remote-desktop.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

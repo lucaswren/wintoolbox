@@ -387,7 +387,7 @@ func memoryModules() string {
 	if len(mods) == 0 {
 		return "-"
 	}
-	// Group identical modules: "2×8 GB 3200 MHz"
+	// Group identical modules: "2×8 GiB 3200 MHz"
 	type key struct {
 		cap   int
 		speed string
@@ -404,7 +404,7 @@ func memoryModules() string {
 	parts := make([]string, 0, len(order))
 	for _, k := range order {
 		n := counts[k]
-		s := fmt.Sprintf("%d×%d GB", n, k.cap)
+		s := fmt.Sprintf("%d×%d GiB", n, k.cap)
 		if k.speed != "" && k.speed != "0" {
 			s += " " + k.speed + " MHz"
 		}

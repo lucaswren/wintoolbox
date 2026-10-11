@@ -1,6 +1,10 @@
 <script setup>
+import { t, locale, setLocale } from './i18n/index.js'
+
 import { computed, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import zhTw from 'element-plus/dist/locale/zh-tw.mjs'
+import en from 'element-plus/dist/locale/en.mjs'
 import {
   Monitor,
   User,
@@ -45,6 +49,7 @@ const ICONS = {
 }
 
 const active = ref('overview')
+const elementLocale = computed(() => ({ en, 'zh-CN': zhCn, 'zh-TW': zhTw })[locale.value])
 const busy = ref(false)
 const logs = ref([])
 const appUpdate = reactive({
@@ -71,9 +76,9 @@ watch(autoDownload, (value) => {
 })
 
 function appendLog(msg, module = active.value) {
-  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false })
+  const time = new Date().toLocaleTimeString(locale.value, { hour12: false })
   const title = MENUS.find((menu) => menu.key === module)?.title || module
-  appendBoundedLog(logs.value, `[${t}] [${title}] ${msg}`)
+  appendBoundedLog(logs.value, `[${time}] [${title}] ${t(msg)}`)
 }
 
 let updateInfoRevision = 0
@@ -184,24 +189,24 @@ async function onCheckAppUpdate(showToast = true) {
     const info = await api.checkAppUpdate()
     applyAppUpdateInfo(info)
     if (info?.hasUpdate) {
-      appendLog(`发现新版本 v${info.latestVersion}`)
+      appendLog(t('发现新版本 v{0}', [info.latestVersion]))
       if (autoDownload.value && (!info.downloaded || !info.verified)) {
         const dl = await api.downloadAppUpdate()
         applyAppUpdateInfo(dl)
-        appendLog(`已自动下载并校验 v${dl.latestVersion}`)
-        if (showToast) ElMessage.success(`已下载并校验 v${dl.latestVersion}，可安装并重启`)
+        appendLog(t('已自动下载并校验 v{0}', [dl.latestVersion]))
+        if (showToast) ElMessage.success(t('已下载并校验 v{0}，可安装并重启', [dl.latestVersion]))
       } else if (showToast && info.downloaded && info.verified) {
-        ElMessage.success(`已有校验通过的 v${info.latestVersion}，可安装并重启`)
+        ElMessage.success(t('已有校验通过的 v{0}，可安装并重启', [info.latestVersion]))
       }
     } else if (showToast) {
-      ElMessage.success('已是最新版本')
-      appendLog('软件已是最新版本')
+      ElMessage.success(t('已是最新版本'))
+      appendLog(t('软件已是最新版本'))
     }
   } catch (e) {
-    const msg = e?.message || String(e)
+    const msg = t(e?.message || String(e))
     appUpdate.error = msg
-    appendLog('检查更新失败: ' + msg)
-    if (showToast) ElMessage.error('检查更新失败: ' + msg)
+    appendLog(t('检查更新失败: ') + msg)
+    if (showToast) ElMessage.error(t('检查更新失败: ') + msg)
   } finally {
     appUpdateChecking.value = false
   }
@@ -213,12 +218,12 @@ async function onDownloadAppUpdate() {
   try {
     const info = await api.downloadAppUpdate()
     applyAppUpdateInfo(info)
-    appendLog(`已下载并校验 v${info.latestVersion}`)
-    ElMessage.success(info.verified ? '更新包已下载并完成 SHA256 校验' : '更新包已下载')
+    appendLog(t('已下载并校验 v{0}', [info.latestVersion]))
+    ElMessage.success(info.verified ? t('更新包已下载并完成 SHA256 校验') : t('更新包已下载'))
   } catch (e) {
-    const msg = e?.message || String(e)
-    appendLog('下载更新失败: ' + msg)
-    ElMessage.error('下载更新失败: ' + msg)
+    const msg = t(e?.message || String(e))
+    appendLog(t('下载更新失败: ') + msg)
+    ElMessage.error(t('下载更新失败: ') + msg)
   } finally {
     busy.value = false
   }
@@ -229,9 +234,9 @@ async function onApplyAppUpdate() {
   busy.value = true
   try {
     await ElMessageBox.confirm(
-      `确认安装 v${appUpdate.latestVersion || ''} 并重启 WinToolbox？`,
-      '安装更新',
-      { type: 'warning', confirmButtonText: '安装并重启', cancelButtonText: '取消' },
+      t('确认安装 v{0} 并重启 WinToolBox？', [appUpdate.latestVersion || '']),
+      t('安装更新'),
+      { type: 'warning', confirmButtonText: t('安装并重启'), cancelButtonText: t('取消') },
     )
   } catch {
     busy.value = false
@@ -239,12 +244,12 @@ async function onApplyAppUpdate() {
   }
   try {
     await api.applyAppUpdate()
-    appendLog('正在安装更新并重启…')
-    ElMessage.success('正在安装更新，程序即将重启')
+    appendLog(t('正在安装更新并重启…'))
+    ElMessage.success(t('正在安装更新，程序即将重启'))
   } catch (e) {
-    const msg = e?.message || String(e)
-    appendLog('安装更新失败: ' + msg)
-    ElMessage.error('安装更新失败: ' + msg)
+    const msg = t(e?.message || String(e))
+    appendLog(t('安装更新失败: ') + msg)
+    ElMessage.error(t('安装更新失败: ') + msg)
     busy.value = false
   }
 }
@@ -256,21 +261,21 @@ async function backgroundAppUpdate() {
     const info = await api.checkAppUpdate()
     applyAppUpdateInfo(info)
     if (!info?.hasUpdate || !autoDownload.value) return
-    appendLog(`后台发现新版本 v${info.latestVersion}，开始下载并校验`)
+    appendLog(t('后台发现新版本 v{0}，开始下载并校验', [info.latestVersion]))
     if (!info.downloaded || !info.verified) {
       const dl = await api.downloadAppUpdate()
       applyAppUpdateInfo(dl)
-      appendLog(`更新包已下载并校验，可在「软件更新」中安装`)
+      appendLog(t('更新包已下载并校验，可在「软件更新」中安装', []))
     }
   } catch (e) {
-    appendLog('后台检查更新失败: ' + (e?.message || e))
+    appendLog(t('后台检查更新失败: ') + (e?.message || e))
   } finally {
     appUpdateChecking.value = false
   }
 }
 
 onMounted(async () => {
-  appendLog('就绪')
+  appendLog(t('就绪'))
   try {
     const info = await api.getAppInfo()
     if (info?.version) APP_VERSION.value = info.version
@@ -332,19 +337,29 @@ async function cancelUpdateDownload() {
 </script>
 
 <template>
-  <el-config-provider :locale="zhCn">
+  <el-config-provider :locale="elementLocale">
     <el-container class="app-shell">
       <el-aside width="232px" class="app-aside">
         <div class="brand">
-          <img class="brand__logo" src="/logo.svg" width="40" height="40" alt="WinToolbox" />
+          <img class="brand__logo" src="/logo.svg" width="40" height="40" alt="WinToolBox" />
           <div class="brand__text">
-            <div class="brand__title">WinToolbox</div>
-            <div class="brand__sub">本地运维工具箱</div>
+            <div class="brand__title">WinToolBox</div>
+            <div class="brand__sub">{{ t('本地运维工具箱') }}</div>
           </div>
         </div>
         <div class="brand__meta">
           <span class="brand__ver">{{ APP_VERSION }}</span>
         </div>
+        <el-select
+          :model-value="locale"
+          aria-label="Language / 语言 / 語言"
+          style="margin: 0 12px 12px; width: calc(100% - 24px)"
+          @update:model-value="setLocale"
+        >
+          <el-option label="English" value="en" />
+          <el-option label="繁體中文" value="zh-TW" />
+          <el-option label="简体中文" value="zh-CN" />
+        </el-select>
 
         <el-menu
           :default-active="active"
@@ -363,7 +378,7 @@ async function cancelUpdateDownload() {
         </el-menu>
 
         <div class="aside-foot">
-          <div>Copyright © WinToolbox</div>
+          <div>Copyright © WinToolBox</div>
         </div>
       </el-aside>
 
@@ -373,12 +388,14 @@ async function cancelUpdateDownload() {
             <div class="header-title">{{ activeMenu?.title }}</div>
             <div class="header-desc">
               {{ activeMenu?.desc
-              }}<span v-if="updatedAt[active] || updatedAt.all">
-                · 状态采集 {{ updatedAt[active] || updatedAt.all }}</span
+              }}<span v-if="updatedAt[active] || updatedAt.all"
+                >{{ t('· 状态采集') }} {{ updatedAt[active] || updatedAt.all }}</span
               >
             </div>
           </div>
-          <el-button type="primary" round :loading="loading" @click="onRefresh">刷新</el-button>
+          <el-button type="primary" round :loading="loading" @click="onRefresh">{{
+            t('刷新')
+          }}</el-button>
         </el-header>
 
         <el-main class="app-main" :aria-busy="loading">
@@ -535,7 +552,7 @@ async function cancelUpdateDownload() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 22px 18px 8px;
+  padding: 16px 18px 8px;
 }
 
 .brand__logo {
@@ -561,7 +578,7 @@ async function cancelUpdateDownload() {
 }
 
 .brand__meta {
-  padding: 0 18px 14px;
+  padding: 0 18px 10px;
 }
 
 .brand__ver {
@@ -583,8 +600,10 @@ async function cancelUpdateDownload() {
 
 .side-menu :deep(.el-menu-item) {
   border-radius: 10px;
-  margin-bottom: 4px;
-  height: 44px;
+  margin-bottom: 2px;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
   transition:
     background 0.18s ease,
     color 0.18s ease;
@@ -601,7 +620,7 @@ async function cancelUpdateDownload() {
 }
 
 .aside-foot {
-  padding: 12px 18px 16px;
+  padding: 10px 18px;
   font-size: 11px;
   color: var(--wt-sidebar-muted);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -638,6 +657,9 @@ async function cancelUpdateDownload() {
   margin-top: 2px;
   font-size: 12px;
   color: var(--wt-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-main {

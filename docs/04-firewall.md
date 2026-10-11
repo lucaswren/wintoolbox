@@ -1,34 +1,25 @@
-# 04 · 防火墙
+[English](04-firewall.md) | [繁體中文](zh-TW/04-firewall.md) | [简体中文](zh-CN/04-firewall.md)
 
-一键开关配置文件、禁 ping、拦高危入站端口，以及按端口放行/删除规则。
+# 04 · Firewall
 
-## 第一步：下载
+Control Domain / Private / Public profiles, inbound TCP allow rules, ICMP Echo (ping) and a high-risk port preset.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+| Action | Effect |
+|---|---|
+| All enabled / All disabled | Toggles all three firewall profiles |
+| Allow | Creates an inbound TCP allow rule for the entered port |
+| Delete by port | Removes the corresponding WinToolBox allow rule |
+| Delete all allow rules | Removes `WinToolbox-Allow-*` rules |
+| Block ping / Restore ping | Adds/removes WinToolBox inbound IPv4/IPv6 Echo blocks |
+| Block high-risk inbound ports | Blocks TCP 135, 139, 445, 5985 and 5986 |
+| Remove high-risk blocks | Removes the blocks created by WinToolBox |
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+The high-risk preset excludes 3389 to preserve Remote Desktop access. Blocking SMB/WinRM ports can interrupt file sharing, remote PowerShell or automation. Disabling all profiles removes network filtering protection.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+Profile and ping status may be partial or unknown. **No WinToolBox block detected** does not guarantee ping responses: other firewall rules and the network also affect them. Refresh unknown state before making changes. Cleanup of allow rules leaves Remote Desktop and ping rules unchanged.
 
-## 界面标注
+![Firewall](images/04-firewall.png)
 
-![防火墙（真实界面）](./images/04-firewall.png)
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **全部开启** | 域 / 专用 / 公用配置文件全部启用（旁有「全部关闭」） |
-| ② | **放行** | 为填写的 TCP 端口添加入站放行（规则名前缀 WinToolbox） |
-| ③ | **一键禁 ping** | 阻止 ICMPv4/v6 Echo（可 **恢复 ping**） |
-| ④ | **拦高危入站端口** | 拦 135 / 139 / 445 / 5985 / 5986（**不含 3389**） |
-
-同页还可 **按端口删除**、**移除高危拦截**，以及管理「已创建规则」列表。
-
-## 步骤
-
-1. **防火墙** → 确认配置文件为开启（必要时 ①）
-2. 运维需要时用 ② 放行业务端口
-3. 加固：③ 禁 ping → ④ 拦高危端口
-
-依赖文件共享 / WinRM 时慎用 ④。云主机还需在安全组同步策略。
-
-相关：[90 · 系统加固指南](./90-hardening-guide.md) · [05 · 安全加固](./05-security-harden.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

@@ -1,28 +1,18 @@
-# 07 · 时间同步
+[English](07-time-sync.md) | [繁體中文](zh-TW/07-time-sync.md) | [简体中文](zh-CN/07-time-sync.md)
 
-设置时区、NTP 源，立即对时与连通性测试。
+# 07 · Time synchronization
 
-## 第一步：下载
+Open **Time synchronization** to view local time and NTP status. The current Windows time zone is selected automatically.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+1. Select a time zone and choose **Apply time zone**.
+2. Choose an NTP preset or enter a server, then select **Save NTP**.
+3. Select **Synchronize now** to request network time synchronization.
+4. Use **Test NTP** to inspect the chosen server's response.
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+An empty NTP server is rejected. Network or Windows Time service errors appear in the activity log. If the status query fails or times out, refresh before proceeding. Windows-provided time zone names use the Windows language.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+![Time synchronization](images/07-time-sync.png)
 
-## 界面标注
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-![时间同步（真实界面）](./images/07-time-sync.png)
-
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **应用时区** | 应用下拉框所选时区 |
-| ② | **保存 NTP** | 写入 NTP 服务器地址 |
-| ③ | **立即同步** | 立刻向当前 NTP 对时 |
-| ④ | **测试 NTP** | 检测 NTP 是否可达 |
-
-也可用「常用 NTP」芯片快速填入 Microsoft / 阿里云 / 腾讯云等。
-
-打开本页会尽量自动定位当前时区。状态读取失败时会出现警告，稍后 **刷新** 再试。
-
-相关：[文档首页](./README.md) · [08 · 电源](./08-power.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

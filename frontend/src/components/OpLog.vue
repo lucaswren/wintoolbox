@@ -1,4 +1,6 @@
 <script setup>
+import { t } from '../i18n/index.js'
+
 import { nextTick, ref, watch } from 'vue'
 import { logLevel } from '../composables/logBuffer.js'
 
@@ -30,12 +32,16 @@ function exportLog() {
 <template>
   <div class="op-log">
     <div class="op-log__head">
-      <span class="op-log__title">活动日志</span>
+      <span class="op-log__title">{{ t('活动日志') }}</span>
       <el-button text size="small" @click="expanded = !expanded">{{
-        expanded ? '收起' : '展开'
+        expanded ? t('收起') : t('展开')
       }}</el-button>
-      <el-button text size="small" :disabled="!lines.length" @click="exportLog">导出</el-button>
-      <el-button text type="primary" size="small" @click="$emit('clear')">清空</el-button>
+      <el-button text size="small" :disabled="!lines.length" @click="exportLog">{{
+        t('导出')
+      }}</el-button>
+      <el-button text type="primary" size="small" @click="$emit('clear')">{{
+        t('清空')
+      }}</el-button>
     </div>
     <el-scrollbar
       ref="scrollbar"
@@ -51,7 +57,7 @@ function exportLog() {
       >
         {{ line }}
       </div>
-      <div v-if="!lines.length" class="op-log__empty">暂无记录</div>
+      <div v-if="!lines.length" class="op-log__empty">{{ t('暂无记录') }}</div>
     </el-scrollbar>
   </div>
 </template>

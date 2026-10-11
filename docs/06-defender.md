@@ -1,28 +1,15 @@
-# 06 · 防病毒
+[English](06-defender.md) | [繁體中文](zh-TW/06-defender.md) | [简体中文](zh-CN/06-defender.md)
 
-一键关闭或恢复 Windows Defender **实时防护**。
+# 06 · Antivirus
 
-## 第一步：下载
+Use **Disable real-time protection** or **Enable real-time protection** to control Windows Defender scanning.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+Disabling real-time protection temporarily removes real-time scanning protection. Tamper Protection or Group Policy can reject or override the change; inspect the returned error and refresh the state. A submitted change does not guarantee it took effect.
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+**Enable real-time protection** explicitly turns protection on; it does not restore a previously disabled state. Configuration backups are marked valid only after their required fields have been written successfully.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+![Defender](images/06-defender.png)
 
-## 界面标注
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-![防病毒（真实界面）](./images/06-defender.png)
-
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **关闭实时防护** | 临时关闭 Defender 实时监控（有风险） |
-| ② | **恢复实时防护** | 重新开启实时监控 |
-
-## 注意
-
-- 若开启 **篡改防护**，关闭可能失败，需先在 Windows 安全中心处理
-- 仅在明确需要的运维窗口关闭，用完立即 **恢复实时防护**
-- 状态显示「未知」时先点 **刷新**
-
-相关：[文档首页](./README.md) · [09 · 系统更新](./09-windows-update.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

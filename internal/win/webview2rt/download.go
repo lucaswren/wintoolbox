@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"wintoolbox/internal/locale"
 )
 
 const bootstrapperURL = `https://go.microsoft.com/fwlink/p/?LinkId=2124703`
@@ -23,11 +24,11 @@ func downloadBootstrapper(dest string, onProgress progressFunc) (err error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("下载失败: %w", err)
+		return fmt.Errorf(locale.Text("Download failed: %w", "下载失败: %w", "下載失敗: %w"), err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("下载失败: HTTP %d", resp.StatusCode)
+		return fmt.Errorf(locale.Text("Download failed: HTTP %d", "下载失败: HTTP %d", "下載失敗: HTTP %d"), resp.StatusCode)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
@@ -71,7 +72,7 @@ func downloadBootstrapper(dest string, onProgress progressFunc) (err error) {
 			break
 		}
 		if readErr != nil {
-			err = fmt.Errorf("下载中断: %w", readErr)
+			err = fmt.Errorf(locale.Text("Download interrupted: %w", "下载中断: %w", "下載中斷: %w"), readErr)
 			return err
 		}
 	}

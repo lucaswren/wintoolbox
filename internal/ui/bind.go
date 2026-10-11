@@ -10,6 +10,7 @@ import (
 	"wintoolbox/internal/defender"
 	"wintoolbox/internal/firewall"
 	"wintoolbox/internal/harden"
+	"wintoolbox/internal/locale"
 	"wintoolbox/internal/power"
 	"wintoolbox/internal/rdp"
 	"wintoolbox/internal/selfupdate"
@@ -40,8 +41,9 @@ func (a *App) Startup(ctx context.Context) { a.ctx = ctx }
 
 func (a *App) GetAppInfo() AppInfo {
 	return AppInfo{
-		Name:    AppName,
-		Version: AppVersion,
+		Name:     AppName,
+		Version:  AppVersion,
+		Language: locale.System(),
 	}
 }
 

@@ -1,29 +1,19 @@
-# 05 · 安全加固
+[English](05-security-harden.md) | [繁體中文](zh-TW/05-security-harden.md) | [简体中文](zh-CN/05-security-harden.md)
 
-针对常见暴露面：禁用 SMBv1、关闭并拦截 WinRM、限制匿名枚举。
+# 05 · Security hardening
 
-## 第一步：下载
+Apply individual controls for common server exposure points:
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+| Action | Effect and compatibility |
+|---|---|
+| Disable SMBv1 | Disables SMBv1 on the SMB server; very old clients may lose share access and a restart may be required |
+| Disable and block WinRM | Disables the WinRM service and blocks inbound TCP 5985/5986; remote PowerShell/Ansible may stop working |
+| Block anonymous enumeration | Sets RestrictAnonymous=1 and RestrictAnonymousSAM=1 to reduce anonymous enumeration of local accounts and shares |
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+Review dependencies before confirming. Group Policy may override these settings. Refresh after the operation and inspect each control's verified or unknown state.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+![Security hardening](images/05-security-harden.png)
 
-## 界面标注
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-![安全加固（真实界面）](./images/05-security-harden.png)
-
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **禁用 SMBv1** | 关闭 SMB 服务器的 SMBv1，降低蠕虫/勒索相关风险 |
-| ② | **关闭并拦截 WinRM** | 禁用 WinRM 服务，并拦入站 TCP 5985 / 5986 |
-| ③ | **禁匿名枚举** | RestrictAnonymous / RestrictAnonymousSAM |
-
-## 注意
-
-- 极老客户端访问共享时慎用 ①
-- 依赖远程 PowerShell / Ansible 时**不要**执行 ②
-- 域环境可能被组策略覆盖；操作后可用右上角 **刷新** 核对状态
-
-相关：[90 · 系统加固指南](./90-hardening-guide.md) · [04 · 防火墙](./04-firewall.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

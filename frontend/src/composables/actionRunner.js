@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js'
 export function createRunner({ busy, appendLog, refresh, getModule }) {
   return async function run(
     fn,
@@ -5,8 +6,8 @@ export function createRunner({ busy, appendLog, refresh, getModule }) {
     { confirm, confirmType = 'warning', skipRefresh } = {},
   ) {
     if (busy.value) {
-      appendLog('上一操作仍在进行，请稍候…')
-      ElMessage.info('上一操作仍在进行，请稍候')
+      appendLog(t('上一操作仍在进行，请稍候…'))
+      ElMessage.info(t('上一操作仍在进行，请稍候'))
       return false
     }
     // Hold busy across confirm + action to prevent stacked dangerous ops.
@@ -17,10 +18,10 @@ export function createRunner({ busy, appendLog, refresh, getModule }) {
     try {
       if (confirm) {
         try {
-          await ElMessageBox.confirm(confirm, '请确认', {
+          await ElMessageBox.confirm(confirm, t('请确认'), {
             type: confirmType,
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
+            confirmButtonText: t('确定'),
+            cancelButtonText: t('取消'),
             closeOnClickModal: false,
             closeOnPressEscape: true,
             distinguishCancelAndClose: true,
@@ -38,8 +39,8 @@ export function createRunner({ busy, appendLog, refresh, getModule }) {
       }
       return result == null ? true : result
     } catch (e) {
-      const msg = e?.message || String(e)
-      appendLog('失败: ' + msg, module)
+      const msg = t(e?.message || String(e))
+      appendLog(t('失败: ') + msg, module)
       ElMessage.error(msg)
       return false
     } finally {
@@ -48,7 +49,9 @@ export function createRunner({ busy, appendLog, refresh, getModule }) {
           await refresh(false, module)
         } catch {
           ElMessage.warning(
-            succeeded ? '操作成功，但状态复查失败' : '操作可能已部分生效，状态复查失败，请手动刷新',
+            succeeded
+              ? t('操作成功，但状态复查失败')
+              : t('操作可能已部分生效，状态复查失败，请手动刷新'),
           )
         }
       }
@@ -59,9 +62,9 @@ export function createRunner({ busy, appendLog, refresh, getModule }) {
 
 export function powerDelayLabel(seconds) {
   const n = Number(seconds)
-  if (!Number.isFinite(n) || n < 0) return '60 秒后'
-  if (n === 0) return '立即'
-  return `${n} 秒后`
+  if (!Number.isFinite(n) || n < 0) return t('60 秒后')
+  if (n === 0) return t('立即')
+  return t('{0} 秒后', [n])
 }
 
 export function normalizePort(value, fallback = 0) {

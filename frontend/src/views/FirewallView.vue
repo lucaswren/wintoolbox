@@ -1,4 +1,6 @@
 <script setup>
+import { t } from '../i18n/index.js'
+
 import { computed } from 'vue'
 
 const props = defineProps({
@@ -22,9 +24,9 @@ defineEmits([
 ])
 
 const profiles = computed(() => [
-  { key: 'domain', label: '域', value: props.status?.firewallDomain || '未知' },
-  { key: 'private', label: '专用', value: props.status?.firewallPrivate || '未知' },
-  { key: 'public', label: '公用', value: props.status?.firewallPublic || '未知' },
+  { key: 'domain', label: t('域'), value: props.status?.firewallDomain || t('未知') },
+  { key: 'private', label: t('专用'), value: props.status?.firewallPrivate || t('未知') },
+  { key: 'public', label: t('公用'), value: props.status?.firewallPublic || t('未知') },
 ])
 
 function profileTagType(value) {
@@ -34,39 +36,39 @@ function profileTagType(value) {
 }
 
 function profileLabel(value) {
-  if (value === '开') return '已开启'
-  if (value === '关') return '已关闭'
-  return value || '未知'
+  if (value === '开') return t('已开启')
+  if (value === '关') return t('已关闭')
+  return t(value || '未知')
 }
 
 const overall = computed(() => {
   if (props.status?.firewallAllOn) {
-    return { text: '全部开启', type: 'success', desc: '域 / 专用 / 公用配置文件均已启用' }
+    return { text: t('全部开启'), type: 'success', desc: t('域 / 专用 / 公用配置文件均已启用') }
   }
   if (props.status?.firewallAllOff) {
-    return { text: '全部关闭', type: 'danger', desc: '域 / 专用 / 公用配置文件均已关闭' }
+    return { text: t('全部关闭'), type: 'danger', desc: t('域 / 专用 / 公用配置文件均已关闭') }
   }
   const vals = profiles.value.map((p) => p.value)
   if (vals.every((v) => v !== '开' && v !== '关')) {
-    return { text: '状态未知', type: 'info', desc: '未能可靠读取防火墙配置文件状态' }
+    return { text: t('状态未知'), type: 'info', desc: t('未能可靠读取防火墙配置文件状态') }
   }
-  return { text: '部分开启', type: 'warning', desc: '部分配置文件已开启，部分已关闭或未知' }
+  return { text: t('部分开启'), type: 'warning', desc: t('部分配置文件已开启，部分已关闭或未知') }
 })
 
 const pingState = computed(() => props.status?.pingState || 'enabled')
 const pingStateInfo = computed(() => {
   switch (pingState.value) {
     case 'blocked':
-      return { text: '已禁用 ping', type: 'info', desc: 'IPv4 和 IPv6 均已阻止 Echo 请求' }
+      return { text: t('已禁用 ping'), type: 'info', desc: t('IPv4 和 IPv6 均已阻止 Echo 请求') }
     case 'partial':
-      return { text: '部分禁用', type: 'warning', desc: 'IPv4 / IPv6 中仅部分协议被阻止' }
+      return { text: t('部分禁用'), type: 'warning', desc: t('IPv4 / IPv6 中仅部分协议被阻止') }
     case 'unknown':
-      return { text: '状态未知', type: 'info', desc: '禁 ping 状态读取超时或失败' }
+      return { text: t('状态未知'), type: 'info', desc: t('禁 ping 状态读取超时或失败') }
     default:
       return {
-        text: '未检测到工具拦截',
+        text: t('未检测到工具拦截'),
         type: 'info',
-        desc: '未检测到本工具的 Echo 拦截规则；实际响应取决于其他规则和网络配置',
+        desc: t('未检测到本工具的 Echo 拦截规则；实际响应取决于其他规则和网络配置'),
       }
   }
 })
@@ -78,23 +80,29 @@ const canEnablePing = computed(
 )
 
 const canEnableAll = computed(
-  () => !props.busy && !props.status?.firewallAllOn && overall.value.text !== '状态未知',
+  () =>
+    !props.busy &&
+    !props.status?.firewallAllOn &&
+    profiles.value.some((p) => ['开', '关'].includes(p.value)),
 )
 const canDisableAll = computed(
-  () => !props.busy && !props.status?.firewallAllOff && overall.value.text !== '状态未知',
+  () =>
+    !props.busy &&
+    !props.status?.firewallAllOff &&
+    profiles.value.some((p) => ['开', '关'].includes(p.value)),
 )
 
 const riskInfo = computed(() => {
   if (props.status?.riskPortsUnknown) {
-    return { text: '状态未知', type: 'info' }
+    return { text: t('状态未知'), type: 'info' }
   }
   if (props.status?.riskPortsBlocked) {
-    return { text: '已全部拦截', type: 'success' }
+    return { text: t('已全部拦截'), type: 'success' }
   }
   if (props.status?.riskPortsPartial) {
-    return { text: '部分拦截', type: 'warning' }
+    return { text: t('部分拦截'), type: 'warning' }
   }
-  return { text: '未启用', type: 'info' }
+  return { text: t('未启用'), type: 'info' }
 })
 const canBlockRisk = computed(
   () => !props.busy && !props.status?.riskPortsUnknown && !props.status?.riskPortsBlocked,
@@ -110,14 +118,17 @@ const canUnblockRisk = computed(
 <template>
   <div data-view="firewall">
     <p class="page-desc">
-      一键开关配置文件、禁用或恢复 ping、高危端口预设，并为入站 TCP 添加放行规则（规则名前缀
-      WinToolbox）
+      {{
+        t(
+          '一键开关配置文件、禁用或恢复 ping、高危端口预设，并为入站 TCP 添加放行规则（规则名前缀 WinToolbox）',
+        )
+      }}
     </p>
 
-    <el-card shadow="never" header="配置文件" class="wt-card">
+    <el-card shadow="never" :header="t('配置文件')" class="wt-card">
       <div class="wt-status-block">
         <div class="wt-status-line">
-          <span class="wt-status-label">总状态</span>
+          <span class="wt-status-label">{{ t('总状态') }}</span>
           <el-tag :type="overall.type" effect="dark">{{ overall.text }}</el-tag>
         </div>
         <p class="wt-detail">{{ overall.desc }}</p>
@@ -133,112 +144,115 @@ const canUnblockRisk = computed(
       </div>
 
       <div class="wt-actions wt-actions--mt">
-        <el-button type="success" :disabled="!canEnableAll" @click="$emit('enable-all')">
-          全部开启
-        </el-button>
-        <el-button type="danger" :disabled="!canDisableAll" @click="$emit('disable-all')">
-          全部关闭
-        </el-button>
+        <el-button type="success" :disabled="!canEnableAll" @click="$emit('enable-all')">{{
+          t('全部开启')
+        }}</el-button>
+        <el-button type="danger" :disabled="!canDisableAll" @click="$emit('disable-all')">{{
+          t('全部关闭')
+        }}</el-button>
       </div>
     </el-card>
 
-    <el-card shadow="never" header="端口操作" class="wt-card">
+    <el-card shadow="never" :header="t('端口操作')" class="wt-card">
       <el-form inline class="wt-form-row">
-        <el-form-item label="TCP 端口">
+        <el-form-item :label="t('TCP 端口')">
           <el-input-number v-model="form.fwPort" :min="1" :max="65535" controls-position="right" />
         </el-form-item>
         <el-form-item>
           <div class="wt-actions">
-            <el-button type="success" :disabled="busy" @click="$emit('allow')">放行</el-button>
-            <el-button type="danger" :disabled="busy" @click="$emit('remove')"
-              >按端口删除</el-button
-            >
+            <el-button type="success" :disabled="busy" @click="$emit('allow')">{{
+              t('放行')
+            }}</el-button>
+            <el-button type="danger" :disabled="busy" @click="$emit('remove')">{{
+              t('按端口删除')
+            }}</el-button>
           </div>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <el-card shadow="never" header="Ping 操作" class="wt-card">
+    <el-card shadow="never" :header="t('Ping 操作')" class="wt-card">
       <p class="wt-detail">
-        当前状态：
-        <el-tag :type="pingStateInfo.type" effect="dark" size="small">
+        {{ t('当前状态：')
+        }}<el-tag :type="pingStateInfo.type" effect="dark" size="small">
           {{ pingStateInfo.text }}
         </el-tag>
         <br />
         {{ pingStateInfo.desc }}
         <br />
         IPv4：{{
-          pingState === 'unknown' ? '未知' : status?.pingIPv4Blocked ? '已阻止' : '未阻止'
+          pingState === 'unknown' ? t('未知') : status?.pingIPv4Blocked ? t('已阻止') : t('未阻止')
         }}；IPv6：{{
-          pingState === 'unknown' ? '未知' : status?.pingIPv6Blocked ? '已阻止' : '未阻止'
+          pingState === 'unknown' ? t('未知') : status?.pingIPv6Blocked ? t('已阻止') : t('未阻止')
         }}
       </p>
       <div class="wt-actions wt-actions--mt">
-        <el-button type="warning" :disabled="!canDisablePing" @click="$emit('disable-ping')"
-          >一键禁 ping</el-button
-        >
-        <el-button type="success" :disabled="!canEnablePing" @click="$emit('enable-ping')"
-          >恢复 ping</el-button
-        >
+        <el-button type="warning" :disabled="!canDisablePing" @click="$emit('disable-ping')">{{
+          t('一键禁 ping')
+        }}</el-button>
+        <el-button type="success" :disabled="!canEnablePing" @click="$emit('enable-ping')">{{
+          t('恢复 ping')
+        }}</el-button>
       </div>
     </el-card>
 
-    <el-card shadow="never" header="高危端口预设" class="wt-card">
+    <el-card shadow="never" :header="t('高危端口预设')" class="wt-card">
       <div class="wt-status-block">
         <div class="wt-status-line">
-          <span class="wt-status-label">拦截状态</span>
+          <span class="wt-status-label">{{ t('拦截状态') }}</span>
           <el-tag :type="riskInfo.type" effect="dark">{{ riskInfo.text }}</el-tag>
-          <span class="wt-status-sub">{{ status?.riskPortsDetail || '—' }}</span>
+          <span class="wt-status-sub">{{ t(status?.riskPortsDetail || '—') }}</span>
         </div>
       </div>
       <p class="wt-detail">
-        一键拦切入站 TCP：135（RPC）、139（NetBIOS）、445（SMB）、5985/5986（WinRM）。不含
-        3389，以免影响远程桌面。
-        <template v-if="status?.riskPortsUnknown">
-          <br />状态未知时请先点击右上角「刷新」后再操作。
-        </template>
+        {{
+          t(
+            '一键拦切入站 TCP：135（RPC）、139（NetBIOS）、445（SMB）、5985/5986（WinRM）。不含 3389，以免影响远程桌面。',
+          )
+        }}<template v-if="status?.riskPortsUnknown">
+          <br />{{ t('状态未知时请先点击右上角「刷新」后再操作。') }}</template
+        >
       </p>
       <div class="wt-actions wt-actions--mt">
-        <el-button type="warning" :disabled="!canBlockRisk" @click="$emit('block-risk')">
-          拦高危入站端口
-        </el-button>
-        <el-button type="success" :disabled="!canUnblockRisk" @click="$emit('unblock-risk')">
-          移除高危拦截
-        </el-button>
+        <el-button type="warning" :disabled="!canBlockRisk" @click="$emit('block-risk')">{{
+          t('拦高危入站端口')
+        }}</el-button>
+        <el-button type="success" :disabled="!canUnblockRisk" @click="$emit('unblock-risk')">{{
+          t('移除高危拦截')
+        }}</el-button>
       </div>
     </el-card>
 
-    <el-card shadow="never" header="已创建规则" class="wt-card">
+    <el-card shadow="never" :header="t('已创建规则')" class="wt-card">
       <div class="wt-actions wt-actions--mt" style="margin-bottom: 10px">
         <el-button
           type="danger"
           :disabled="busy || !rules.length"
           @click="$emit('clear-allow-all')"
+          >{{ t('删除全部放行规则') }}</el-button
         >
-          删除全部放行规则
-        </el-button>
       </div>
       <el-table
         :data="rules"
         stripe
-        empty-text="暂无规则"
+        :empty-text="t('暂无规则')"
         highlight-current-row
         style="width: 100%"
       >
-        <el-table-column prop="name" label="规则名称" min-width="240" />
-        <el-table-column prop="port" label="端口" width="90" />
-        <el-table-column label="状态" width="90">
+        <el-table-column prop="name" :label="t('规则名称')" min-width="240" />
+        <el-table-column prop="port" :label="t('端口')" width="90" />
+        <el-table-column :label="t('状态')" width="90">
           <template #default="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'info'" size="small">
-              {{ row.enabled ? '开启' : '关闭' }}
+              {{ row.enabled ? t('开启') : t('关闭') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="90" fixed="right">
+        <el-table-column :label="t('操作')" width="90" fixed="right">
           <template #default="{ row }">
-            <el-button link type="danger" :disabled="busy" @click="$emit('remove-row', row.port)"
-              >删除</el-button
-            >
+            <el-button link type="danger" :disabled="busy" @click="$emit('remove-row', row.port)">{{
+              t('删除')
+            }}</el-button>
           </template>
         </el-table-column>
       </el-table>

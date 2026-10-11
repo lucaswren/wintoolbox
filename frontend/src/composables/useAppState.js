@@ -1,3 +1,4 @@
+import { t, locale } from '../i18n/index.js'
 import { reactive, ref } from 'vue'
 import { api } from '../api/index.js'
 import { mergeModuleStatus } from './moduleStatus.js'
@@ -182,7 +183,7 @@ export function useAppState({ appendLog }) {
     const prev = lastWarnings
     lastWarnings = state.warnings.slice()
     for (const w of state.warnings) {
-      if (!prev.includes(w)) appendLog('提示: ' + w)
+      if (!prev.includes(w)) appendLog(t('提示: ') + t(w))
     }
   }
 
@@ -212,7 +213,7 @@ export function useAppState({ appendLog }) {
       activationStatus:
         state.overview.activationStatus === '检测中…' ? fail : state.overview.activationStatus,
     }
-    appendLog('概览详情: ' + msg)
+    appendLog(t('概览详情: ') + msg)
   }
 
   async function queueOverviewDetail() {
@@ -240,14 +241,14 @@ export function useAppState({ appendLog }) {
       const st = module ? mergeModuleStatus(state, snapshot, module) : snapshot
       if (seq !== statusSeq) return
       applyStatus(st)
-      updatedAt[module || 'all'] = new Date().toLocaleTimeString('zh-CN', { hour12: false })
-      if (showLog) appendLog('已刷新')
+      updatedAt[module || 'all'] = new Date().toLocaleTimeString(locale.value, { hour12: false })
+      if (showLog) appendLog(t('已刷新'))
       if (queueDetail) queueOverviewDetail()
     } catch (e) {
       if (seq !== statusSeq) return
-      const msg = e?.message || String(e)
-      appendLog('刷新失败: ' + msg)
-      if (showLog) ElMessage.error('刷新失败: ' + msg)
+      const msg = t(e?.message || String(e))
+      appendLog(t('刷新失败: ') + msg)
+      if (showLog) ElMessage.error(t('刷新失败: ') + msg)
       throw e
     } finally {
       if (seq === statusSeq) loading.value = false
@@ -263,7 +264,7 @@ export function useAppState({ appendLog }) {
     } catch (e) {
       if (seq !== rulesSeq) return
       firewallRules.value = []
-      ElMessage.warning('防火墙规则加载失败: ' + (e?.message || e))
+      ElMessage.warning(t('防火墙规则加载失败: ') + (e?.message || e))
     }
   }
 
@@ -276,7 +277,7 @@ export function useAppState({ appendLog }) {
       rdpHistory.value = list
     } catch (e) {
       if (seq !== historySeq) return
-      ElMessage.warning('RDP 连接记录加载失败: ' + (e?.message || e))
+      ElMessage.warning(t('RDP 连接记录加载失败: ') + (e?.message || e))
       rdpHistory.value = []
     } finally {
       if (seq === historySeq) rdpHistoryLoading.value = false
@@ -289,7 +290,7 @@ export function useAppState({ appendLog }) {
       timeZones.value = zones?.length ? zones : []
     } catch (e) {
       timeZones.value = []
-      ElMessage.warning(e?.message || '时区列表加载失败')
+      ElMessage.warning(e?.message || t('时区列表加载失败'))
     }
   }
 

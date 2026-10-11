@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"wintoolbox/internal/locale"
 
 	"wintoolbox/internal/win/syscmd"
 )
@@ -12,7 +13,7 @@ import (
 func verifyMicrosoftSigned(path string) error {
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return fmt.Errorf("解析安装包路径失败: %w", err)
+		return fmt.Errorf(locale.Text("Failed to resolve the installer path: %w", "解析安装包路径失败: %w", "解析安裝程式路徑失敗: %w"), err)
 	}
 	escaped := strings.ReplaceAll(abs, "'", "''")
 	script := fmt.Sprintf(`
@@ -32,7 +33,7 @@ Write-Output 'OK'
 			msg = err.Error()
 		}
 		if msg == "" {
-			msg = "未知错误"
+			msg = locale.Text("Unknown error", "未知错误", "未知錯誤")
 		}
 		return fmt.Errorf("%s", msg)
 	}

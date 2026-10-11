@@ -1,35 +1,29 @@
-# WinToolbox 文档
+[English](README.md) | [繁體中文](zh-TW/README.md) | [简体中文](zh-CN/README.md)
 
-操作说明。配图中红色数字与文中标注对应。
-**下载图为模拟示意**；软件页为 **2× 高清真实界面截图**。
+# WinToolBox documentation
 
-## 命名规则
+English is the primary documentation language. Complete user guides are also available in [Traditional Chinese](zh-TW/README.md) and [Simplified Chinese](zh-CN/README.md). The application chooses the user's Windows display language on first launch and lets users save a manual preference.
 
-`序号-英文短名.md` / `序号-英文短名.png`，与侧栏功能一一对应；`90-` 为综合指南。
+Start with [Download and first launch](00-download.md). Administrator privileges are required; Group Policy may override local changes.
 
-## 第一步：下载
+See [Language selection](localization.md) for automatic detection and saved preferences.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+| Guide | Topic |
+|---|---|
+| [Download and first launch](00-download.md) | Download, checksum, UAC, WebView2 and language selection |
+| [Overview](01-overview.md) | Overview |
+| [Local accounts](02-local-account.md) | Local accounts |
+| [Remote Desktop](03-remote-desktop.md) | Remote Desktop |
+| [Firewall](04-firewall.md) | Firewall |
+| [Security hardening](05-security-harden.md) | Security hardening |
+| [Antivirus](06-defender.md) | Antivirus |
+| [Time synchronization](07-time-sync.md) | Time synchronization |
+| [Power](08-power.md) | Power |
+| [Windows Update](09-windows-update.md) | Windows Update |
+| [App update](10-app-update.md) | App update |
+| [Windows hardening guide](90-hardening-guide.md) | Windows hardening guide |
+| [Development and acceptance](development.md) | Development and acceptance |
 
-拦截时点 **保留 / 保持**；SmartScreen：**更多信息 → 仍要运行**。详见 [00 · 下载](./00-download.md)。
+Existing screenshots show the earlier Simplified Chinese interface. Software screenshots are real captures at 2× resolution; browser download images are illustrations. Numbered filenames match the sidebar modules; 90- is the combined guide.
 
-![下载拦截示意（模拟）](./images/00-download.png)
-
-## 功能文档
-
-| 文档 | 说明 |
-|------|------|
-| [00 · 下载](./00-download.md) | 下载、拦截、校验、管理员运行 |
-| [01 · 本机概览](./01-overview.md) | 系统与硬件信息 |
-| [02 · 本地账户](./02-local-account.md) | 来宾/自动登录、密码策略、锁定、改密 |
-| [03 · 远程桌面](./03-remote-desktop.md) | 端口、开关、NLA、连接记录 |
-| [04 · 防火墙](./04-firewall.md) | 配置文件、放行、禁 ping、高危端口 |
-| [05 · 安全加固](./05-security-harden.md) | SMBv1、WinRM、匿名枚举 |
-| [06 · 防病毒](./06-defender.md) | Defender 实时防护开关 |
-| [07 · 时间同步](./07-time-sync.md) | 时区、NTP、对时与测试 |
-| [08 · 电源](./08-power.md) | 锁定 / 重启 / 关机 / 取消 |
-| [09 · 系统更新](./09-windows-update.md) | Windows Update 开关 |
-| [10 · 软件更新](./10-app-update.md) | 本软件检查、下载、安装 |
-| [90 · 系统加固指南](./90-hardening-guide.md) | 推荐顺序：账户 → RDP → 防火墙 → 加固 → 更新 |
-
-需**管理员权限**。域环境可能被组策略覆盖。
+Historical engineering notes: [Project review, 2026-10-08](project-review-2026-10-08.md) · [Optimization delivery, 2026-10-08](optimization-2026-10-08.md).

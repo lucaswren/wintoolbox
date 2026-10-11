@@ -1,26 +1,15 @@
-# 01 · 本机概览
+[English](01-overview.md) | [繁體中文](zh-TW/01-overview.md) | [简体中文](zh-CN/01-overview.md)
 
-查看本机系统与硬件信息（只读，无危险操作）。
+# 01 · Overview
 
-## 第一步：下载
+Open **Overview** to view the hostname, architecture, Windows edition/build, activation status, display resolution, IP addresses and volumes.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+The hardware card shows manufacturer, model, motherboard, BIOS, CPU and logical processors, memory usage/modules, physical disks and graphics adapters. Hardware details load separately from the initial status snapshot.
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+Select **Refresh** to collect new information. **Unknown**, **Checking…**, **Read failed** or **Query timed out** are diagnostic states, not evidence of a disabled feature. Windows and device-supplied names retain their original language.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+![Overview](images/01-overview.png)
 
-## 界面
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-![本机概览（真实界面）](./images/01-overview.png)
-
-侧栏点 **本机概览**。页面展示：
-
-| 区块 | 内容 |
-|------|------|
-| **系统** | 主机名、架构、操作系统与 Build、激活、分辨率、IP、磁盘空间 |
-| **硬件** | 厂商/型号、主板、BIOS、CPU、内存与内存条、物理磁盘、显卡 |
-
-右上角 **刷新** 可重新拉取状态。部分硬件细节可能异步补全。
-
-返回：[文档首页](./README.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

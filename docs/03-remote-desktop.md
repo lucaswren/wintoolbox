@@ -1,37 +1,20 @@
-# 03 · 远程桌面
+[English](03-remote-desktop.md) | [繁體中文](zh-TW/03-remote-desktop.md) | [简体中文](zh-CN/03-remote-desktop.md)
 
-修改 RDP 端口、开关服务、强制 NLA，并管理本机连接记录。
+# 03 · Remote Desktop
 
-## 第一步：下载
+Manage the Remote Desktop service, listening port, Network Level Authentication (NLA) and local mstsc connection history.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+1. Enter a port from 1–65535 and select **Save port**. WinToolBox updates the registry and synchronizes its `WinToolbox-RDP` firewall allow rule.
+2. Enable Remote Desktop if required and select **Enforce NLA**. Very old clients may be unable to connect with NLA enforced.
+3. Connect using `IP:new-port`. Update cloud security groups and upstream firewall rules separately; changing the local port does not update them.
+4. Refresh and verify the actual state, especially after a partial failure. If the service or NLA state is unknown, refresh before proceeding.
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+Changing ports alone does not replace access controls or NLA. Confirm that the old port is no longer exposed where appropriate.
 
-![下载拦截示意（模拟）](./images/00-download.png)
+**Connection history** supports filtering/search, deleting one record, clearing a selected type and clearing all records. Cleanup covers host/MRU history, saved username hints, TERMSRV credentials, Default.rdp/recent .rdp files and bitmap cache. It does not change Remote Desktop service or port settings.
 
-## 界面标注
+![Remote Desktop](images/03-remote-desktop.png)
 
-![远程桌面（真实界面）](./images/03-remote-desktop.png)
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-| # | 选项 | 说明 |
-|---|------|------|
-| ① | **端口** | 1–65535，避免长期使用 3389 |
-| ② | **保存端口** | 写注册表，并同步 `WinToolbox-RDP` 防火墙放行 |
-| ③ | **开启 / 关闭** | 开关远程桌面服务（图示为已开启时的「关闭」） |
-| ④ | **强制 NLA** | 认证前拒绝连接；极旧客户端可能连不上 |
-
-下方 **连接记录** 可筛选、删除单条或 **清理全部记录**（含主机历史、凭据提示等缓存）。
-
-## 步骤
-
-1. **远程桌面** → 填写端口（①）→ **保存端口**（②）
-2. 未开启则点 **开启**（③）→ **强制 NLA**（④）
-3. 客户端使用 `IP:新端口`；云主机请同步安全组
-
-## 注意
-
-- 公网请确认安全组是否仍放行旧 3389
-- 状态异常时先点右上角 **刷新**
-
-相关：[90 · 系统加固指南](./90-hardening-guide.md) · [02 · 本地账户](./02-local-account.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

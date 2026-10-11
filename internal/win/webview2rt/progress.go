@@ -6,6 +6,7 @@ import (
 	"sync"
 	"syscall"
 	"unsafe"
+	"wintoolbox/internal/locale"
 
 	"golang.org/x/sys/windows"
 )
@@ -247,7 +248,7 @@ func (p *progressUI) SetProgress(done, total int64) {
 		return
 	}
 	if total <= 0 {
-		p.setText(fmt.Sprintf("正在下载 WebView2 运行时… 已下载 %s", formatBytes(done)))
+		p.setText(fmt.Sprintf(locale.Text("Downloading WebView2… %s downloaded", "正在下载 WebView2 运行时… 已下载 %s", "正在下載 WebView2 執行階段… 已下載 %s"), formatBytes(done)))
 		procSendMessageW.Call(uintptr(p.bar), pbmSetMarquee, 1, 30)
 		return
 	}
@@ -258,7 +259,7 @@ func (p *progressUI) SetProgress(done, total int64) {
 	if pct < 0 {
 		pct = 0
 	}
-	p.setText(fmt.Sprintf("正在下载 WebView2 运行时… %d%%（%s / %s）", pct, formatBytes(done), formatBytes(total)))
+	p.setText(fmt.Sprintf(locale.Text("Downloading WebView2… %d%% (%s / %s)", "正在下载 WebView2 运行时… %d%%（%s / %s）", "正在下載 WebView2 執行階段… %d%%（%s / %s）"), pct, formatBytes(done), formatBytes(total)))
 	procSendMessageW.Call(uintptr(p.bar), pbmSetMarquee, 0, 0)
 	procSendMessageW.Call(uintptr(p.bar), pbmSetPos, uintptr(pct), 0)
 }

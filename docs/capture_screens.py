@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Capture HD annotated screenshots for all WinToolbox feature docs."""
+"""Capture HD annotated screenshots for all WinToolBox feature docs."""
 from __future__ import annotations
 
 import subprocess
@@ -25,7 +25,7 @@ M_ACCOUNT = "\u672c\u5730\u8d26\u6237"
 M_RDP = "\u8fdc\u7a0b\u684c\u9762"
 M_FW = "\u9632\u706b\u5899"
 M_HARDEN = "\u5b89\u5168\u52a0\u56fa"
-M_DEF = "\u9632\u75c5\u6bd2"
+M_DEF = "Microsoft Defender"
 M_TIME = "\u65f6\u95f4\u540c\u6b65"
 M_POWER = "\u7535\u6e90"
 M_UPD = "\u7cfb\u7edf\u66f4\u65b0"
@@ -47,7 +47,7 @@ B_NLA = "\u5f3a\u5236 NLA"
 B_FW_ON = "\u5168\u90e8\u5f00\u542f"
 B_FW_OFF = "\u5168\u90e8\u5173\u95ed"
 B_ALLOW = "\u653e\u884c"
-B_PING = "\u4e00\u952e\u7981 ping"
+B_PING = "阻止 ICMP Echo"
 B_RISK = "\u62e6\u9ad8\u5371\u5165\u7ad9\u7aef\u53e3"
 B_SMB1 = "\u7981\u7528 SMBv1"
 B_WINRM = "\u5173\u95ed\u5e76\u62e6\u622a WinRM"
@@ -95,7 +95,7 @@ MOCK_JS = r"""
       cpu: 'Intel Xeon Silver 4210', cpuCores: 20, memoryTotalGB: 64, memoryAvailGB: 41.2,
       memoryModules: '4 x 16GB DDR4', resolution: '1920x1080', ips: ['10.0.0.12'],
       disks: ['C: 120GB free / 500GB'], physicalDisks: ['Samsung SSD 980 1TB'],
-      gpus: ['Microsoft Basic Display Adapter'], activated: true, activationStatus: 'Licensed'
+      gpus: ['Microsoft Basic Display Adapter'], activated: true, activationStatus: '已激活'
     },
     accounts: [
       { name: 'Administrator', enabled: true, enabledUnknown: false, admin: true, adminUnknown: false, current: true },
@@ -124,7 +124,7 @@ MOCK_JS = r"""
     winrmHardened: false, winrmUnknown: false, winrmDetail: 'WinRM not hardened',
     anonymousOK: false, anonymousUnknown: false, anonymousDetail: 'Anonymous enum allowed'
   };
-  const appInfo = { name: 'WinToolbox', version: 'v1.0.0' };
+  const appInfo = { name: 'WinToolBox', version: 'v1.0.0' };
   const rules = [{ name: 'WinToolbox-Allow-8080', port: '8080', enabled: true }];
   const history = [{ kind: 'mru', host: '10.0.0.8', username: 'Administrator', source: 'MRU', detail: '', sid: '' }];
   const upd = { currentVersion: 'v1.0.0', latestVersion: 'v1.0.0', hasUpdate: false, assetName: '', assetURL: '', assetSize: 0, assetSHA256: '', notes: '', downloaded: false, downloadPath: '', verified: false, error: '' };
@@ -132,7 +132,7 @@ MOCK_JS = r"""
   const noop = () => ok(null);
   const app = {
     GetAppInfo: () => ok(appInfo), GetStatus: () => ok(status), GetModuleStatus: () => ok(status), CancelAppUpdateDownload: noop,
-    GetOverviewDetail: () => ok({ memoryModules: status.overview.memoryModules, physicalDisks: status.overview.physicalDisks, gpus: status.overview.gpus, activated: true, activationStatus: 'Licensed' }),
+    GetOverviewDetail: () => ok({ memoryModules: status.overview.memoryModules, physicalDisks: status.overview.physicalDisks, gpus: status.overview.gpus, activated: true, activationStatus: '已激活' }),
     GetTimeZones: () => ok(status.timeZones), GetFirewallRules: () => ok(rules), GetRdpHistory: () => ok(history),
     CheckAppUpdate: () => ok(upd), DownloadAppUpdate: () => ok(upd), GetAppUpdateInfo: () => ok(upd), ApplyAppUpdate: noop,
     ChangeAccountPassword: noop, SetAccountEnabled: noop, SetAccountAdmin: noop,
@@ -404,6 +404,7 @@ def main():
             page = context.new_page()
             page.on("pageerror", lambda err: print("pageerror:", err))
             page.add_init_script(MOCK_JS)
+            page.add_init_script("localStorage.setItem('wintoolbox.language', 'zh-CN')")
             page.goto(BASE, wait_until="networkidle", timeout=60000)
             wait_ready(page)
             page.add_style_tag(content=".op-log, .wt-log { max-height: 64px !important; }")

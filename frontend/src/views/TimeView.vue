@@ -1,4 +1,6 @@
 <script setup>
+import { t } from '../i18n/index.js'
+
 import { computed } from 'vue'
 import { FORM_LABEL_WIDTH, NTP_PRESETS } from '../constants.js'
 
@@ -17,34 +19,34 @@ const canAct = computed(() => !props.busy && !timeUnknown.value)
 
 <template>
   <div data-view="time">
-    <p class="page-desc">时区、NTP 源与立即对时（打开本页会自动定位当前时区）</p>
+    <p class="page-desc">{{ t('时区、NTP 源与立即对时（打开本页会自动定位当前时区）') }}</p>
 
     <el-alert
       v-if="timeUnknown"
       type="warning"
       :closable="false"
       show-icon
-      title="时间/NTP 状态读取超时或失败，请稍后刷新后再操作"
+      :title="t('时间/NTP 状态读取超时或失败，请稍后刷新后再操作')"
       style="margin-bottom: 12px"
     />
 
-    <el-card shadow="never" header="当前状态" class="wt-card">
+    <el-card shadow="never" :header="t('当前状态')" class="wt-card">
       <div class="wt-status-block">
         <div class="wt-status-line">
-          <span class="wt-status-label">本机时间</span>
+          <span class="wt-status-label">{{ t('本机时间') }}</span>
         </div>
-        <p class="wt-detail">{{ status?.timeText || '—' }}</p>
+        <p class="wt-detail">{{ t(status?.timeText || '—') }}</p>
       </div>
     </el-card>
 
-    <el-card shadow="never" header="设置" class="wt-card">
+    <el-card shadow="never" :header="t('设置')" class="wt-card">
       <el-form :label-width="FORM_LABEL_WIDTH" class="wt-form-row">
-        <el-form-item label="时区">
+        <el-form-item :label="t('时区')">
           <el-select-v2
             v-model="form.timeZone"
             :options="zones.map((z) => ({ value: z.id, label: z.label || z.id }))"
             filterable
-            placeholder="选择时区"
+            :placeholder="t('选择时区')"
             style="width: 100%"
             :disabled="!canAct"
           />
@@ -52,7 +54,7 @@ const canAct = computed(() => !props.busy && !timeUnknown.value)
         <el-form-item label="NTP">
           <el-input v-model="form.ntpServer" placeholder="time.windows.com" :disabled="!canAct" />
         </el-form-item>
-        <el-form-item label="常用 NTP">
+        <el-form-item :label="t('常用 NTP')">
           <div class="wt-tag-row">
             <el-tag
               v-for="p in NTP_PRESETS"
@@ -70,21 +72,21 @@ const canAct = computed(() => !props.busy && !timeUnknown.value)
               type="primary"
               :disabled="!canAct || !form.timeZone"
               @click="$emit('apply-tz')"
-              >应用时区</el-button
+              >{{ t('应用时区') }}</el-button
             >
             <el-button
               :disabled="!canAct || !String(form.ntpServer || '').trim()"
               @click="$emit('save-ntp')"
-              >保存 NTP</el-button
+              >{{ t('保存 NTP') }}</el-button
             >
-            <el-button type="success" :disabled="!canAct" @click="$emit('sync')"
-              >立即同步</el-button
-            >
+            <el-button type="success" :disabled="!canAct" @click="$emit('sync')">{{
+              t('立即同步')
+            }}</el-button>
             <el-button
               type="info"
               :disabled="!canAct || !String(form.ntpServer || '').trim()"
               @click="$emit('test-ntp')"
-              >测试 NTP</el-button
+              >{{ t('测试 NTP') }}</el-button
             >
           </div>
         </el-form-item>

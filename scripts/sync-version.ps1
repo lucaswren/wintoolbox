@@ -20,7 +20,7 @@ $dtoPath = Join-Path $Root 'internal\ui\dto.go'
 $dto = Get-Content $dtoPath -Raw -Encoding UTF8
 $dto = [regex]::Replace($dto, 'AppName\s+=\s+"[^"]*"', "AppName    = `"$name`"")
 $dto = [regex]::Replace($dto, 'AppVersion\s+=\s+"[^"]*"', "AppVersion = `"$display`"")
-$dto = [regex]::Replace($dto, 'Version string `json:"version"` // v[\d.]+', "Version string ``json:`"version`"`` // $display")
+$dto = [regex]::Replace($dto, 'Version\s+string\s+`json:"version"`\s+// v[\d.]+', "Version string ``json:`"version`"`` // $display")
 Set-FileUtf8 $dtoPath $dto
 
 # frontend/src/constants.js
@@ -43,11 +43,14 @@ $pkg = Get-Content $pkgPath -Raw -Encoding UTF8
 $pkg = [regex]::Replace($pkg, '"version":\s*"[^"]*"', "`"version`": `"$ver`"")
 Set-FileUtf8 $pkgPath $pkg
 
-# README.md (header line)
-$readmePath = Join-Path $Root 'README.md'
-$readme = Get-Content $readmePath -Raw -Encoding UTF8
-$readme = [regex]::Replace($readme, '版本：v[\d.]+', "版本：$display")
-Set-FileUtf8 $readmePath $readme
+# Keep all language editions aligned (header line only).
+foreach ($readmeName in @('README.md', 'README.zh-CN.md', 'README.zh-TW.md')) {
+  $readmePath = Join-Path $Root $readmeName
+  if (-not (Test-Path -LiteralPath $readmePath)) { continue }
+  $readme = Get-Content -LiteralPath $readmePath -Raw -Encoding UTF8
+  $readme = [regex]::Replace($readme, '(?m)^(Version: |版本：)v[\d.]+', ('${1}' + $display))
+  Set-FileUtf8 $readmePath $readme
+}
 
 Write-Host "Synced version $display from version.json" -ForegroundColor DarkGray
 

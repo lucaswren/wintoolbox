@@ -501,7 +501,7 @@ func accountsFrom(accs []account.Info) []AccountView {
 func overviewFrom(ov sysinfo.Overview) OverviewView {
 	diskTexts := make([]string, 0, len(ov.Disks))
 	for _, d := range ov.Disks {
-		diskTexts = append(diskTexts, fmt.Sprintf("%s %.0f/%.0f GB", d.Root, d.FreeGB, d.TotalGB))
+		diskTexts = append(diskTexts, fmt.Sprintf("%s %.0f/%.0f GiB", d.Root, d.FreeGB, d.TotalGB))
 	}
 	return OverviewView{
 		Hostname: ov.Hostname, OSName: ov.OSName, OSBuild: ov.OSBuild, Arch: ov.Arch,
@@ -517,9 +517,9 @@ func formatPhysicalDisks(disks []sysinfo.PhysicalDisk) []string {
 	physTexts := make([]string, 0, len(disks))
 	for _, d := range disks {
 		if d.Media != "" {
-			physTexts = append(physTexts, fmt.Sprintf("%s（%s，%.0f GB）", d.Model, d.Media, d.SizeGB))
+			physTexts = append(physTexts, fmt.Sprintf("%s（%s，%.0f GiB）", d.Model, d.Media, d.SizeGB))
 		} else {
-			physTexts = append(physTexts, fmt.Sprintf("%s（%.0f GB）", d.Model, d.SizeGB))
+			physTexts = append(physTexts, fmt.Sprintf("%s（%.0f GiB）", d.Model, d.SizeGB))
 		}
 	}
 	return physTexts

@@ -19,7 +19,7 @@
   --wt-radius-sm: 10px;
   --wt-accent: #3b82f6;
   --wt-status-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  --wt-desc-label-width: 84px;
+  --wt-desc-label-width: 150px;
 }
 
 * {
@@ -52,6 +52,13 @@ body,
   font-size: 13px;
   line-height: 1.5;
   color: var(--wt-text-secondary);
+}
+
+.el-form-item__label {
+  white-space: normal;
+  height: auto;
+  line-height: 1.4;
+  align-items: center;
 }
 
 /* —— Cards —— */
@@ -111,7 +118,7 @@ body,
   font-size: 14px;
   font-weight: 650;
   color: var(--wt-text-primary);
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .wt-status-sub {
@@ -234,7 +241,7 @@ body,
   width: var(--wt-desc-label-width) !important;
   min-width: var(--wt-desc-label-width) !important;
   max-width: var(--wt-desc-label-width) !important;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
 }
 

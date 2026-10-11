@@ -1,22 +1,26 @@
-# 四阶段优化交付记录
+[English](optimization-2026-10-08.md) | [繁體中文](zh-TW/optimization-2026-10-08.md) | [简体中文](zh-CN/optimization-2026-10-08.md)
 
-## 已落实
+# Four-stage optimization delivery record
 
-1. 可靠性：Update/Defender备份逐项检查写入，恢复前验证所需字段；损坏备份拒绝恢复。防火墙、ping、系统更新、时间、Defender探测保留未知态。写操作无论成功失败都复查原模块。自更新增加受限暂存目录、复制前后哈希校验、旧exe备份、替换失败日志和启动失败回滚。
-2. 状态与并发：增加模块状态API；重叠慢查询合并；支持取消的查询传递共享context，最后一个调用者退出时取消命令；其他原生查询保持单个后台任务。系统命令并发上限6，后端按账户/网络/时间等资源序列化写操作。Windows Update恢复以原配置为目标；Defender明确以启用为目标。管理员组用固定SID解析，并通过NetAPI查询和修改成员；更新服务状态使用注册表，任务状态使用COM接口。
-3. 工程规范：由Go导出方法与JSON DTO生成桥接类型契约，前端API进行类型检查；增加ESLint、Prettier、故障回归测试及Windows CI。拆出更新器、快照、共享查询、日志和模块状态逻辑；useAction/useActions改为actionRunner/useSystemActions。构建使用npm ci，锁文件版本同步，产物统一放artifacts/releases。开发环境与文档对齐。
-4. UI与发布体验：账户分为用户管理/安全策略；KeepAlive保留草稿；按钮允许换行、侧栏可滚动；避免单项操作后的全局遮罩；修正锁定状态颜色和ping文案；显示状态采集时间。日志最多500条，带模块与级别颜色，支持展开、自动滚动和导出。自更新有下载量/速率/取消及自动下载偏好。电源操作明确提示强制关闭应用。修复依赖审计报告的Vue和source-map-js漏洞。
+Historical delivery record, 2026-10-08. Validation results below describe that delivery, not the current localization work.
 
-## 验证
+## Delivered changes
 
-- Go：11个回归测试，覆盖备份写入失败、损坏备份、未知状态、查询合并/取消、下载状态读取/取消清理、摘要匹配、预发布版本与更新器启动失败回滚；全部通过。
-- 前端：6个回归测试通过；lint、桥接类型检查、生成契约一致性检查、格式检查通过。
-- Go静态分析与gofmt检查通过；git diff --check通过。
-- 模拟UI：十个页面，960×600和1120×720，草稿保留，无页面错误及主区域横向溢出。截图位于artifacts/ui。
-- npm audit：最终锁文件0项已报告漏洞。
-- 完整Windows桌面构建通过，exe与SHA256位于artifacts/releases。
-- 构建仍有第三方VueUse的两条PURE注释警告，不影响构建结果。
+1. Reliability: check each Update/Defender backup write and validate required restore fields; reject corrupt backups. Preserve unknown states for firewall, ping, updates, time and Defender. Verify the original module after both successful and failed writes. Secure updater staging, verify hashes before/after copying, retain the previous executable, log replacement failures and roll back startup failures.
+2. State/concurrency: module status API, coalesced slow probes, shared contexts cancelled after the last caller leaves, and single background jobs for uncancellable native queries. Limit system commands to six and serialize writes by account/network/time resources. Restore Windows Update to its previous configuration; Defender enable explicitly targets on. Resolve the administrator group by SID and manage membership through NetAPI; query service state via the registry and task state via COM.
+3. Engineering: generate bridge types from Go methods/JSON DTOs and type-check the frontend API. Add ESLint, Prettier, fault regression tests and Windows CI. Extract updater, snapshot, shared probe, log and module state logic; rename useAction/useActions to actionRunner/useSystemActions. Use npm ci, synchronize lockfile versions, centralize artifacts/releases and align environment docs.
+4. UI/release: separate account tabs, retain drafts with KeepAlive, wrap buttons and scroll the sidebar. Avoid full masks for local operations, fix lockout colors and ping wording, and show collection time. Keep 500 log entries with module/severity colors, expansion, auto-scroll and export. Add update amount/speed/cancel and automatic-download preference. Explain forced power actions. Fix the reported Vue/source-map-js dependency vulnerabilities.
 
-本次未运行真实系统设置写操作、真实自更新安装或跨Windows版本/高DPI验收。界面测试使用模拟Wails后端；更新器故障测试仅替换临时目录中的测试文件。真实部署前按[开发规范](development.md)中的虚拟机清单验收。桥接层有类型检查，Vue页面仍为JavaScript。资源锁保护当前进程，不替代多实例之间的系统协调。
+## Recorded validation
 
-四阶段优化首次交付时保持 1.2.0，仅生成本地构建。后续按用户要求将版本重新设为 1.0.0，更新请求及文档统一指向 lucaswren/wintoolbox，并在备份后删除、重建线上公开仓库，再发布 v1.0.0。旧版 1.2.0 用户需手动安装。
+- Eleven Go regression tests covered backup write failures/corruption, unknown states, coalescing/cancellation, download status/cancellation cleanup, checksum matching, prereleases and updater startup rollback; all passed.
+- Six frontend regression tests, lint, bridge types, generated-contract consistency and formatting passed.
+- Go vet, gofmt and git diff --check passed.
+- Mock UI checks covered ten pages at 960×600 and 1120×720, retained drafts, no page errors and no main-area horizontal overflow; screenshots were written to artifacts/ui.
+- npm audit reported zero known vulnerabilities for the final lockfile at that time.
+- The complete Windows desktop build passed; executable and SHA256 were written to artifacts/releases.
+- Two third-party VueUse PURE-comment warnings remained without affecting build success.
+
+Real system writes, real self-update installation, cross-Windows-version and high-DPI acceptance were not performed. UI checks mocked Wails; updater fault tests only replaced temporary test files. Follow [Development and acceptance](development.md) before deployment. Vue pages remain JavaScript although the bridge has type checks. Resource locks coordinate one process, not multiple instances.
+
+The initial optimization delivery retained 1.2.0 and generated only a local build. A later user request reset the version to 1.0.0, aligned update requests/docs to lucaswren/wintoolbox, backed up and recreated the public repository, and published v1.0.0. Existing 1.2.0 users must install manually.

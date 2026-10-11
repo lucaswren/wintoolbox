@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"log"
+	"wintoolbox/internal/locale"
 
 	"wintoolbox/internal/ui"
 	"wintoolbox/internal/win/dialog"
@@ -16,7 +17,7 @@ var assets embed.FS
 func main() {
 	elevate.EnsureAdmin()
 	if err := webview2rt.Ensure(); err != nil {
-		dialog.MessageBox("WinToolbox", "无法准备 WebView2 运行时：\n"+err.Error(), true)
+		dialog.MessageBox("WinToolBox", locale.Text("Unable to prepare the WebView2 runtime:\n", "无法准备 WebView2 运行时：\n", "無法準備 WebView2 執行階段：\n")+err.Error(), true)
 		log.Fatal(err)
 	}
 	if err := ui.Run(assets); err != nil {

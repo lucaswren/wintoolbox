@@ -1,26 +1,16 @@
-# 08 · 电源
+[English](08-power.md) | [繁體中文](zh-TW/08-power.md) | [简体中文](zh-CN/08-power.md)
 
-锁定会话，或按延迟计划重启 / 关机，并可取消已计划的关机与重启。
+# 08 · Power
 
-## 第一步：下载
+Use **Lock** to lock the current session, or **Restart / Shut down** to schedule a power action.
 
-https://github.com/lucaswren/wintoolbox/releases/latest
+1. Set **Delay (seconds)** from 0–604800 (up to 7 days). Zero means immediately.
+2. Select **Restart** or **Shut down** and read the confirmation.
+3. Save your work before confirming: these actions forcibly close applications.
+4. Use **Cancel shutdown/restart** to cancel a pending schedule.
 
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
+![Power](images/08-power.png)
 
-![下载拦截示意（模拟）](./images/00-download.png)
+Start by [downloading WinToolBox](00-download.md) and running it as administrator.
 
-## 界面标注
-
-![电源（真实界面）](./images/08-power.png)
-
-| # | 按钮 | 说明 |
-|---|------|------|
-| ① | **锁定** | 锁定当前会话（不影响计划关机） |
-| ② | **重启** | 按「延迟（秒）」计划重启；0 表示立即（会确认） |
-| ③ | **关机** | 按延迟计划关机；0 表示立即（会确认） |
-| ④ | **取消关机/重启** | 中止已计划的关机或重启 |
-
-延迟范围 0–604800 秒（最长 7 天）。远程操作前请确认不会误关生产机。
-
-相关：[文档首页](./README.md) · [07 · 时间同步](./07-time-sync.md)
+Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

@@ -1,4 +1,6 @@
 <script setup>
+import { t } from '../i18n/index.js'
+
 import { computed, ref } from 'vue'
 import { FORM_LABEL_WIDTH } from '../constants.js'
 
@@ -20,13 +22,13 @@ defineEmits([
   'refresh-history',
 ])
 
-const kindLabel = {
-  mru: '最近主机',
-  server: '已保存主机',
-  credential: '凭据',
-  file: '文件',
-  cache: '缓存',
-}
+const kindLabel = computed(() => ({
+  mru: t('最近主机'),
+  server: t('已保存主机'),
+  credential: t('凭据'),
+  file: t('文件'),
+  cache: t('缓存'),
+}))
 
 const kindTag = {
   mru: 'primary',
@@ -37,7 +39,7 @@ const kindTag = {
 }
 
 function labelKind(kind) {
-  return kindLabel[kind] || kind || '—'
+  return kindLabel.value[kind] || kind || '—'
 }
 
 function tagKind(kind) {
@@ -84,7 +86,7 @@ const selectedKindCount = computed(() => {
 <template>
   <div data-view="rdp">
     <p class="page-desc">
-      开关、端口与 NLA（更改端口会同步防火墙规则）；可查看并清理本机 mstsc 连接记录
+      {{ t('开关、端口与 NLA（更改端口会同步防火墙规则）；可查看并清理本机 mstsc 连接记录') }}
     </p>
 
     <el-alert
@@ -92,35 +94,41 @@ const selectedKindCount = computed(() => {
       type="warning"
       :closable="false"
       show-icon
-      title="无法读取远程桌面状态（可能未安装远程桌面服务或权限不足）"
+      :title="t('无法读取远程桌面状态（可能未安装远程桌面服务或权限不足）')"
       class="wt-card"
     />
 
-    <el-card shadow="never" header="服务状态" class="wt-card">
+    <el-card shadow="never" :header="t('服务状态')" class="wt-card">
       <div class="wt-status-block">
         <div class="wt-status-line">
-          <span class="wt-status-label">远程桌面</span>
+          <span class="wt-status-label">{{ t('远程桌面') }}</span>
           <template v-if="status?.rdpAvailable !== false">
             <el-tag :type="status?.rdpEnabled ? 'success' : 'info'" effect="dark">
-              {{ status?.rdpEnabled ? '已开启' : '已关闭' }}
+              {{ status?.rdpEnabled ? t('已开启') : t('已关闭') }}
             </el-tag>
-            <span class="wt-status-sub">端口 {{ status?.rdpPort || '—' }}</span>
+            <span class="wt-status-sub">{{ t('端口') }} {{ status?.rdpPort || '—' }}</span>
           </template>
-          <el-tag v-else type="danger" effect="dark">不可用</el-tag>
+          <el-tag v-else type="danger" effect="dark">{{ t('不可用') }}</el-tag>
         </div>
         <div v-if="status?.rdpAvailable !== false" class="wt-status-line" style="margin-top: 8px">
-          <span class="wt-status-label">网络级身份验证</span>
+          <span class="wt-status-label">{{ t('网络级身份验证') }}</span>
           <el-tag
             :type="status?.rdpNLAUnknown ? 'info' : status?.rdpNLA ? 'success' : 'warning'"
             effect="dark"
           >
-            {{ status?.rdpNLAUnknown ? '状态未知' : status?.rdpNLA ? '已强制 NLA' : '未强制 NLA' }}
+            {{
+              status?.rdpNLAUnknown
+                ? t('状态未知')
+                : status?.rdpNLA
+                  ? t('已强制 NLA')
+                  : t('未强制 NLA')
+            }}
           </el-tag>
         </div>
       </div>
 
       <el-form :label-width="FORM_LABEL_WIDTH" class="wt-form-row">
-        <el-form-item label="端口">
+        <el-form-item :label="t('端口')">
           <el-input-number
             v-model="form.rdpPort"
             :min="1"
@@ -135,15 +143,14 @@ const selectedKindCount = computed(() => {
               type="primary"
               :disabled="busy || status?.rdpAvailable === false"
               @click="$emit('save-port')"
+              >{{ t('保存端口') }}</el-button
             >
-              保存端口
-            </el-button>
             <el-button
               type="warning"
               :disabled="busy || status?.rdpAvailable === false"
               @click="$emit('toggle')"
             >
-              {{ status?.rdpEnabled ? '关闭' : '开启' }}
+              {{ status?.rdpEnabled ? t('关闭') : t('开启') }}
             </el-button>
             <el-button
               type="success"
@@ -151,96 +158,107 @@ const selectedKindCount = computed(() => {
                 busy || status?.rdpAvailable === false || status?.rdpNLAUnknown || status?.rdpNLA
               "
               @click="$emit('set-nla', true)"
+              >{{ t('强制 NLA') }}</el-button
             >
-              强制 NLA
-            </el-button>
             <el-button
               :disabled="
                 busy || status?.rdpAvailable === false || status?.rdpNLAUnknown || !status?.rdpNLA
               "
               @click="$emit('set-nla', false)"
+              >{{ t('关闭 NLA') }}</el-button
             >
-              关闭 NLA
-            </el-button>
           </div>
         </el-form-item>
       </el-form>
       <p class="wt-hint">
-        强制 NLA 可在完成身份验证前拒绝连接，降低未认证爆破面。极旧客户端可能无法连接。NLA
-        状态未知时请先刷新。
+        {{
+          t(
+            '强制 NLA 可在完成身份验证前拒绝连接，降低未认证爆破面。极旧客户端可能无法连接。NLA 状态未知时请先刷新。',
+          )
+        }}
       </p>
     </el-card>
 
-    <el-card shadow="never" header="连接记录" class="wt-card" v-loading="historyLoading">
+    <el-card shadow="never" :header="t('连接记录')" class="wt-card" v-loading="historyLoading">
       <p class="wt-detail" style="margin-top: 0">
-        下列为本地远程桌面客户端留下的历史主机、用户名提示、TERMSRV
-        凭据、相关文件与位图缓存。清理不影响远程桌面服务开关与端口。
+        {{
+          t(
+            '下列为本地远程桌面客户端留下的历史主机、用户名提示、TERMSRV 凭据、相关文件与位图缓存。清理不影响远程桌面服务开关与端口。',
+          )
+        }}
       </p>
 
       <div class="wt-actions wt-actions--mt">
-        <el-select v-model="selectedKind" placeholder="类型（全部）" clearable style="width: 160px">
+        <el-select
+          v-model="selectedKind"
+          :placeholder="t('类型（全部）')"
+          clearable
+          style="width: 160px"
+        >
           <el-option v-for="(label, key) in kindLabel" :key="key" :label="label" :value="key" />
         </el-select>
         <el-input
           v-model="searchText"
-          placeholder="搜索主机 / 用户名 / 来源 / 详情"
+          :placeholder="t('搜索主机 / 用户名 / 来源 / 详情')"
           clearable
           style="max-width: 520px; flex: 1"
         />
       </div>
 
       <div class="wt-actions wt-actions--mt">
-        <el-button :disabled="busy || historyLoading" @click="$emit('refresh-history')"
-          >刷新列表</el-button
-        >
+        <el-button :disabled="busy || historyLoading" @click="$emit('refresh-history')">{{
+          t('刷新列表')
+        }}</el-button>
         <el-button
           type="danger"
           plain
           :disabled="busy || historyLoading || !history.length"
           @click="$emit('clear-history')"
+          >{{ t('清理全部记录') }}</el-button
         >
-          清理全部记录
-        </el-button>
         <el-button
           v-if="selectedKind"
           type="warning"
           :disabled="busy || historyLoading || selectedKindCount === 0"
           @click="$emit('clear-history-kind', selectedKind)"
+          >{{ t('清理当前类型') }}</el-button
         >
-          清理当前类型
-        </el-button>
-        <span class="wt-count">共 {{ filteredHistory.length }} 条</span>
+        <span class="wt-count">{{ t('共 {0} 条', [filteredHistory.length]) }}</span>
       </div>
       <el-table
         :data="filteredHistory"
         stripe
-        empty-text="暂无连接记录"
+        :empty-text="t('暂无连接记录')"
         highlight-current-row
         style="width: 100%; margin-top: 12px"
       >
-        <el-table-column label="类型" width="140">
+        <el-table-column :label="t('类型')" width="140">
           <template #default="{ row }">
             <el-tag :type="tagKind(row.kind)" size="small" style="white-space: nowrap">{{
               labelKind(row.kind)
             }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="host" label="主机 / 名称" min-width="140" show-overflow-tooltip />
-        <el-table-column prop="username" label="用户名" min-width="110" show-overflow-tooltip>
+        <el-table-column
+          prop="host"
+          :label="t('主机 / 名称')"
+          min-width="140"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="username" :label="t('用户名')" min-width="110" show-overflow-tooltip>
           <template #default="{ row }">{{ row.username || '—' }}</template>
         </el-table-column>
-        <el-table-column prop="source" label="来源" min-width="110" show-overflow-tooltip />
-        <el-table-column prop="detail" label="详情" min-width="160" show-overflow-tooltip />
-        <el-table-column label="操作" width="90" fixed="right">
+        <el-table-column prop="source" :label="t('来源')" min-width="110" show-overflow-tooltip />
+        <el-table-column prop="detail" :label="t('详情')" min-width="160" show-overflow-tooltip />
+        <el-table-column :label="t('操作')" width="90" fixed="right">
           <template #default="{ row }">
             <el-button
               link
               type="danger"
               :disabled="busy || historyLoading"
               @click="$emit('delete-history', row)"
+              >{{ t('删除') }}</el-button
             >
-              删除
-            </el-button>
           </template>
         </el-table-column>
       </el-table>
