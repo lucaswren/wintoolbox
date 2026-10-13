@@ -144,6 +144,22 @@ func readRealtimeDisabled() (disabled bool, ok bool) {
 func readRealtimeDisabledContext(ctx context.Context) (disabled bool, ok bool) {
 	out, err := syscmd.RunPSQuickContext(ctx, `
 try {
+  $s = Get-MpComputerStatus -ErrorAction Stop
+  Write-Output ('RT=' + [string]$s.RealTimeProtectionEnabled)
+} catch {
+  Write-Output 'RT=?'
+}
+`)
+	if err != nil {
+		return false, false
+	}
+	enabled, known := parseRealtimeValue(out)
+	return known && !enabled, known
+}
+
+func readRealtimePreference() (disabled bool, ok bool) {
+	out, err := syscmd.RunPSQuick(`
+try {
   $p = Get-MpPreference -ErrorAction Stop
   Write-Output ('RT=' + [string]$p.DisableRealtimeMonitoring)
 } catch {
@@ -153,14 +169,22 @@ try {
 	if err != nil {
 		return false, false
 	}
+	return parseRealtimeValue(out)
+}
+
+func parseRealtimeValue(out string) (bool, bool) {
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "RT=") {
 			val := strings.TrimPrefix(line, "RT=")
-			if val == "?" {
+			switch strings.ToLower(val) {
+			case "true", "1":
+				return true, true
+			case "false", "0":
+				return false, true
+			default:
 				return false, false
 			}
-			return strings.EqualFold(val, "True") || val == "1", true
 		}
 	}
 	return false, false
@@ -198,7 +222,7 @@ func saveSnapshotIfNeeded() error {
 	if backupExists() {
 		return nil
 	}
-	rtOff, ok := readRealtimeDisabled()
+	rtOff, ok := readRealtimePreference()
 	if !ok {
 		return fmt.Errorf("无法读取实时防护，已中止以避免保存未知配置")
 	}

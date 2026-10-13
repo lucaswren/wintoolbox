@@ -125,3 +125,25 @@ func TestPrereleaseOrdering(t *testing.T) {
 		t.Fatal("metadata affects ordering")
 	}
 }
+
+func TestChecksumsDoNotMatchOtherExecutables(t *testing.T) {
+	hash := strings.Repeat("a", 64)
+	for _, text := range []string{
+		"OtherWinToolbox.exe SHA256: " + hash,
+		"WinToolbox.exe.sha256 SHA256: " + hash,
+		"arm64.exe SHA256: " + hash,
+		"SHA256: " + hash + "\nSHA256: " + strings.Repeat("b", 64),
+	} {
+		if got := parseSHA256FromNotes(text, "WinToolbox.exe"); got != "" {
+			t.Fatalf("unmatched checksum accepted for %q: %s", text, got)
+		}
+		if got := parseSHA256ForAsset(text, "WinToolbox.exe"); got != "" {
+			t.Fatalf("unmatched manifest entry accepted for %q: %s", text, got)
+		}
+	}
+	for _, text := range []string{"`WinToolbox.exe` SHA256: " + hash, hash + " *WinToolbox.exe", "SHA256: " + hash} {
+		if got := parseSHA256FromNotes(text, "WinToolbox.exe"); got != hash {
+			t.Fatalf("valid checksum rejected for %q: %s", text, got)
+		}
+	}
+}

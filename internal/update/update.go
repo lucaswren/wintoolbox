@@ -461,9 +461,6 @@ func setUpdatePolicyDisabled() error {
 func clearUpdatePolicy() error {
 	auKey, _, err := registry.CreateKey(registry.LOCAL_MACHINE, auKeyPath, registry.SET_VALUE)
 	if err != nil {
-		if _, err2 := registry.OpenKey(registry.LOCAL_MACHINE, auKeyPath, registry.QUERY_VALUE); err2 != nil {
-			return nil
-		}
 		return err
 	}
 	defer auKey.Close()

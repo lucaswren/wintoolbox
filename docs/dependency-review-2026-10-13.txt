@@ -1,0 +1,114 @@
+WinToolBox 依赖更新与功能代码审查（2026-10-13）
+
+审查方法与边界
+阅读 Go 后端、Wails 桥接、Vue 状态和操作流程，结合现有测试及新增回归测试。
+覆盖账户、RDP、防火墙、安全加固、Defender、时间、电源、Windows Update、软件自更新与系统概览。
+未执行真实系统配置变更；未在各 Windows/Server 版本或域策略环境验证。
+以下“修复”指代码与自动化验证通过，不等于真实系统操作已完成验收。
+
+依赖更新
+Go：Wails 2.15.0 -> 2.16.0；x/sys 0.47.0 -> 0.49.0。
+间接依赖：dbus 5.2.2 -> 5.2.3；echo 4.15.4 -> 4.16.0；go-colorable 0.1.15 -> 0.1.16；
+x/crypto 0.55.0 -> 0.58.0；x/image 0.45.0 -> 0.47.0；x/net 0.58.0 -> 0.61.0；x/text 0.41.0 -> 0.43.0。
+前端：锁文件中 Vue 3.5.43 -> 3.5.44；Element Plus 2.14.4 -> 2.14.7；
+Vite 6.4.3 -> 6.4.4；Prettier 3.9.9 -> 3.9.10；同时更新满足原版本范围的传递依赖。
+package.json 对应最低版本同步更新。保留 Go 1.27 与现有前端主版本。
+npm 查询还提供 Vite 8.3.4/plugin-vue 6.0.10；本次未做跨主版本迁移。
+依据官方迁移说明，Vite 8 涉及 Rolldown/配置变化，宜单独实施与验证。
+https://vite.dev/guide/migration
+
+已修复的问题（6 项）
+
+1. 密码复杂度状态读取失败（高）
+文件：internal/account/password_policy.go
+原实现直接将 secedit 导出的字节转为 Go 字符串，无法识别 UTF-16 INF 中的 PasswordComplexity。
+结果：复杂度显示未知；设置可能实际生效，但后端复查失败并返回错误。
+修复：解码 UTF-16 LE/BE BOM，兼容 UTF-8 BOM/普通文本，精确匹配字段并拒绝无效值。
+测试：开启/关闭两种状态，四种编码，以及无效字段和值、截断 UTF-16。
+
+2. Defender 配置偏好被当作运行状态（高）
+文件：internal/defender/defender.go
+原实现读取 Get-MpPreference.DisableRealtimeMonitoring；该字段是配置，不足以证明实时防护当前运行。
+结果：在服务停止、被动模式或策略介入时，显示及操作复查可能与实际防护状态不一致。
+修复：状态及操作复查使用 Get-MpComputerStatus.RealTimeProtectionEnabled；备份继续读取配置偏好。
+同时拒绝空/未知/异常布尔输出，防止误判为已开启。
+测试：真实/假/数值布尔及未知、空、异常输出解析；实际策略/服务差异需虚拟机验收。
+官方字段依据：https://learn.microsoft.com/powershell/module/defender/get-mpcomputerstatus
+
+3. 不同模块并发刷新丢失有效结果（中）
+文件：frontend/src/composables/useAppState.js
+原实现以全局 statusSeq 判定请求过期；后启动的其他模块请求会使先启动请求被丢弃。
+结果：部分模块保留旧状态，加载指示可能提前消失；被丢弃的失败也被吞掉。
+修复：每个模块分别记录请求序号；全量查询仅合并尚未被新请求替代的模块；计数所有未完成请求。
+测试：不同模块逆序完成、全量查询与新模块查询交错。保留有效 snapshot 返回给操作复查调用者。
+
+4. 更新附件 SHA256 错配（中）
+文件：internal/selfupdate/selfupdate.go
+原实现对文件名做子串匹配；没找到对应文件时又回退到发布说明中第一个 SHA256。
+结果：多个架构/附件时可能使用其他 exe 的哈希，使合法更新包校验失败。
+修复：完整文件名边界匹配；拒绝复用其他 exe 的校验值；无文件关联时仅接受唯一的 SHA256。
+测试：其他架构、文件名前缀/后缀、多个哈希、精确文件名及独立哈希。
+
+5. 自动登录读取失败误报关闭（中）
+文件：internal/account/autologon.go
+原实现将所有 AutoAdminLogon 读取错误当作值不存在。
+修复：仅 ErrNotExist 表示未启用；类型/读取错误表示 Unknown。
+测试：用模拟读取器覆盖缺失、类型错误、开启和关闭，不写真实注册表。
+
+6. 更新策略清理吞掉注册表错误并可能泄漏句柄（中）
+文件：internal/update/update.go
+原实现 CreateKey 失败后再次 OpenKey；再次失败就返回成功，再次成功却未关闭句柄。
+修复：创建/打开失败直接返回原始错误，不再进行无意义的第二次打开。
+验证：Go 测试与静态检查。权限失败分支未在真实系统策略键上注入。
+
+仍需跟进的代码风险（本次未改动，未进行真实系统复现）
+
+A. RDP 内置规则后台写入顺序（高）
+internal/rdp/rdp.go 的 scheduleBuiltinRDPGroupPort 每次创建独立 goroutine。
+桥接 network 锁只覆盖前台方法，后台同步不会等待该锁。
+代码存在两次改端口或改端口失败回滚时，旧后台任务最后写入内置规则的可能。
+自定义规则已同步，因此不能直接断言所有连接必然中断；需故障注入验证内置规则与最终端口一致。
+建议：将端口和启用状态统一交给一个串行、取最新期望值的后台任务，并记录同步错误。
+
+B. 防火墙“已拦截”校验不包含所有筛选条件（高）
+internal/firewall/riskports.go 检查启用、动作、方向、协议、端口、配置文件；
+未检查地址、程序、服务、远端端口等过滤器，也未将防火墙配置文件关闭纳入“实际防护”判断。
+internal/harden/harden.go 的 WinRM 校验还缺少方向/协议/配置文件的完整验证。
+存在规则被外部缩小适用范围后仍被报告为已拦截/已加固的可能。
+建议：清楚区分“预设规则配置正确”与“系统实际过滤生效”，并核验所有规则过滤器。
+
+C. Windows Update 备份未保存延迟自动启动（中）
+internal/update/update.go 保存服务 Start，但未保存 DelayedAutoStart。
+还原调用 sc config start=auto 不能保证原来的延迟启动属性不变。
+建议：扩展备份字段并兼容旧备份；在原配置 auto/delayed-auto 场景验证恢复语义。
+
+D. 账户解锁部分失败可能被隐藏（中）
+internal/account/lockout.go 中 unlockAllLocked 忽略 isLocked 读取失败；
+DisableLockout 仅在 unlockErr != nil 且 unlocked == 0 时返回错误。
+因此已有部分账户解锁成功时，其他解锁失败可能仍返回整体成功。
+建议：返回成功/失败数量和明细；任何未知或失败都保留部分失败反馈。
+
+各模块审查结论
+系统概览：缓存和快慢采集分离；原生调用取消、激活及硬件信息仍依赖运行环境。
+账户：当前用户禁用/降权保护存在；本次修复复杂度及自动登录状态；解锁部分失败风险见 D。
+RDP：注册表/自定义防火墙同步和回滚已实现；后台内置规则顺序风险见 A。
+防火墙：端口验证、规则复查和未知状态处理存在；完整范围校验风险见 B。
+安全加固：SMB1 服务端、WinRM、匿名枚举配置与复查存在；WinRM 的规则完整性见 B。
+Defender：本次改用实时运行状态；篡改防护与域策略覆盖需真实环境验收。
+时间：时区复查、NTP 测试样本错误检测存在；服务启停等待和实际同步需真实环境验收。
+电源：延迟边界、当前用户权限与失败回退存在；未执行关机/重启/锁屏。
+Windows Update：备份提交标志与恢复前校验存在；本次修复清理错误；延迟启动见 C。
+自更新：限流、取消、哈希校验、受限暂存和失败启动回滚存在；本次修复哈希匹配。
+5 秒进程存活检查无法证明 UI 就绪；真实安装/UAC/杀毒干预仍需虚拟机验收。
+
+验证结果
+go test ./...：通过（含新增账户、Defender、自更新测试与临时目录更新回滚测试）。
+go vet ./...：通过。
+go mod verify：所有模块通过校验。
+go run ./scripts/genbindings -check：通过。
+npm run check：lint、桥接类型、17 项测试、Prettier 检查通过。
+npm run build：通过。
+npm 依赖审计：0 个已知漏洞（不代表 Go 依赖已做漏洞数据库扫描）。
+git diff --check：通过。
+生产标签构建使用 desktop,production，并写入 artifacts/WinToolbox-dependency-check.exe。
+本次未进行完整 GUI/多版本虚拟机验收，也未运行 Go 漏洞数据库扫描。

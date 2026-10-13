@@ -1,12 +1,14 @@
 package account
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf16"
 	"unsafe"
 
 	"wintoolbox/internal/win/syscmd"
@@ -118,15 +120,32 @@ func getPasswordComplexitySecedit() (bool, bool) {
 	if err != nil {
 		return false, false
 	}
-	for _, line := range strings.Split(string(data), "\n") {
+	return parsePasswordComplexity(data)
+}
+
+func parsePasswordComplexity(data []byte) (bool, bool) {
+	text := string(data)
+	// secedit exports Unicode INF files with a UTF-16 BOM.
+	if len(data) >= 2 && (data[0] == 0xff && data[1] == 0xfe || data[0] == 0xfe && data[1] == 0xff) {
+		if len(data)%2 != 0 {
+			return false, false
+		}
+		var order binary.ByteOrder = binary.LittleEndian
+		if data[0] == 0xfe {
+			order = binary.BigEndian
+		}
+		units := make([]uint16, (len(data)-2)/2)
+		for i := range units {
+			units[i] = order.Uint16(data[2+i*2:])
+		}
+		text = string(utf16.Decode(units))
+	}
+	text = strings.TrimPrefix(text, "\ufeff")
+	for _, line := range strings.Split(text, "\n") {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(strings.ToLower(line), "passwordcomplexity") {
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) != 2 {
-				continue
-			}
+		if parts := strings.SplitN(line, "=", 2); len(parts) == 2 && strings.EqualFold(strings.TrimSpace(parts[0]), "PasswordComplexity") {
 			v := strings.TrimSpace(parts[1])
-			return v == "1", true
+			return v == "1", v == "0" || v == "1"
 		}
 	}
 	return false, false

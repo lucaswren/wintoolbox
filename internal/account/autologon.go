@@ -24,11 +24,21 @@ func GetAutoLogonStatus() AutoLogonStatus {
 		return AutoLogonStatus{Unknown: true, Detail: "读取自动登录失败"}
 	}
 	defer k.Close()
+	return autoLogonStatus(k)
+}
 
+type stringValueReader interface {
+	GetStringValue(string) (string, uint32, error)
+}
+
+func autoLogonStatus(k stringValueReader) AutoLogonStatus {
 	val, _, err := k.GetStringValue("AutoAdminLogon")
-	if err != nil {
+	if err == registry.ErrNotExist {
 		// Missing value means disabled.
 		return AutoLogonStatus{Enabled: false, Detail: "未启用自动登录"}
+	}
+	if err != nil {
+		return AutoLogonStatus{Unknown: true, Detail: "读取自动登录失败: " + err.Error()}
 	}
 	user, _, _ := k.GetStringValue("DefaultUserName")
 	enabled := strings.TrimSpace(val) == "1"

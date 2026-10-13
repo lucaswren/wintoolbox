@@ -404,7 +404,7 @@ func parseSHA256FromNotes(notes, assetName string) string {
 	if assetName != "" {
 		want := strings.ToLower(filepath.Base(assetName))
 		for _, line := range strings.Split(notes, "\n") {
-			if !strings.Contains(strings.ToLower(line), want) {
+			if !mentionsAsset(line, want) {
 				continue
 			}
 			if m := sha256BodyRe.FindStringSubmatch(line); len(m) >= 2 {
@@ -418,12 +418,22 @@ func parseSHA256FromNotes(notes, assetName string) string {
 				}
 			}
 		}
+		// A checksum associated with another executable must never be reused.
+		if strings.Contains(strings.ToLower(notes), ".exe") {
+			return ""
+		}
 	}
-	m := sha256BodyRe.FindStringSubmatch(notes)
-	if len(m) >= 2 {
-		return strings.ToLower(m[1])
+	matches := sha256BodyRe.FindAllStringSubmatch(notes, -1)
+	if len(matches) == 1 {
+		return strings.ToLower(matches[0][1])
 	}
 	return ""
+}
+
+func mentionsAsset(line, assetName string) bool {
+	// Match a complete filename, not a suffix such as OtherWinToolbox.exe.
+	pattern := `(?i)(?:^|[\s` + "`" + `"'*(])` + regexp.QuoteMeta(assetName) + `(?:$|[\s` + "`" + `"'):\]])`
+	return regexp.MustCompile(pattern).MatchString(line)
 }
 
 func isHex(s string) bool {
@@ -638,7 +648,7 @@ func parseSHA256ForAsset(text, assetName string) string {
 		return parseSHA256Text(lines[0])
 	}
 	for _, line := range lines {
-		if strings.Contains(strings.ToLower(line), strings.ToLower(assetName)) {
+		if mentionsAsset(line, assetName) {
 			return parseSHA256FromNotes(line, assetName)
 		}
 	}

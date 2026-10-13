@@ -17,6 +17,18 @@ export function useAppState({ appendLog }) {
   let detailSeq = 0
   let historySeq = 0
   let statusSeq = 0
+  let pendingStatus = 0
+  const latestStatus = new Map()
+  const statusModules = [
+    'overview',
+    'account',
+    'rdp',
+    'firewall',
+    'harden',
+    'defender',
+    'time',
+    'update',
+  ]
   let rulesSeq = 0
   let lastWarnings = []
 
@@ -235,26 +247,36 @@ export function useAppState({ appendLog }) {
 
   async function refresh(showLog = false, invalidate = false, queueDetail = false, module = '') {
     const seq = ++statusSeq
+    const requested = module ? [module] : statusModules
+    for (const key of requested) latestStatus.set(key, seq)
+    pendingStatus++
     loading.value = true
     try {
       const snapshot = module
         ? await api.getModuleStatus(module, invalidate)
         : await api.getStatus(invalidate)
-      const st = module ? mergeModuleStatus(state, snapshot, module) : snapshot
-      if (seq !== statusSeq) return
+      const current = requested.filter((key) => latestStatus.get(key) === seq)
+      if (!current.length) return snapshot
+      let st = snapshot
+      if (module || current.length !== statusModules.length) {
+        st = state
+        for (const key of current) st = mergeModuleStatus(st, snapshot, key)
+      }
       applyStatus(st)
-      updatedAt[module || 'all'] = new Date().toLocaleTimeString(locale.value, { hour12: false })
+      const collectedAt = new Date().toLocaleTimeString(locale.value, { hour12: false })
+      for (const key of current) updatedAt[key] = collectedAt
+      if (!module && current.length === statusModules.length) updatedAt.all = collectedAt
       if (showLog) appendLog(t('已刷新'))
-      if (queueDetail) queueOverviewDetail()
+      if (queueDetail && current.includes('overview')) queueOverviewDetail()
       return snapshot
     } catch (e) {
-      if (seq !== statusSeq) return
       const msg = t(e?.message || String(e))
       appendLog(t('刷新失败: ') + msg)
       if (showLog) ElMessage.error(t('刷新失败: ') + msg)
       throw e
     } finally {
-      if (seq === statusSeq) loading.value = false
+      pendingStatus--
+      loading.value = pendingStatus > 0
     }
   }
 

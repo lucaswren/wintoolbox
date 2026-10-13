@@ -162,3 +162,64 @@ test('successful status refresh exposes collection time to the header', async ()
     globalThis.window = previousWindow
   }
 })
+
+test('overlapping refreshes keep results from different modules', async () => {
+  const previousWindow = globalThis.window
+  const finish = {}
+  globalThis.window = {
+    go: {
+      ui: {
+        App: {
+          GetModuleStatus: (module) =>
+            new Promise((resolve) => {
+              finish[module] = resolve
+            }),
+        },
+      },
+    },
+  }
+  try {
+    const app = useAppState({ appendLog() {} })
+    const rdp = app.refresh(false, false, false, 'rdp')
+    const update = app.refresh(false, false, false, 'update')
+    finish.update({ updateDisabled: true, warnings: [] })
+    await update
+    assert.equal(app.loading.value, true)
+    finish.rdp({ rdpPort: 3390, warnings: [] })
+    await rdp
+    assert.equal(app.state.updateDisabled, true)
+    assert.equal(app.state.rdpPort, 3390)
+    assert.equal(app.loading.value, false)
+  } finally {
+    globalThis.window = previousWindow
+  }
+})
+
+test('a full refresh preserves a newer module refresh', async () => {
+  const previousWindow = globalThis.window
+  let finishAll
+  globalThis.window = {
+    go: {
+      ui: {
+        App: {
+          GetStatus: () =>
+            new Promise((resolve) => {
+              finishAll = resolve
+            }),
+          GetModuleStatus: async () => ({ rdpPort: 3390, warnings: [] }),
+        },
+      },
+    },
+  }
+  try {
+    const app = useAppState({ appendLog() {} })
+    const all = app.refresh()
+    await app.refresh(false, false, false, 'rdp')
+    finishAll({ rdpPort: 3389, updateDisabled: true, accounts: [], warnings: [] })
+    await all
+    assert.equal(app.state.rdpPort, 3390)
+    assert.equal(app.state.updateDisabled, true)
+  } finally {
+    globalThis.window = previousWindow
+  }
+})
