@@ -4,7 +4,7 @@
 
 WinToolBox 是 Windows 本地管理工具箱，用于查看系统信息，管理本地账户、远程桌面、防火墙规则、Microsoft Defender、时间同步、电源和更新。基于 Go、Wails、Vue 和 Element Plus 开发。
 
-版本：v1.0.0
+版本：v1.0.1
 
 ## 文档
 

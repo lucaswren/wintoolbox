@@ -4,7 +4,7 @@
 
 WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本機帳戶、遠端桌面、防火牆規則、Microsoft Defender、時間同步、電源及更新。使用 Go、Wails、Vue 與 Element Plus 開發。
 
-版本：v1.0.0
+版本：v1.0.1
 
 ## 文件
 

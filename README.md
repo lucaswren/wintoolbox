@@ -3,7 +3,7 @@
 # WinToolBox
 
 WinToolBox is a Windows administration toolkit for inspecting system information and managing local accounts, Remote Desktop, firewall rules, Microsoft Defender, time synchronization, power, and updates. Built with Go, Wails, Vue and Element Plus.
-Version: v1.0.0
+Version: v1.0.1
 
 ## Languages and documentation
 

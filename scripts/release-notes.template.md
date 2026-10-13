@@ -2,13 +2,14 @@
 
 ### Changes
 
-- English, Simplified Chinese and Traditional Chinese UI and documentation; automatic Windows display-language detection and persistent manual selection.
-- Region-neutral language identifiers: en, zh-Hans and zh-Hant.
-- Compact navigation and a two-column overview in the 1280×800 default window.
-- Local accounts, Remote Desktop, firewall, Microsoft Defender, time, power and update management.
-- Apache-2.0 licensing. Retain LICENSE and NOTICE when redistributing; third-party components retain their own licenses.
+- Added English, Simplified Chinese and Traditional Chinese UI and documentation, automatic Windows display-language detection and persistent language selection.
+- Improved navigation and the default 1280×800 layout; added persistent operation stages, elapsed time and verification results.
+- Batched high-risk firewall port operations with a shared timeout and per-port verification; improved account, Remote Desktop, Windows Update and NTP operation feedback.
+- Fixed UTF-16 password-policy parsing, Defender runtime-state detection, automatic-logon state checks, concurrent module refreshes, update-asset checksum matching and Windows Update policy error handling.
+- Updated Go and frontend dependencies, regression tests and documentation.
+- Adopted Apache-2.0 licensing. Retain LICENSE and NOTICE when redistributing; third-party components retain their own licenses.
 
-Users running v1.2.0 must install v1.0.0 manually; automatic updates do not downgrade versions.
+Users running v1.2.0 must download {{VERSION}} manually; automatic updates do not downgrade versions.
 
 ### Download and verification
 

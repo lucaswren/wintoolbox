@@ -1,6 +1,6 @@
 import { t } from './i18n/index.js'
 export const APP_NAME = 'WinToolBox' // synced from version.json
-export const APP_VERSION = 'v1.0.0' // synced from version.json
+export const APP_VERSION = 'v1.0.1' // synced from version.json
 
 export const MENUS = [
   {
