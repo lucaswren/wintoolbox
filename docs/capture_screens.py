@@ -126,10 +126,12 @@ MOCK_JS = r"""
   };
   const appInfo = { name: 'WinToolBox', version: 'v1.0.0' };
   const rules = [{ name: 'WinToolbox-Allow-8080', port: '8080', enabled: true }];
-  const history = [{ kind: 'mru', host: '10.0.0.8', username: 'Administrator', source: 'MRU', detail: '', sid: '' }];
+  const history = [{ kind: 'mru', host: '10.0.0.8', username: 'Administrator', source: 'MRU', detail: '', sid: '' }, { kind: 'credential', host: 'TERMSRV/server.example', username: 'ops', source: 'Credential Manager', detail: 'TERMSRV/server.example', sid: '' }, { kind: 'cache', host: 'Cache', username: '', source: 'mstsc', detail: 'Bitmap cache', sid: '' }];
   const upd = { currentVersion: 'v1.0.0', latestVersion: 'v1.0.0', hasUpdate: false, assetName: '', assetURL: '', assetSize: 0, assetSHA256: '', notes: '', downloaded: false, downloadPath: '', verified: false, error: '' };
   const ok = (v) => Promise.resolve(v);
   const noop = () => ok(null);
+  const rdpSafety = { session: { id: 2, known: true, remote: true }, pending: false, transaction: '', deadline: '', phase: 'idle', kind: '', addresses: [], port: 3389, listening: true, service: 'Running', profiles: 'Domain=True/Block; Private=True/Block; Public=True/Block', rules: [{ name: 'RDP-TCP', action: 'Allow', protocol: 'TCP', ports: '3389', addresses: 'Any', source: 'Local', profile: 'Any' }], warnings: [], canConfirm: false };
+  window.__rdpSafety = rdpSafety;
   const app = {
     GetAppInfo: () => ok(appInfo), GetStatus: () => ok(status), GetModuleStatus: () => ok(status), CancelAppUpdateDownload: noop,
     GetOverviewDetail: () => ok({ memoryModules: status.overview.memoryModules, physicalDisks: status.overview.physicalDisks, gpus: status.overview.gpus, activated: true, activationStatus: '已激活' }),
@@ -139,6 +141,12 @@ MOCK_JS = r"""
     DisableAccountLockout: noop, EnableAccountLockout: noop, SetAccountLockoutPolicy: noop,
     DisableGuestAccount: noop, DisableAutoLogon: noop, EnablePasswordPolicy: noop,
     ChangeRdpPort: noop, ToggleRdp: noop, SetRdpNLA: noop,
+    GetRdpSafetyStatus: () => ok(JSON.parse(JSON.stringify(rdpSafety))),
+    ApplyRdpWhitelist: (addresses) => { Object.assign(rdpSafety, { pending: true, transaction: 'mock-transaction', deadline: new Date(Date.now()+300000).toISOString(), phase: 'awaiting-confirmation', kind: 'whitelist', addresses: addresses.split(/[,;\s]+/), canConfirm: false }); return noop(); },
+    ConfirmRdpSafety: () => { if (!rdpSafety.canConfirm) return Promise.reject('Reconnect first'); Object.assign(rdpSafety, {pending: false, phase: 'confirmed'}); return noop(); },
+    RollbackRdpSafety: () => { Object.assign(rdpSafety, {pending: false, phase: 'rolled-back'}); return noop(); },
+    GetRdpServerEvents: () => ok({ events: [{ time: '2026-10-23T01:00:00Z', id: 24, channel: 'LocalSessionManager/Operational', user: 'Administrator', address: '203.0.113.7', session: '2', detail: 'Session disconnected (simulated)' }], warnings: ['Simulated event data'] }),
+    GetSystemEventReport: () => ok({collectedAt:'2026-10-23T02:00:00Z',startTime:'2026-10-16T02:00:00Z',truncated:false,summary:{total:3,boot:1,requests:1,unexpected:1,bugchecks:0},warnings:['统计为事件条数，不是重启次数；41、6008、1001 可能描述同一次故障。前后十分钟的关联仅为排查线索。'],events:[{recordId:'103',time:'2026-10-23T01:00:00Z',provider:'Microsoft-Windows-Kernel-Power',id:41,level:1,computer:'VPS-DEMO',message:'The system has rebooted without cleanly shutting down first. Simulated data.',xml:'<Event><System><EventID>41</EventID></System></Event>',data:[{name:'BugcheckCode',value:'0'}],category:'unexpected',meaning:'检测到未正常关机后的启动；此事件本身不能确定是断电、宿主机重置、蓝屏还是系统卡死。'},{recordId:'102',time:'2026-10-23T00:59:50Z',provider:'Microsoft-Windows-Kernel-General',id:12,computer:'VPS-DEMO',message:'System started (simulated)',data:[],category:'boot',meaning:'内核记录系统启动。'},{recordId:'101',time:'2026-10-22T03:00:00Z',provider:'User32',id:1074,computer:'VPS-DEMO',message:'A restart was requested (simulated)',data:[{name:'param1',value:'shutdown.exe'}],category:'request',meaning:'已记录进程或用户发起的关机/重启请求；这不能单独证明操作正常完成。'}],findings:[{recordId:'103',time:'2026-10-23T01:00:00Z',kind:'unexpected',stopCode:'',conclusion:'检测到未正常关机后的启动；此事件本身不能确定是断电、宿主机重置、蓝屏还是系统卡死。',nextSteps:['核对故障前后的服务商维护、宿主机重置、监控与控制台记录。'],evidence:['103','102']}]}),
     ClearRdpHistory: noop, ClearRdpHistoryByKind: noop, DeleteRdpHistoryEntry: noop,
     AllowFirewallPort: noop, RemoveFirewallPort: noop, ClearFirewallAllowRules: noop,
     SetFirewallEnabled: noop, DisablePing: noop, EnablePing: noop, BlockRiskPorts: noop, UnblockRiskPorts: noop,

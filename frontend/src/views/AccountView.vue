@@ -29,6 +29,7 @@ const props = defineProps({
 })
 
 defineEmits([
+  'rename-account',
   'change-pass',
   'set-enabled',
   'set-admin',
@@ -163,6 +164,21 @@ const canDisableAutoLogon = computed(
 )
 
 const hasSelected = computed(() => !!selected.value)
+watch(
+  () => props.form.accUser,
+  () => {
+    props.form.accNewName = ''
+  },
+)
+const canRename = computed(
+  () =>
+    !props.busy &&
+    hasSelected.value &&
+    !!props.form.accNewName?.trim() &&
+    props.form.accNewName.trim() !== props.form.accUser &&
+    !props.autoLogonUnknown &&
+    !props.autoLogonEnabled,
+)
 const canChangePass = computed(() => !props.busy && hasSelected.value)
 const canSetEnabled = computed(
   () => !props.busy && hasSelected.value && !selected.value?.enabledUnknown,
@@ -181,7 +197,12 @@ const canSetAdmin = computed(
         <el-card shadow="never" :header="t('账户操作')" class="wt-card">
           <el-form :label-width="FORM_LABEL_WIDTH" class="wt-form-row">
             <el-form-item :label="t('用户')">
-              <el-select v-model="form.accUser" :placeholder="t('选择用户')" style="width: 100%">
+              <el-select
+                :disabled="busy"
+                v-model="form.accUser"
+                :placeholder="t('选择用户')"
+                style="width: 100%"
+              >
                 <el-option
                   v-for="a in accounts"
                   :key="a.name"
@@ -189,6 +210,28 @@ const canSetAdmin = computed(
                   :value="a.name"
                 />
               </el-select>
+            </el-form-item>
+            <el-form-item :label="t('新用户名')">
+              <el-input
+                v-model="form.accNewName"
+                :maxlength="20"
+                :disabled="busy"
+                autocomplete="off"
+              />
+            </el-form-item>
+            <el-form-item>
+              <div class="rename-action">
+                <el-button :disabled="!canRename" @click="$emit('rename-account')">{{
+                  t('修改用户名')
+                }}</el-button>
+                <p class="wt-hint">
+                  {{
+                    t(
+                      '仅修改本地登录用户名，用户文件夹路径保持不变。请先关闭自动登录；当前登录用户改名后建议注销并重新登录。',
+                    )
+                  }}
+                </p>
+              </div>
             </el-form-item>
             <el-form-item :label="t('新密码')">
               <el-input
@@ -407,3 +450,10 @@ const canSetAdmin = computed(
     </el-tabs>
   </div>
 </template>
+
+<style scoped>
+.rename-action {
+  width: 100%;
+  min-width: 0;
+}
+</style>

@@ -145,7 +145,7 @@ const canUnblockRisk = computed(
       <div class="wt-stat-grid">
         <div v-for="p in profiles" :key="p.key" class="wt-stat-item">
           <span class="wt-stat-name">{{ p.label }}</span>
-          <el-tag :type="profileTagType(p.value)" effect="plain" size="small">
+          <el-tag :type="profileTagType(p.value)" effect="plain">
             {{ profileLabel(p.value) }}
           </el-tag>
         </div>
@@ -182,7 +182,7 @@ const canUnblockRisk = computed(
     <el-card shadow="never" :header="t('Ping 操作')" class="wt-card">
       <p class="wt-detail">
         {{ t('当前状态：')
-        }}<el-tag :type="pingStateInfo.type" effect="dark" size="small">
+        }}<el-tag :type="pingStateInfo.type" effect="dark">
           {{ pingStateInfo.text }}
         </el-tag>
         <br />
@@ -265,7 +265,7 @@ const canUnblockRisk = computed(
         <el-table-column prop="port" :label="t('端口')" width="90" />
         <el-table-column :label="t('状态')" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.enabled ? 'success' : 'info'" size="small">
+            <el-tag :type="row.enabled ? 'success' : 'info'">
               {{ row.enabled ? t('开启') : t('关闭') }}
             </el-tag>
           </template>

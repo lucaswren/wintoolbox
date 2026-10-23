@@ -10,6 +10,16 @@ const props = defineProps({
 defineEmits(['clear'])
 const scrollbar = ref()
 const expanded = ref(false)
+async function expand() {
+  expanded.value = true
+  await nextTick()
+  scrollbar.value?.setScrollTop(Number.MAX_SAFE_INTEGER)
+}
+function toggle() {
+  if (expanded.value) expanded.value = false
+  else expand()
+}
+defineExpose({ expand })
 watch(
   () => props.lines[props.lines.length - 1],
   async () => {
@@ -33,22 +43,13 @@ function exportLog() {
   <div class="op-log">
     <div class="op-log__head">
       <span class="op-log__title">{{ t('活动日志') }}</span>
-      <el-button text size="small" @click="expanded = !expanded">{{
+      <el-button text :aria-expanded="expanded" @click="toggle">{{
         expanded ? t('收起') : t('展开')
       }}</el-button>
-      <el-button text size="small" :disabled="!lines.length" @click="exportLog">{{
-        t('导出')
-      }}</el-button>
-      <el-button text type="primary" size="small" @click="$emit('clear')">{{
-        t('清空')
-      }}</el-button>
+      <el-button text :disabled="!lines.length" @click="exportLog">{{ t('导出') }}</el-button>
+      <el-button text type="primary" @click="$emit('clear')">{{ t('清空') }}</el-button>
     </div>
-    <el-scrollbar
-      ref="scrollbar"
-      class="op-log__body"
-      :style="{ height: expanded ? '180px' : '68px' }"
-      always
-    >
+    <el-scrollbar v-if="expanded" ref="scrollbar" class="op-log__body" always>
       <div
         v-for="(line, i) in lines"
         :key="i"
@@ -64,27 +65,29 @@ function exportLog() {
 
 <style scoped>
 .op-log {
+  flex: 0 0 auto;
   border-top: 1px solid var(--wt-border);
   background: rgba(255, 255, 255, 0.92);
-  padding: 10px 18px 12px;
+  padding: 6px 18px;
 }
 .op-log__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 10px;
 }
 .op-log__title {
-  font-size: 12px;
+  margin-right: auto;
+  font-size: 13px;
   font-weight: 600;
   color: var(--wt-text-secondary);
   letter-spacing: 0.02em;
 }
 .op-log__body {
-  height: 68px;
+  height: clamp(80px, calc(100vh - 420px), 180px);
+  margin-top: 6px;
 }
 .op-log__line {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--wt-text-regular);
   line-height: 1.65;
   font-family: Consolas, 'Cascadia Mono', 'Microsoft YaHei UI', monospace;

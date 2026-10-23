@@ -4,7 +4,7 @@
 
 WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本機帳戶、遠端桌面、防火牆規則、Microsoft Defender、時間同步、電源及更新。使用 Go、Wails、Vue 與 Element Plus 開發。
 
-版本：v1.0.1
+版本：v1.1.0
 
 ## 文件
 
@@ -20,16 +20,17 @@ WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本
 - [09 · 系統更新](./docs/zh-Hant/09-windows-update.md)
 - [全部功能文件](./docs/zh-Hant/README.md)
 
-## v1.0.0 發布說明
+## v1.1.0 發布說明
 
-- 包含本地帳戶、遠端桌面、防火牆、安全加固、Defender、時間、電源及 Windows Update 管理
-- 設定備份僅在全部寫入成功後標記有效；恢復前校驗備份，操作後復查狀態
-- 按模塊刷新狀態，合並並發查詢，為系統寫操作增加互斥，減少重復請求和介面等待
-- 軟體更新支持 SHA256 校驗、下載進度及取消，安裝失敗可回退並保留日志
-- 優化帳戶頁、操作日志和小窗口布局，增加橋接類型檢查、回歸測試和 Windows CI
-- 更新請求統一使用 `lucaswren/wintoolbox`，發布附件提供 SHA256 校驗檔案
+- 新增 RDP 來源 IP 白名單、逾時自動回復、重新連線確認、監聽與有效防火牆規則檢查、登入和中斷連線記錄。
+- 新增系統日誌分析，檢視開關機、重新啟動、異常重啟與藍屏線索，支援原文、XML 和 JSON 匯出。
+- 支援修改使用者名稱，保留用戶端歷程、認證和快取清理；簡化選單、頂部結果提示及預設收起的活動日誌。
+- 改善小視窗下的表格、按鈕、彈窗、下拉選單和日誌詳情，使用預設元件尺寸。
+- 自動化驗證通過；缺少 Windows Server/VPS 測試機，實機斷線重連、回復工作和重啟驗收尚未執行。遠端變更前請保留獨立主控台入口。
 
-本次將版本號重新設為 v1.0.0。已安裝 v1.2.0 的使用者需手動下載並安裝，此版本不會被識別為更高版本。
+[發布下載](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.0) · [詳細驗證報告](docs/zh-Hans/validation-vps-2026-10-23.md)
+
+舊版 v1.2.0 使用者仍需手動安裝，自動更新不會降級。
 
 ## 功能
 
@@ -138,7 +139,7 @@ wails dev
 2. 用 Release / `*.sha256` 中的哈希校驗後再執行
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.0.0-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.1.0-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## 技術棧

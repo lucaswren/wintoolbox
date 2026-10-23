@@ -73,26 +73,25 @@ export function createRunner({ busy, appendLog, refresh, getModule, operation })
           (verificationError ? ' ' + t('状态复查失败：') + verificationError : '')
         update('failed', detail)
         appendLog(t('失败: ') + detail, module)
-        ElMessage.error({ message: detail, duration: 8000, showClose: true })
         return false
       }
       if (verificationError) {
         const detail = t('操作已返回，但状态复查不完整，请手动刷新。') + ' ' + verificationError
         update('warning', detail)
         appendLog(detail, module)
-        ElMessage.warning({ message: detail, duration: 8000, showClose: true })
       } else {
         update('completed', successMsg || t('操作完成'))
-        if (successMsg) {
-          appendLog(successMsg, module)
-          ElMessage.success(successMsg)
-        }
+        appendLog(successMsg || t('操作完成'), module)
       }
       return result == null ? true : result
     } finally {
       clearInterval(timer)
-      if (attempted && operation) operation.elapsed = Math.floor((Date.now() - started) / 1000)
       busy.value = false
+      if (attempted) {
+        const elapsed = Math.floor((Date.now() - started) / 1000)
+        if (operation) operation.elapsed = elapsed
+        appendLog(t('耗时 {0} 秒', [elapsed]), module)
+      }
     }
   }
 }

@@ -2,16 +2,20 @@
 
 # 03 · Remote Desktop
 
-Manage the Remote Desktop service, listening port, Network Level Authentication (NLA) and local mstsc connection history.
+Manage the Remote Desktop service, listening port, Network Level Authentication (NLA) and server sign-in records.
 
-1. Enter a port from 1–65535 and select **Save port**. WinToolBox updates the registry and synchronizes its `WinToolbox-RDP` firewall allow rule.
+1. Enter a port from 1024–65535 and select **Save port**. WinToolBox saves the original settings, arms an independent SYSTEM recovery task and adds scoped TCP/UDP rules. The service restarts after about ten seconds, disconnecting sessions.
 2. Enable Remote Desktop if required and select **Enforce NLA**. Very old clients may be unable to connect with NLA enforced.
 3. Connect using `IP:new-port`. Update cloud security groups and upstream firewall rules separately; changing the local port does not update them.
-4. Refresh and verify the actual state, especially after a partial failure. If the service or NLA state is unknown, refresh before proceeding.
+4. Disconnect and reconnect using the new settings within five minutes, then confirm in the global recovery banner. Existing sessions and console clicks cannot confirm. Without confirmation, settings are restored even if the tool exits.
+
+The RDP page also provides IPv4/IPv6 source allowlists, listener checks tied to the TermService process, candidate rules from ActiveStore, and server logon/disconnection events. Allowlist changes restrict existing applicable allow rules; conflicting managed or broad rules prevent changes. NLA changes and enabling all firewall profiles use the same protection. Destructive generic network operations require the local console; pending transactions and confirmed allowlists restrict ordinary network writes.
+
+Keep VPS console access available. Recovery covers saved host settings only, not cloud security groups, NAT, credentials or OS failures. Domain controllers and unknown/noninteractive sessions are refused; managed RDP policies must be changed by their administrator. Target systems are Windows Server 2016–2025 with Desktop Experience, PowerShell 5.1, NetSecurity and Task Scheduler. Multi-version VPS acceptance remains required. See the [detailed protection, diagnostics and console recovery guide (Simplified Chinese)](zh-Hans/03-remote-desktop.md#vps-防失联保护).
 
 Changing ports alone does not replace access controls or NLA. Confirm that the old port is no longer exposed where appropriate.
 
-**Connection history** supports filtering/search, deleting one record, clearing a selected type and clearing all records. Cleanup covers host/MRU history, saved username hints, TERMSRV credentials, Default.rdp/recent .rdp files and bitmap cache. It does not change Remote Desktop service or port settings.
+**Access restrictions** shows the allowlist and local listener status. Raw rules and output are collapsed under **Diagnostics**. **Sign-in records** loads server events on request; rows expand to show technical details. **Client history** retains search, type filters, single-record deletion, clearing a selected type and clearing all records, including saved credentials and bitmap cache. Records load when this tab is opened; cleanup does not change the Remote Desktop service or port.
 
 ![Remote Desktop](images/03-remote-desktop.png)
 

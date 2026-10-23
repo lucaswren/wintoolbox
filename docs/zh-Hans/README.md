@@ -32,6 +32,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 | [08 · 电源](./08-power.md) | 锁定 / 重启 / 关机 / 取消 |
 | [09 · 系统更新](./09-windows-update.md) | Windows Update 开关 |
 | [10 · 软件更新](./10-app-update.md) | 本软件检查、下载、安装 |
+| [11 · 系统日志分析](./11-system-logs.md) | 开关机、重启、异常证据、关联分析与导出 |
 | [90 · 系统加固指南](./90-hardening-guide.md) | 推荐顺序：账户 → RDP → 防火墙 → 加固 → 更新 |
 
 需**管理员权限**。域环境可能被组策略覆盖。

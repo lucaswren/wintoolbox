@@ -36,6 +36,8 @@ body,
   color: var(--wt-text-primary);
   user-select: text;
   -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 /* —— Page chrome —— */
@@ -84,11 +86,6 @@ body,
   border-bottom-color: var(--wt-border-soft) !important;
   font-weight: 600;
   color: var(--wt-text-primary);
-  padding: 14px 18px !important;
-}
-
-.el-card__body {
-  padding: 16px 18px !important;
 }
 
 /* —— Status panel (shared across RDP / firewall / defender / update / etc.) —— */
@@ -145,7 +142,7 @@ body,
 
 .wt-hint {
   margin: 12px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--wt-text-secondary);
   line-height: 1.5;
 }
@@ -266,4 +263,29 @@ body,
 }
 .wt-actions > .el-button {
   margin-left: 0;
+}
+
+/* Keep confirmation controls visible while long messages scroll internally. */
+.el-overlay-message-box .el-message-box {
+  display: inline-flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+.el-message-box .el-message-box__header,
+.el-message-box .el-message-box__btns {
+  flex: 0 0 auto;
+}
+.el-message-box .el-message-box__content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.el-message-box__message {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .app-aside {
+    width: 210px !important;
+  }
 }

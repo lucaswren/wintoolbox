@@ -21,6 +21,7 @@ See [Language selection](localization.md) for automatic detection and saved pref
 | [Power](08-power.md) | Power |
 | [Windows Update](09-windows-update.md) | Windows Update |
 | [App update](10-app-update.md) | App update |
+| [System log analysis](11-system-logs.md) | Startup, shutdown, reboot evidence and diagnostic export |
 | [Windows hardening guide](90-hardening-guide.md) | Windows hardening guide |
 | [Development and acceptance](development.md) | Development and acceptance |
 

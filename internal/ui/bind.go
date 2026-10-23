@@ -8,6 +8,7 @@ import (
 
 	"wintoolbox/internal/account"
 	"wintoolbox/internal/defender"
+	"wintoolbox/internal/eventlog"
 	"wintoolbox/internal/firewall"
 	"wintoolbox/internal/harden"
 	"wintoolbox/internal/locale"
@@ -77,6 +78,11 @@ func (a *App) GetTimeZones() ([]wintime.ZoneOption, error) {
 
 func (a *App) GetFirewallRules() ([]firewall.RuleInfo, error) {
 	return LoadFirewallRules()
+}
+
+func (a *App) RenameAccount(user, newName string) error {
+	defer lockResource("account")()
+	return account.Rename(user, newName)
 }
 
 func (a *App) ChangeAccountPassword(user, pass1, pass2 string) error {
@@ -158,7 +164,11 @@ func (a *App) EnablePasswordPolicy(minLen int) error {
 }
 
 func (a *App) ChangeRdpPort(portNum uint32) error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 
 	if err := port.ValidTCP(portNum); err != nil {
 		return err
@@ -166,11 +176,18 @@ func (a *App) ChangeRdpPort(portNum uint32) error {
 	if err := rdp.ValidatePort(portNum); err != nil {
 		return err
 	}
-	return rdp.SetPort(portNum)
+	return rdp.ApplyProtected("port", fmt.Sprint(portNum))
 }
 
 func (a *App) ToggleRdp() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(true); err != nil {
+		return err
+	}
 
 	st, err := rdp.GetStatus()
 	if err != nil {
@@ -180,9 +197,46 @@ func (a *App) ToggleRdp() error {
 }
 
 func (a *App) SetRdpNLA(enabled bool) error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	value := "0"
+	if enabled {
+		value = "1"
+	}
+	return rdp.ApplyProtected("nla", value)
+}
 
-	return rdp.SetNLA(enabled)
+func (a *App) GetRdpSafetyStatus() (rdp.SafetyStatus, error) { return rdp.GetSafetyStatus() }
+func (a *App) GetSystemEventReport(days, limit int) (eventlog.Report, error) {
+	return eventlog.Read(a.context(), days, limit)
+}
+func (a *App) GetRdpServerEvents() (rdp.ServerEvents, error) { return rdp.GetServerEvents() }
+func (a *App) ApplyRdpWhitelist(addresses string) error {
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	return rdp.ApplyProtected("whitelist", addresses)
+}
+func (a *App) ConfirmRdpSafety(transaction string) error {
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	return rdp.ConfirmSafety(transaction)
+}
+func (a *App) RollbackRdpSafety(transaction string) error {
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	return rdp.RollbackSafety(transaction)
 }
 
 func (a *App) ClearRdpHistory() (string, error) {
@@ -208,7 +262,14 @@ func (a *App) DeleteRdpHistoryEntry(kind, host, username, detail, sid string) er
 }
 
 func (a *App) AllowFirewallPort(portNum uint32) error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(false); err != nil {
+		return err
+	}
 
 	if err := port.ValidTCP(portNum); err != nil {
 		return err
@@ -217,7 +278,14 @@ func (a *App) AllowFirewallPort(portNum uint32) error {
 }
 
 func (a *App) RemoveFirewallPort(portNum uint32) error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(true); err != nil {
+		return err
+	}
 
 	if err := port.ValidTCP(portNum); err != nil {
 		return err
@@ -226,31 +294,69 @@ func (a *App) RemoveFirewallPort(portNum uint32) error {
 }
 
 func (a *App) ClearFirewallAllowRules() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(true); err != nil {
+		return err
+	}
 
 	return firewall.ClearAllowRules()
 }
 
 func (a *App) SetFirewallEnabled(enabled bool) error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if enabled {
+		return rdp.ApplyProtected("firewall", "1")
+	}
+	if err := rdp.GuardNetwork(true); err != nil {
+		return err
+	}
 
 	return firewall.SetAllProfiles(enabled)
 }
 
 func (a *App) DisablePing() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(false); err != nil {
+		return err
+	}
 
 	return firewall.DisablePing()
 }
 
 func (a *App) EnablePing() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(false); err != nil {
+		return err
+	}
 
 	return firewall.EnablePing()
 }
 
 func (a *App) BlockRiskPorts() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(false); err != nil {
+		return err
+	}
 
 	st, err := rdp.GetStatus()
 	if err != nil {
@@ -265,25 +371,47 @@ func (a *App) BlockRiskPorts() error {
 }
 
 func (a *App) UnblockRiskPorts() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(false); err != nil {
+		return err
+	}
 
 	return firewall.UnblockRiskPorts()
 }
 
 func (a *App) DisableSMBv1() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 
 	return harden.DisableSMBv1()
 }
 
 func (a *App) HardenWinRM() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := rdp.GuardNetwork(false); err != nil {
+		return err
+	}
 
 	return harden.HardenWinRM()
 }
 
 func (a *App) RestrictAnonymous() error {
-	defer lockResource("network")()
+	unlock, err := rdp.LockNetworkMutation()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 
 	return harden.RestrictAnonymous()
 }

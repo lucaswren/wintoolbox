@@ -27,10 +27,10 @@ defineEmits(['check', 'download', 'apply', 'cancel', 'update:autoDownload'])
       <div class="wt-status-block">
         <div class="wt-status-line">
           <span class="wt-status-label">{{ t('当前') }}</span>
-          <el-tag size="small">{{ info?.currentVersion ? 'v' + info.currentVersion : '—' }}</el-tag>
+          <el-tag>{{ info?.currentVersion ? 'v' + info.currentVersion : '—' }}</el-tag>
           <template v-if="info?.latestVersion">
             <span class="wt-status-label">{{ t('最新') }}</span>
-            <el-tag :type="info.hasUpdate ? 'warning' : 'success'" size="small">
+            <el-tag :type="info.hasUpdate ? 'warning' : 'success'">
               v{{ info.latestVersion }}
             </el-tag>
           </template>

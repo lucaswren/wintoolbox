@@ -7,7 +7,7 @@
 3. Compare the SHA256 hash with the release checksum:
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.0.0-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.1.0-windows-amd64.exe -Algorithm SHA256
 ```
 
 4. Launch the executable and accept Windows UAC elevation. If elevation fails, right-click and select **Run as administrator**.

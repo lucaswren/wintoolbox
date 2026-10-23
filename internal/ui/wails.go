@@ -14,12 +14,13 @@ import (
 // Run starts the Wails desktop shell with embedded frontend assets.
 func Run(assets embed.FS) error {
 	app := NewApp()
+	width, height, minWidth, minHeight := initialWindow()
 	err := wails.Run(&options.App{
 		Title:     "WinToolBox",
-		Width:     1280,
-		Height:    800,
-		MinWidth:  960,
-		MinHeight: 600,
+		Width:     width,
+		Height:    height,
+		MinWidth:  minWidth,
+		MinHeight: minHeight,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

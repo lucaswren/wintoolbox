@@ -3,7 +3,7 @@
 # WinToolBox
 
 WinToolBox is a Windows administration toolkit for inspecting system information and managing local accounts, Remote Desktop, firewall rules, Microsoft Defender, time synchronization, power, and updates. Built with Go, Wails, Vue and Element Plus.
-Version: v1.0.1
+Version: v1.1.0
 
 ## Languages and documentation
 
@@ -59,7 +59,7 @@ Run `WinToolBox.exe` and accept UAC elevation, or select **Run as administrator*
 Download from [GitHub Releases](https://github.com/lucaswren/wintoolbox/releases/latest). The executable currently has no Authenticode signature, so the browser or SmartScreen may block it. Confirm its source and compare the release SHA256 before selecting **Keep**, or **More info → Run anyway**.
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.0.0-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.1.0-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## Architecture
@@ -88,16 +88,17 @@ go test ./...
 go vet ./...
 ```
 
-## v1.0.0 release notes
+## v1.1.0 release notes
 
-- Local account, RDP, firewall, hardening, Defender, time, power and Windows Update management.
-- Backups become valid only after all required writes succeed; validate before restoration and verify after operations.
-- Module refresh, coalesced probes and resource locks reduce duplicate work.
-- App updates verify SHA256, support progress/cancellation and retain rollback files/logs.
-- Improved account/log/small-window layouts, bridge type checks, regression tests and Windows CI.
-- Updates use `lucaswren/wintoolbox`, with SHA256 release attachments.
+- Added RDP source-IP allowlists, independent timeout rollback, reconnect confirmation, listener/firewall checks and session event records.
+- Added system-event analysis for startup, shutdown, restart and crash evidence, with original XML and JSON export.
+- Added account rename; retained client history, credential and cache cleanup. Simplified menus, result messages and collapsible activity logs.
+- Improved small-window tables, buttons, confirmations, dropdowns and log details while retaining default component sizes.
+- Automated checks passed. Windows Server/VPS live acceptance remains unperformed because no test server is available; retain an independent console recovery channel before remote changes.
 
-The version was reset to v1.0.0. Users running v1.2.0 must install this version manually; it is not recognized as a newer version.
+[Download release](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.0) · [Validation report (Simplified Chinese)](docs/zh-Hans/validation-vps-2026-10-23.md)
+
+Users running the older v1.2.0 build must still install manually; automatic updates do not downgrade versions.
 
 [Product review and license recommendations](docs/product-review-2026-10-11.md)
 

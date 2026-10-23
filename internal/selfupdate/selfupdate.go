@@ -27,6 +27,10 @@ const (
 
 var cacheDirectory = os.UserCacheDir
 
+// Keep the HTTP boundary injectable so cancellation tests do not depend on
+// loopback networking, proxies or firewall settings on a Windows build host.
+var downloadHTTPClient = func() *http.Client { return &http.Client{Timeout: 10 * time.Minute} }
+
 // Info describes the latest release relative to the running app.
 type Info struct {
 	CurrentVersion  string `json:"currentVersion"`
@@ -205,7 +209,7 @@ func Download(current string) (result Info, downloadErr error) {
 	tmp := dest + ".partial"
 	_ = os.Remove(tmp)
 
-	client := &http.Client{Timeout: 10 * time.Minute}
+	client := downloadHTTPClient()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, info.AssetURL, nil)
 	if err != nil {
 		return info, err

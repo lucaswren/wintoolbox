@@ -66,6 +66,12 @@ type Info struct {
 
 // CurrentUsername returns the current Windows logon user name.
 func CurrentUsername() string {
+	// Resolve the token SID each time: environment variables keep the old name after a rename.
+	if tokenUser, err := windows.GetCurrentProcessToken().GetTokenUser(); err == nil {
+		if name, _, _, err := tokenUser.User.Sid.LookupAccount(""); err == nil {
+			return name
+		}
+	}
 	if u := strings.TrimSpace(os.Getenv("USERNAME")); u != "" {
 		return u
 	}

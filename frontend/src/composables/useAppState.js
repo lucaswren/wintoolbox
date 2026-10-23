@@ -13,9 +13,9 @@ export function useAppState({ appendLog }) {
   const timeZones = ref([])
   const rdpHistory = ref([])
   const rdpHistoryLoading = ref(false)
+  let historySeq = 0
 
   let detailSeq = 0
-  let historySeq = 0
   let statusSeq = 0
   let pendingStatus = 0
   const latestStatus = new Map()
@@ -98,6 +98,7 @@ export function useAppState({ appendLog }) {
 
   const form = reactive({
     accUser: '',
+    accNewName: '',
     accPass1: '',
     accPass2: '',
     rdpPort: 3389,
@@ -326,12 +327,12 @@ export function useAppState({ appendLog }) {
     state,
     form,
     firewallRules,
-    rdpHistory,
-    rdpHistoryLoading,
     timeZones,
     refresh,
     ensureFirewallRules,
     ensureRdpHistory,
+    rdpHistory,
+    rdpHistoryLoading,
     ensureTimeZones,
   }
 }

@@ -33,6 +33,8 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 依赖文件共享 / WinRM 时慎用 ④。云主机还需在安全组同步策略。
 
+开启全部配置文件现在使用五分钟回滚保护，要求已有可验证的 RDP 监听和已启用的放行规则，重新连接后需在顶部确认保留。远程会话中拒绝关闭全部防火墙和删除普通放行规则；白名单生效或事务等待确认时会限制普通网络写操作。详见 [RDP 防失联流程与控制台恢复](03-remote-desktop.md#vps-防失联保护)。
+
 相关：[90 · 系统加固指南](./90-hardening-guide.md) · [05 · 安全加固](./05-security-harden.md)
 
 [操作反馈与功能审查](operation-audit-2026-10-12.md)

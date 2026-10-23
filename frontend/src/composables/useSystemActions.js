@@ -24,6 +24,25 @@ export function useSystemActions({
   }
 
   return {
+    onAccRename: async () => {
+      const user = form.accUser
+      const newName = form.accNewName.trim()
+      const ok = await run(
+        async () => {
+          await api.renameAccount(user, newName)
+          form.accUser = newName
+          form.accNewName = ''
+        },
+        t('用户名已修改，请在下次登录时使用新名称'),
+        {
+          confirm: t(
+            '确认将用户 [{0}] 改名为 [{1}]？用户文件夹路径保持不变；当前登录用户建议注销后重新登录。',
+            [user, newName],
+          ),
+        },
+      )
+      return ok
+    },
     onAccPass: async () => {
       if (!form.accPass1 || !form.accPass2) {
         const msg = t('密码不能为空')
@@ -106,8 +125,11 @@ export function useSystemActions({
         return
       }
       form.rdpPort = port
-      run(() => api.changeRdpPort(port), t('端口已保存并同步防火墙'), {
-        confirm: t('确认将远程桌面端口改为 {0}？', [port]),
+      run(() => api.changeRdpPort(port), t('配置已提交，等待重新连接确认'), {
+        confirm: t(
+          '将 RDP 端口改为 {0}，约十秒后重启远程桌面服务并断开会话。请先放行云安全组，五分钟内重新连接确认，否则恢复。',
+          [port],
+        ),
       })
     },
     onRdpToggle: async () => {
@@ -130,16 +152,12 @@ export function useSystemActions({
         ElMessage.warning(t('NLA 状态未知，请先刷新后再操作'))
         return
       }
-      return run(
-        () => api.setRdpNLA(enabled),
-        enabled ? t('已强制网络级身份验证（NLA）') : t('已关闭 NLA'),
-        {
-          confirm: enabled
-            ? t('确认强制网络级身份验证（NLA）？旧版客户端可能无法连接。')
-            : t('确认关闭 NLA？未认证连接面将增大。'),
-          confirmType: 'warning',
-        },
-      )
+      return run(() => api.setRdpNLA(enabled), t('配置已提交，等待重新连接确认'), {
+        confirm: enabled
+          ? t('确认强制 NLA？旧版客户端可能无法连接；五分钟内需重新连接确认，否则恢复。')
+          : t('确认关闭 NLA？未认证连接面将增大；五分钟内需重新连接确认，否则恢复。'),
+        confirmType: 'warning',
+      })
     },
     onRdpClearHistory: () =>
       run(() => api.clearRdpHistory(), t('已清理 RDP 连接记录'), {
@@ -242,8 +260,8 @@ export function useSystemActions({
         confirmType: 'warning',
       }).then((ok) => ok && ensureFirewallRules()),
     onFwEnableAll: () =>
-      run(() => api.setFirewallEnabled(true), t('防火墙已全部开启'), {
-        confirm: t('确认开启域 / 专用 / 公用全部防火墙配置文件？'),
+      run(() => api.setFirewallEnabled(true), t('配置已提交，等待重新连接确认'), {
+        confirm: t('开启所有防火墙配置文件可能中断连接；五分钟内需重新连接确认，否则恢复。'),
       }),
     onFwDisableAll: () =>
       run(() => api.setFirewallEnabled(false), t('防火墙已全部关闭'), {

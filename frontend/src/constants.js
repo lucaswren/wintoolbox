@@ -1,12 +1,12 @@
 import { t } from './i18n/index.js'
 export const APP_NAME = 'WinToolBox' // synced from version.json
-export const APP_VERSION = 'v1.0.1' // synced from version.json
+export const APP_VERSION = 'v1.1.0' // synced from version.json
 
 export const MENUS = [
   {
     key: 'overview',
     get title() {
-      return t('本机概览')
+      return t('系统信息')
     },
     icon: 'Monitor',
     get desc() {
@@ -16,11 +16,11 @@ export const MENUS = [
   {
     key: 'account',
     get title() {
-      return t('本地账户')
+      return t('账户管理')
     },
     icon: 'User',
     get desc() {
-      return t('密码、权限与锁定策略')
+      return t('用户、密码与登录安全')
     },
   },
   {
@@ -30,7 +30,7 @@ export const MENUS = [
     },
     icon: 'Connection',
     get desc() {
-      return t('开关、端口、NLA 与连接记录')
+      return t('连接设置与访问限制')
     },
   },
   {
@@ -46,7 +46,7 @@ export const MENUS = [
   {
     key: 'harden',
     get title() {
-      return t('安全加固')
+      return t('安全设置')
     },
     icon: 'Key',
     get desc() {
@@ -66,7 +66,7 @@ export const MENUS = [
   {
     key: 'time',
     get title() {
-      return t('时间同步')
+      return t('日期和时间')
     },
     icon: 'Clock',
     get desc() {
@@ -76,7 +76,7 @@ export const MENUS = [
   {
     key: 'power',
     get title() {
-      return t('电源')
+      return t('关机重启')
     },
     icon: 'SwitchButton',
     get desc() {
@@ -84,9 +84,19 @@ export const MENUS = [
     },
   },
   {
+    key: 'systemlogs',
+    get title() {
+      return t('系统日志')
+    },
+    icon: 'Clock',
+    get desc() {
+      return t('查看重启原因和系统异常')
+    },
+  },
+  {
     key: 'update',
     get title() {
-      return t('系统更新')
+      return t('Windows 更新')
     },
     icon: 'Refresh',
     get desc() {
@@ -100,7 +110,7 @@ export const MENUS = [
     },
     icon: 'Download',
     get desc() {
-      return t('检测仓库并下载安装')
+      return t('检查新版本并安装')
     },
   },
 ]

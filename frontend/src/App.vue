@@ -2,7 +2,16 @@
 import { t, locale, setLocale } from './i18n/index.js'
 import { LANGUAGE_OPTIONS } from './i18n/locale.js'
 
-import { computed, defineAsyncComponent, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import {
+  computed,
+  defineAsyncComponent,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  ref,
+  watch,
+} from 'vue'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import zhTw from 'element-plus/dist/locale/zh-tw.mjs'
 import en from 'element-plus/dist/locale/en.mjs'
@@ -25,6 +34,7 @@ import { useSystemActions } from './composables/useSystemActions.js'
 import { appendBoundedLog } from './composables/logBuffer.js'
 import OpLog from './components/OpLog.vue'
 import OperationStatus from './components/OperationStatus.vue'
+import RdpSafetyBanner from './components/RdpSafetyBanner.vue'
 
 const OverviewView = defineAsyncComponent(() => import('./views/OverviewView.vue'))
 const AccountView = defineAsyncComponent(() => import('./views/AccountView.vue'))
@@ -36,6 +46,8 @@ const TimeView = defineAsyncComponent(() => import('./views/TimeView.vue'))
 const PowerView = defineAsyncComponent(() => import('./views/PowerView.vue'))
 const UpdateView = defineAsyncComponent(() => import('./views/UpdateView.vue'))
 const SelfUpdateView = defineAsyncComponent(() => import('./views/SelfUpdateView.vue'))
+const SystemLogsView = defineAsyncComponent(() => import('./views/SystemLogsView.vue'))
+const systemLogsView = ref(null)
 
 const ICONS = {
   Monitor,
@@ -55,6 +67,7 @@ const elementLocale = computed(() => ({ en, 'zh-Hans': zhCn, 'zh-Hant': zhTw })[
 const busy = ref(false)
 const operation = reactive({ phase: 'idle', title: '', detail: '', elapsed: 0, module: '' })
 const logs = ref([])
+const opLog = ref(null)
 const appUpdate = reactive({
   currentVersion: '',
   latestVersion: '',
@@ -113,12 +126,12 @@ const {
   form,
   firewallRules,
   timeZones,
-  rdpHistory,
-  rdpHistoryLoading,
   refresh,
   ensureFirewallRules,
   ensureTimeZones,
   ensureRdpHistory,
+  rdpHistory,
+  rdpHistoryLoading,
 } = useAppState({ appendLog })
 
 const actions = useSystemActions({
@@ -177,9 +190,9 @@ const status = computed(() => ({
 const activeMenu = computed(() => MENUS.find((m) => m.key === active.value))
 
 watch(active, (key) => {
+  nextTick(() => document.querySelector('.app-main')?.scrollTo({ top: 0 }))
   if (key === 'firewall') ensureFirewallRules()
   if (key === 'time') ensureTimeZones()
-  if (key === 'rdp') ensureRdpHistory()
   if (key === 'selfupdate' && !appUpdate.latestVersion && !appUpdateChecking.value) {
     onCheckAppUpdate(false)
   }
@@ -297,6 +310,10 @@ onMounted(async () => {
 })
 
 async function onRefresh() {
+  if (active.value === 'systemlogs') {
+    await systemLogsView.value?.refresh()
+    return
+  }
   try {
     const queueDetail = active.value === 'overview'
     await refreshActive(true, true, queueDetail)
@@ -331,10 +348,9 @@ async function refreshActive(
   module = '',
 ) {
   const key = module || active.value
-  if (['power', 'selfupdate'].includes(key)) return
+  if (['power', 'selfupdate', 'systemlogs'].includes(key)) return
   const snapshot = await refresh(showLog, invalidate, queueDetail || key === 'overview', key)
   if (key === 'firewall') await ensureFirewallRules()
-  if (key === 'rdp') await ensureRdpHistory()
   return snapshot
 }
 async function cancelUpdateDownload() {
@@ -407,11 +423,17 @@ async function cancelUpdateDownload() {
           }}</el-button>
         </el-header>
 
-        <OperationStatus :operation="operation" @dismiss="operation.phase = 'idle'" />
+        <OperationStatus
+          :operation="operation"
+          @dismiss="operation.phase = 'idle'"
+          @show-log="opLog?.expand()"
+        />
+        <RdpSafetyBanner />
         <el-main class="app-main" :aria-busy="loading || busy">
-          <KeepAlive :max="10">
+          <KeepAlive :max="11">
+            <SystemLogsView v-if="active === 'systemlogs'" ref="systemLogsView" />
             <OverviewView
-              v-if="active === 'overview'"
+              v-else-if="active === 'overview'"
               :overview="state.overview"
               :detail-loading="overviewDetailLoading"
             />
@@ -438,6 +460,7 @@ async function cancelUpdateDownload() {
               :password-complexity-unknown="state.passwordComplexityUnknown"
               :password-unknown="state.passwordUnknown"
               :password-policy-detail="state.passwordPolicyDetail"
+              @rename-account="actions.onAccRename"
               @change-pass="actions.onAccPass"
               @set-enabled="actions.onAccEnabled"
               @set-admin="actions.onAccAdmin"
@@ -455,13 +478,13 @@ async function cancelUpdateDownload() {
               :busy="busy"
               :history="rdpHistory"
               :history-loading="rdpHistoryLoading"
-              @save-port="actions.onRdpPort"
-              @toggle="actions.onRdpToggle"
-              @set-nla="actions.onRdpNLA"
               @clear-history="actions.onRdpClearHistory"
               @clear-history-kind="actions.onRdpClearHistoryByKind"
               @delete-history="actions.onRdpDeleteHistory"
               @refresh-history="ensureRdpHistory"
+              @save-port="actions.onRdpPort"
+              @toggle="actions.onRdpToggle"
+              @set-nla="actions.onRdpNLA"
             />
             <FirewallView
               v-else-if="active === 'firewall'"
@@ -537,7 +560,7 @@ async function cancelUpdateDownload() {
           </KeepAlive>
         </el-main>
 
-        <OpLog :lines="logs" @clear="logs = []" />
+        <OpLog ref="opLog" :lines="logs" @clear="logs = []" />
       </el-container>
     </el-container>
   </el-config-provider>
@@ -581,10 +604,17 @@ async function cancelUpdateDownload() {
   line-height: 1.2;
 }
 
+.brand__text {
+  min-width: 0;
+}
+
 .brand__sub {
   margin-top: 3px;
   font-size: 12px;
   color: var(--wt-sidebar-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brand__meta {
@@ -603,6 +633,7 @@ async function cancelUpdateDownload() {
 }
 
 .side-menu {
+  --el-menu-item-height: 40px;
   border-right: none;
   flex: 1;
   padding: 4px 12px 12px;
@@ -611,9 +642,6 @@ async function cancelUpdateDownload() {
 .side-menu :deep(.el-menu-item) {
   border-radius: 10px;
   margin-bottom: 2px;
-  height: 36px;
-  padding: 0 12px;
-  font-size: 13px;
   transition:
     background 0.18s ease,
     color 0.18s ease;
@@ -640,6 +668,7 @@ async function cancelUpdateDownload() {
 .app-main-wrap {
   background: linear-gradient(180deg, #f7f9fc 0%, var(--wt-page-bg) 120px);
   min-width: 0;
+  min-height: 0;
 }
 
 .app-header {
@@ -675,5 +704,6 @@ async function cancelUpdateDownload() {
 .app-main {
   padding: 18px 22px 14px;
   overflow: auto;
+  min-height: 0;
 }
 </style>

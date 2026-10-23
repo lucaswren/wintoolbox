@@ -1,8 +1,9 @@
 package selfupdate
 
 import (
+	"context"
+	"io"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,26 +12,75 @@ import (
 	"time"
 )
 
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+type cancelBody struct {
+	ctx     context.Context
+	entered chan struct{}
+	started bool
+}
+
+func (b *cancelBody) Read(p []byte) (int, error) {
+	if !b.started {
+		b.started = true
+		close(b.entered)
+		return copy(p, "partial"), nil
+	}
+	<-b.ctx.Done()
+	return 0, b.ctx.Err()
+}
+func (b *cancelBody) Close() error { return nil }
+func workspaceTemp(t *testing.T) string {
+	t.Helper()
+	dir, err := os.MkdirTemp(".", ".selfupdate-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir, err = filepath.Abs(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Error(err)
+		}
+	})
+	return dir
+}
+
 func TestDownloadStateResponsiveAndCancellationCleansPartial(t *testing.T) {
 	dir := t.TempDir()
 	previousDirectory, previousInfo := cacheDirectory, Cached()
 	cacheDirectory = func() (string, error) { return dir, nil }
 	t.Cleanup(func() { cacheDirectory = previousDirectory; setCached(previousInfo) })
 	entered := make(chan struct{})
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.(http.Flusher).Flush()
-		close(entered)
-		<-r.Context().Done()
-	}))
-	defer server.Close()
-	setCached(Info{CurrentVersion: "1.0.0", LatestVersion: "2.0.0", HasUpdate: true, AssetName: "test.exe", AssetURL: server.URL, AssetSHA256: strings.Repeat("a", 64), AssetSize: 1024})
+	previousClient := downloadHTTPClient
+	downloadHTTPClient = func() *http.Client {
+		return &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: &cancelBody{ctx: r.Context(), entered: entered}}, nil
+		})}
+	}
+	t.Cleanup(func() { downloadHTTPClient = previousClient })
+	setCached(Info{CurrentVersion: "1.0.0", LatestVersion: "2.0.0", HasUpdate: true, AssetName: "test.exe", AssetURL: "https://update.test/package.exe", AssetSHA256: strings.Repeat("a", 64), AssetSize: 1024})
 	done := make(chan error, 1)
-	go func() { _, err := Download("1.0.0"); done <- err }()
+	finished := make(chan struct{})
+	go func() { defer close(finished); _, err := Download("1.0.0"); done <- err }()
+	t.Cleanup(func() {
+		CancelDownload()
+		select {
+		case <-finished:
+		case <-time.After(3 * time.Second):
+			t.Error("download worker did not stop")
+		}
+	})
 	select {
 	case <-entered:
 	case <-time.After(3 * time.Second):
 		t.Fatal("download did not start")
+	case err := <-done:
+		t.Fatalf("download exited before body read: %v", err)
 	}
 	state := make(chan Info, 1)
 	go func() { state <- Cached() }()
@@ -63,7 +113,7 @@ func TestDownloadStateResponsiveAndCancellationCleansPartial(t *testing.T) {
 // Exercise the actual handoff script using temporary files and a fake launcher.
 // No installed executable or Windows configuration is touched.
 func TestUpdaterRollsBackFailedLaunch(t *testing.T) {
-	dir := t.TempDir()
+	dir := workspaceTemp(t)
 	target, source := filepath.Join(dir, "app.exe"), filepath.Join(dir, "package.exe")
 	if err := os.WriteFile(target, []byte("old executable"), 0600); err != nil {
 		t.Fatal(err)
@@ -96,6 +146,50 @@ func TestUpdaterRollsBackFailedLaunch(t *testing.T) {
 	}
 	if !strings.Contains(string(log), "Restored previous executable") {
 		t.Fatal(string(log))
+	}
+	if !strings.Contains(string(log), "injected launcher failure") {
+		t.Fatal("replacement did not reach launch failure", string(log))
+	}
+}
+
+func TestDownloadTransportFailureClearsState(t *testing.T) {
+	oldClient, oldDirectory, oldInfo := downloadHTTPClient, cacheDirectory, Cached()
+	t.Cleanup(func() { downloadHTTPClient = oldClient; cacheDirectory = oldDirectory; setCached(oldInfo) })
+	dir := t.TempDir()
+	cacheDirectory = func() (string, error) { return dir, nil }
+	downloadHTTPClient = func() *http.Client {
+		return &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) { return nil, io.ErrUnexpectedEOF })}
+	}
+	setCached(Info{CurrentVersion: "1.0.0", LatestVersion: "2.0.0", HasUpdate: true, AssetName: "test.exe", AssetURL: "https://update.test/fail", AssetSHA256: strings.Repeat("a", 64)})
+	if _, err := Download("1.0.0"); err == nil {
+		t.Fatal("transport failure ignored")
+	}
+	if state := Cached(); state.Downloading || state.Downloaded || state.Error == "" {
+		t.Fatalf("stale download state: %+v", state)
+	}
+}
+
+func TestDownloadRejectsCorruptPackageAndRemovesPartial(t *testing.T) {
+	oldClient, oldDirectory, oldInfo := downloadHTTPClient, cacheDirectory, Cached()
+	t.Cleanup(func() { downloadHTTPClient = oldClient; cacheDirectory = oldDirectory; setCached(oldInfo) })
+	dir := t.TempDir()
+	cacheDirectory = func() (string, error) { return dir, nil }
+	downloadHTTPClient = func() *http.Client {
+		return &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("corrupt"))}, nil
+		})}
+	}
+	setCached(Info{CurrentVersion: "1.0.0", LatestVersion: "2.0.0", HasUpdate: true, AssetName: "test.exe", AssetURL: "https://update.test/corrupt", AssetSHA256: strings.Repeat("a", 64), AssetSize: 7})
+	if _, err := Download("1.0.0"); err == nil {
+		t.Fatal("corrupt package accepted")
+	}
+	for _, p := range []string{downloadPath("2.0.0", "test.exe"), downloadPath("2.0.0", "test.exe") + ".partial"} {
+		if _, err := os.Stat(p); !os.IsNotExist(err) {
+			t.Fatalf("invalid package retained: %s, %v", p, err)
+		}
+	}
+	if s := Cached(); s.Downloading || s.Verified || s.Downloaded || s.Error == "" {
+		t.Fatalf("incorrect failure state: %+v", s)
 	}
 }
 

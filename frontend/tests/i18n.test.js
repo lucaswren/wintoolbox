@@ -50,7 +50,7 @@ test('manual choice persists, overrides Windows detection and updates navigation
   try {
     setLocale('zh-Hant')
     assert.equal(t('本机概览'), '本機概覽')
-    assert.equal(MENUS[0].title, '本機概覽')
+    assert.equal(MENUS[0].title, '系統資訊')
     assert.equal(saved.get('wintoolbox.language'), 'zh-Hant')
     assert.equal(document.documentElement.lang, 'zh-Hant')
     useSystemLocale('en')
@@ -58,12 +58,12 @@ test('manual choice persists, overrides Windows detection and updates navigation
     const restarted = await import('../src/i18n/index.js?restart')
     assert.equal(restarted.locale.value, 'zh-Hant')
     setLocale('en')
-    assert.equal(MENUS[0].title, 'Overview')
+    assert.equal(MENUS[0].title, 'System information')
     assert.equal(NTP_PRESETS[1].label, 'Alibaba Cloud')
     setLocale('unsupported')
     assert.equal(locale.value, 'en')
     setLocale('zh-Hans')
-    assert.equal(MENUS[0].title, '本机概览')
+    assert.equal(MENUS[0].title, '系统信息')
   } finally {
     globalThis.localStorage = previousStorage
     globalThis.document = previousDocument

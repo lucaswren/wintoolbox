@@ -40,13 +40,7 @@ function memText() {
 
     <div class="overview-grid">
       <el-card shadow="never" :header="t('系统')" class="wt-card">
-        <el-descriptions
-          :column="1"
-          border
-          size="small"
-          class="wt-desc"
-          :label-style="descLabelStyle"
-        >
+        <el-descriptions :column="1" border class="wt-desc" :label-style="descLabelStyle">
           <el-descriptions-item :label="t('主机名')">{{
             overview?.hostname || '—'
           }}</el-descriptions-item>
@@ -58,7 +52,7 @@ function memText() {
             <template v-if="overview?.osBuild">（Build {{ overview.osBuild }}）</template>
           </el-descriptions-item>
           <el-descriptions-item :label="t('激活状态')">
-            <el-tag :type="actType" size="small">{{ t(overview?.activationStatus || '—') }}</el-tag>
+            <el-tag :type="actType">{{ t(overview?.activationStatus || '—') }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item :label="t('分辨率')">{{
             overview?.resolution || '—'
@@ -73,13 +67,7 @@ function memText() {
       </el-card>
 
       <el-card shadow="never" :header="t('硬件')" class="wt-card" v-loading="detailLoading">
-        <el-descriptions
-          :column="1"
-          border
-          size="small"
-          class="wt-desc"
-          :label-style="descLabelStyle"
-        >
+        <el-descriptions :column="1" border class="wt-desc" :label-style="descLabelStyle">
           <el-descriptions-item :label="t('制造商')">{{
             overview?.manufacturer || '—'
           }}</el-descriptions-item>

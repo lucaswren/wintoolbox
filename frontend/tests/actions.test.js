@@ -91,6 +91,60 @@ test('partial failure triggers state verification and releases busy', async () =
   assert.equal(refreshed, 1)
   assert.equal(busy.value, false)
 })
+
+test('full confirmation and failure details remain in logs without duplicate result toasts', async () => {
+  const logs = []
+  const operation = {}
+  const original = globalThis.ElMessage
+  let toasts = 0
+  globalThis.ElMessage = {
+    ...original,
+    success() {
+      toasts++
+    },
+    warning() {
+      toasts++
+    },
+    error() {
+      toasts++
+    },
+  }
+  try {
+    const run = createRunner({
+      busy: { value: false },
+      operation,
+      appendLog: (line) => logs.push(line),
+      refresh: async () => {
+        throw Error('verification details')
+      },
+    })
+    await run(
+      async () => {
+        throw Error('full provider details\nsecond line')
+      },
+      'done',
+      {
+        confirm: 'full confirmation text',
+      },
+    )
+    assert.equal(operation.phase, 'failed')
+    assert.ok(logs.some((line) => line.includes('full confirmation text')))
+    assert.ok(
+      logs.some(
+        (line) =>
+          line.includes('full provider details\nsecond line') &&
+          line.includes('verification details'),
+      ),
+    )
+    assert.equal(toasts, 0)
+    await run(async () => {}, 'short success', { skipRefresh: true })
+    assert.equal(operation.phase, 'completed')
+    assert.ok(logs.includes('short success'))
+    assert.equal(toasts, 0)
+  } finally {
+    globalThis.ElMessage = original
+  }
+})
 test('cancelled confirmation performs no write or refresh', async () => {
   globalThis.ElMessageBox.confirm = async () => {
     throw new Error('cancel')
@@ -221,5 +275,47 @@ test('a full refresh preserves a newer module refresh', async () => {
     assert.equal(app.state.updateDisabled, true)
   } finally {
     globalThis.window = previousWindow
+  }
+})
+
+test('account rename selects new name before refresh and preserves input on failure or cancellation', async () => {
+  const { useSystemActions } = await import('../src/composables/useSystemActions.js')
+  const { api } = await import('../src/api/index.js')
+  const original = api.renameAccount
+  const confirm = globalThis.ElMessageBox.confirm
+  try {
+    for (const mode of ['success', 'failure', 'cancel']) {
+      const form = { accUser: 'OldName', accNewName: ' NewName ' }
+      let writes = 0
+      let refreshes = 0
+      api.renameAccount = async (user, name) => {
+        writes++
+        assert.equal(user, 'OldName')
+        assert.equal(name, 'NewName')
+        if (mode === 'failure') throw Error('access denied')
+      }
+      globalThis.ElMessageBox.confirm = async () => {
+        if (mode === 'cancel') throw Error('cancel')
+      }
+      const actions = useSystemActions({
+        busy: { value: false },
+        form,
+        state: {},
+        appendLog() {},
+        getModule: () => 'account',
+        refresh: async () => {
+          refreshes++
+          assert.equal(form.accUser, mode === 'success' ? 'NewName' : 'OldName')
+          return {}
+        },
+      })
+      assert.equal(await actions.onAccRename(), mode === 'success')
+      assert.equal(writes, mode === 'cancel' ? 0 : 1)
+      assert.equal(refreshes, mode === 'cancel' ? 0 : 1)
+      assert.equal(form.accNewName, mode === 'success' ? '' : ' NewName ')
+    }
+  } finally {
+    api.renameAccount = original
+    globalThis.ElMessageBox.confirm = confirm
   }
 })
