@@ -134,6 +134,8 @@ with sync_playwright() as p:
             menu(10)
             dialog(lambda:page.get_by_role('button',name=tr('安装并重启'),exact=True).click(),'software update confirmation')
             menu(8)
+            toggle=page.locator('button[aria-controls="system-log-options"]')
+            if toggle.get_attribute('aria-expanded')!='true':toggle.click()
             for index in range(3):dropdown(page.locator('[data-view="systemlogs"] .el-select').nth(index),'system log dropdown '+str(index))
             # Reset the category filter before opening an event with long evidence.
             page.locator('[data-view="systemlogs"] .el-select').nth(2).click()
@@ -144,8 +146,8 @@ with sync_playwright() as p:
                 drawer=page.locator('.el-drawer:visible')
                 drawer.wait_for(state='visible')
                 check_panel(drawer,'long system log drawer/'+close,True)
-                drawer.locator('.el-collapse-item__header').click()
-                drawer.locator('.el-collapse-item__wrap').evaluate("async el=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));await Promise.all(el.getAnimations().map(a=>a.finished.catch(()=>{})))}")
+                drawer.get_by_role('button',name='XML',exact=True).click()
+                drawer.locator('.el-collapse-item__wrap:visible').last.evaluate("async el=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));await Promise.all(el.getAnimations().map(a=>a.finished.catch(()=>{})))}")
                 body=drawer.locator('.el-drawer__body')
                 body.evaluate('el=>el.scrollTop=el.scrollHeight')
                 assert body.evaluate('el=>el.scrollTop>0'), 'Full long XML must remain reachable by scrolling'

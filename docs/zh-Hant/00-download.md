@@ -24,7 +24,7 @@
 ## 校驗（可選）
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.1.1-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.1.2-windows-amd64.exe -Algorithm SHA256
 ```
 
 與 Release / `.sha256` 對比。

@@ -9,3 +9,5 @@ Event 41 alone does not establish power loss or another specific cause. Check st
 Read the [detailed guide in Simplified Chinese](zh-Hans/11-system-logs.md) for event IDs, limitations and investigation steps.
 
 **Clear results** resets displayed records, statistics, details, filters and errors. It does not delete Windows event logs. It is disabled during a read; reading again reloads retained history.
+
+The default view shows actions, compact counts and key records. Open **Filters and range** for collection settings, categories and search. **Log notes** contains collection metadata and full explanations. Event details keep original text, fields, XML and nearby evidence collapsed until opened. Brief read-failure and incomplete-log notices remain visible.

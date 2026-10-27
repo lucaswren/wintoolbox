@@ -1,0 +1,49 @@
+.log-results .log-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.log-results .log-actions .el-button + .el-button {
+  margin-left: 0;
+}
+.log-results .log-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.log-results .log-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.log-results .log-options .el-select {
+  width: 100%;
+  min-width: 0;
+}
+.log-results .log-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 18px;
+  margin-top: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.log-results .log-summary strong {
+  margin-left: 4px;
+}
+.log-results .log-scope {
+  color: var(--wt-text-secondary);
+}
+.log-results .log-result-table,
+.log-results .log-result-notice,
+.log-results .log-extra {
+  margin-top: 14px;
+}
+@media (max-width: 700px) {
+  .log-results .log-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

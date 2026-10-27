@@ -7,13 +7,13 @@ import (
 
 const (
 	AppName    = "WinToolBox" // synced from version.json via scripts/sync-version.ps1
-	AppVersion = "v1.1.1"     // synced from version.json via scripts/sync-version.ps1
+	AppVersion = "v1.1.2"     // synced from version.json via scripts/sync-version.ps1
 )
 
 // AppInfo is version metadata for the UI.
 type AppInfo struct {
 	Name     string `json:"name"`     // WinToolBox
-	Version  string `json:"version"`  // v1.1.1
+	Version  string `json:"version"`  // v1.1.2
 	Language string `json:"language"` // User's Windows display language, normalized to a supported locale.
 }
 

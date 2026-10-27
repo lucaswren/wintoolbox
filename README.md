@@ -3,7 +3,7 @@
 # WinToolBox
 
 WinToolBox is a Windows administration toolkit for inspecting system information and managing local accounts, Remote Desktop, firewall rules, Microsoft Defender, time synchronization, power, and updates. Built with Go, Wails, Vue and Element Plus.
-Version: v1.1.1
+Version: v1.1.2
 
 ## Languages and documentation
 
@@ -59,7 +59,7 @@ Run `WinToolBox.exe` and accept UAC elevation, or select **Run as administrator*
 Download from [GitHub Releases](https://github.com/lucaswren/wintoolbox/releases/latest). The executable currently has no Authenticode signature, so the browser or SmartScreen may block it. Confirm its source and compare the release SHA256 before selecting **Keep**, or **More info → Run anyway**.
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.1.1-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.1.2-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## Architecture
@@ -88,16 +88,15 @@ go test ./...
 go vet ./...
 ```
 
-## v1.1.1 release notes
+## v1.1.2 release notes
 
-- Fixed Windows 11 Teredo/System firewall-rule misclassification during RDP port changes and hardening-status timeouts.
-- Prevented WinRM hardening from blocking custom RDP ports 5985/5986.
-- Enhanced remote sign-in analysis with source summaries, failure reasons, repeated-failure hints, filtering, event/XML details and JSON export.
-- Added **Clear results** to both log pages; Windows event logs are retained. Client history, credential and cache cleanup remain available.
-- Fixed timestamp ordering, partial-read handling and exported collection scope. Go/frontend checks, 11-page regression and 366 layout cases passed.
-- Windows Server/VPS live acceptance remains unperformed; retain an independent console recovery channel and finish pending RDP changes before updating.
+- Simplified both log pages: actions, compact counts and key records are shown by default.
+- Collapsed filters, collection settings and notes; event details expand original messages, fields, XML and related evidence on demand. Brief failure and incomplete-result notices remain visible.
+- Improved small-window wrapping, table scrolling and fixed detail buttons. Retained all analysis, search, export, clear/reread and client-cleanup functions; Windows event logs are retained.
+- Passed frontend/Go checks, 11-page regression, 168 log-page layout cases, 234 overlay cases and 42 final small-window cases.
+- Windows Server/VPS live acceptance remains unperformed. Retain an independent recovery console and finish pending RDP changes before updating.
 
-[Download release](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.1) · [Validation report (Simplified Chinese)](docs/zh-Hans/validation-vps-2026-10-23.md)
+[Download release](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.2) · [Validation report (Simplified Chinese)](docs/zh-Hans/validation-vps-2026-10-23.md)
 
 Users running the older v1.2.0 build must still install manually; automatic updates do not downgrade versions.
 

@@ -7,3 +7,5 @@
 時間線統一顯示 UTC。匯出包含整次讀取結果，可能含主機、帳戶與檔案路徑，分享前請核對。完整事件編號和排查流程見[簡體中文指南](../zh-Hans/11-system-logs.md)；事件解讀依據見[微軟異常重新啟動排查](https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/troubleshoot-unexpected-reboots-system-event-logs)。
 
 **清空結果** 重設目前顯示的記錄、統計、詳情、篩選與錯誤提示，不刪除 Windows 原始日誌。讀取期間停用，重新讀取仍可載入歷史記錄。
+
+預設顯示操作按鈕、簡短統計和關鍵記錄；時間、筆數、分類與搜尋放在預設收起的 **篩選與範圍**。完整說明與採集資訊可開啟 **日誌說明**，原文、欄位、XML 及關聯記錄可在事件詳情分別展開。失敗與日誌不完整仍保留簡短提示。
