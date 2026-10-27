@@ -214,6 +214,9 @@ func (a *App) GetSystemEventReport(days, limit int) (eventlog.Report, error) {
 	return eventlog.Read(a.context(), days, limit)
 }
 func (a *App) GetRdpServerEvents() (rdp.ServerEvents, error) { return rdp.GetServerEvents() }
+func (a *App) GetRdpLoginReport(days, limit int) (rdp.ServerEvents, error) {
+	return rdp.ReadLoginReport(a.context(), days, limit)
+}
 func (a *App) ApplyRdpWhitelist(addresses string) error {
 	unlock, err := rdp.LockNetworkMutation()
 	if err != nil {
@@ -403,7 +406,19 @@ func (a *App) HardenWinRM() error {
 		return err
 	}
 
-	return harden.HardenWinRM()
+	return hardenWinRMChecked(rdp.GetStatus, harden.HardenWinRM)
+}
+
+// A custom RDP port can overlap WinRM's defaults; never block it accidentally.
+func hardenWinRMChecked(read func() (rdp.Status, error), apply func() error) error {
+	status, err := read()
+	if err != nil {
+		return fmt.Errorf("无法确认远程桌面端口，已中止拦截: %w", err)
+	}
+	if status.Enabled && (status.Port == 5985 || status.Port == 5986) {
+		return fmt.Errorf("当前远程桌面端口 %d 位于 WinRM 拦截范围内，已中止以避免断开连接", status.Port)
+	}
+	return apply()
 }
 
 func (a *App) RestrictAnonymous() error {

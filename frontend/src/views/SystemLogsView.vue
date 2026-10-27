@@ -12,6 +12,7 @@ const loading = ref(false),
   report = ref(null),
   selected = ref(null),
   finding = ref(null)
+const loadedScope = ref(null)
 const categories = [
   'unexpected',
   'bugcheck',
@@ -82,8 +83,10 @@ async function refresh() {
   if (loading.value) return
   loading.value = true
   error.value = ''
+  const scope = { days: days.value, limit: limit.value }
   try {
-    report.value = await api.getSystemEventReport(days.value, limit.value)
+    report.value = await api.getSystemEventReport(scope.days, scope.limit)
+    loadedScope.value = scope
     selected.value = null
     finding.value = null
   } catch (e) {
@@ -100,13 +103,22 @@ function closeDetails() {
   selected.value = null
   finding.value = null
 }
+function clearResults() {
+  if (loading.value) return
+  closeDetails()
+  report.value = null
+  loadedScope.value = null
+  error.value = ''
+  category.value = ''
+  search.value = ''
+}
 function exportReport() {
   const data = {
     ...report.value,
     exportedAt: new Date().toISOString(),
     lastReadError: error.value,
-    requestedDays: days.value,
-    requestedLimit: limit.value,
+    requestedDays: loadedScope.value?.days,
+    requestedLimit: loadedScope.value?.limit,
     note: 'System events and heuristic correlations; not a verified root cause.',
   }
   const url = URL.createObjectURL(
@@ -153,9 +165,13 @@ defineExpose({ refresh })
         <el-button :disabled="loading || !report" @click="exportReport">{{
           t('导出诊断报告')
         }}</el-button>
+        <el-button :disabled="loading || (!report && !error)" @click="clearResults">{{
+          t('清空结果')
+        }}</el-button>
       </div>
       <p class="wt-hint">
         {{ t('只读取日志，不更改审计或系统配置。导出包含主机、账户及事件详情，分享前请核对。') }}
+        {{ t('清空结果仅清除当前显示，不删除 Windows 原始日志。') }}
       </p>
       <el-alert v-if="error" type="error" :closable="false" :title="error" class="log-notice" />
       <p v-if="error && report" class="wt-hint">

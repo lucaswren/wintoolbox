@@ -7,3 +7,5 @@ The page covers startup, shutdown requests and sequences, unclean shutdowns, bug
 Event 41 alone does not establish power loss or another specific cause. Check stop codes and dumps, then correlate monitoring and VPS provider/host records. See Microsoft's [unexpected reboot investigation](https://learn.microsoft.com/en-us/troubleshoot/windows-server/performance/troubleshoot-unexpected-reboots-system-event-logs) and [Event 41 limitations](https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/event-id-41-restart).
 
 Read the [detailed guide in Simplified Chinese](zh-Hans/11-system-logs.md) for event IDs, limitations and investigation steps.
+
+**Clear results** resets displayed records, statistics, details, filters and errors. It does not delete Windows event logs. It is disabled during a read; reading again reloads retained history.

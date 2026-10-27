@@ -134,7 +134,11 @@ func Analyze(r Report) Report {
 	}
 	r.Findings = []Finding{}
 	r.Summary = Summary{Total: len(r.Events)}
-	sort.SliceStable(r.Events, func(i, j int) bool { return r.Events[i].Time > r.Events[j].Time })
+	sort.SliceStable(r.Events, func(i, j int) bool {
+		a, _ := time.Parse(time.RFC3339Nano, r.Events[i].Time)
+		b, _ := time.Parse(time.RFC3339Nano, r.Events[j].Time)
+		return a.After(b)
+	})
 	for i := range r.Events {
 		e := &r.Events[i]
 		e.Category, e.Meaning = classify(*e)

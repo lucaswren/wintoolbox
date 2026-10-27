@@ -44,21 +44,6 @@ type SafetyRule struct {
 	Profile   string `json:"profile"`
 }
 
-type ServerEvent struct {
-	Time    string `json:"time"`
-	ID      int    `json:"id"`
-	Channel string `json:"channel"`
-	User    string `json:"user"`
-	Address string `json:"address"`
-	Session string `json:"session"`
-	Detail  string `json:"detail"`
-}
-
-type ServerEvents struct {
-	Events   []ServerEvent `json:"events"`
-	Warnings []string      `json:"warnings"`
-}
-
 func NormalizeSources(input string) ([]string, error) {
 	parts := strings.FieldsFunc(input, func(r rune) bool { return r == ',' || r == ';' || r == '\n' || r == '\r' || r == ' ' || r == '\t' })
 	if len(parts) == 0 || len(parts) > 64 {
@@ -209,13 +194,4 @@ func GuardNetwork(consoleOnly bool) error {
 	}
 	_, err := runSafety("Guard", "", "", "")
 	return err
-}
-
-func GetServerEvents() (ServerEvents, error) {
-	out, err := runSafety("Events", "", "", "")
-	var events ServerEvents
-	if err == nil {
-		err = json.Unmarshal([]byte(strings.TrimSpace(out)), &events)
-	}
-	return events, err
 }

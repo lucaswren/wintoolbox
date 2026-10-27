@@ -12,11 +12,6 @@ const { status, error, loading, refresh } = useRdpSafety()
 const sources = ref('')
 const working = ref(false)
 const actionError = ref('')
-const eventsRead = ref(false)
-const events = ref([])
-const eventWarnings = ref([])
-const eventError = ref('')
-const eventsLoading = ref(false)
 onMounted(async () => {
   if (props.section !== 'access') return
   await refresh()
@@ -45,38 +40,6 @@ async function apply() {
   } finally {
     working.value = false
   }
-}
-async function readEvents() {
-  eventsLoading.value = true
-  eventError.value = ''
-  try {
-    const result = await api.getRdpServerEvents()
-    eventsRead.value = true
-    events.value = result.events || []
-    eventWarnings.value = result.warnings || []
-  } catch (e) {
-    eventError.value = e?.message || String(e)
-  } finally {
-    eventsLoading.value = false
-  }
-}
-function eventLabel(id) {
-  const labels = {
-    21: '登录成功',
-    22: '桌面已启动',
-    23: '已注销',
-    24: '连接已断开',
-    25: '重新连接成功',
-    39: '连接已断开',
-    40: '连接已断开',
-    1149: '身份验证成功',
-    4624: '登录成功',
-    4625: '登录失败',
-    4634: '已注销',
-    4778: '重新连接成功',
-    4779: '连接已断开',
-  }
-  return labels[id] ? t(labels[id]) : t('其他事件')
 }
 </script>
 
@@ -159,54 +122,6 @@ function eventLabel(id) {
           <el-table-column prop="source" :label="t('策略来源')" width="110" />
           <el-table-column prop="profile" :label="t('配置文件')" width="120" />
         </el-table>
-      </el-collapse-item>
-    </el-collapse>
-  </el-card>
-  <el-card v-else class="wt-card" shadow="never">
-    <div class="wt-inline-row">
-      <span>{{ t('最近七天的服务器登录和断连记录。') }}</span>
-      <el-button :loading="eventsLoading" @click="readEvents">{{ t('读取记录') }}</el-button>
-    </div>
-    <el-alert
-      v-if="eventError"
-      class="wt-actions--mt"
-      type="error"
-      :closable="false"
-      :title="
-        eventsRead
-          ? t('读取失败，下面保留上次结果；原因见日志说明。')
-          : t('读取失败，请查看日志说明。')
-      "
-    />
-    <el-table
-      v-if="eventsRead"
-      :data="events"
-      max-height="450"
-      style="margin-top: 12px"
-      :empty-text="t('暂无记录；日志未启用或已清除时也可能为空。')"
-    >
-      <el-table-column type="expand">
-        <template #default="{ row }">
-          <p>ID {{ row.id }} · {{ t('会话') }} {{ row.session || '—' }} · {{ row.channel }}</p>
-          <p>{{ row.detail }}</p>
-        </template>
-      </el-table-column>
-      <el-table-column prop="time" :label="t('时间（UTC）')" min-width="185" />
-      <el-table-column :label="t('事件')" min-width="130">
-        <template #default="{ row }">{{ eventLabel(row.id) }}</template>
-      </el-table-column>
-      <el-table-column prop="user" :label="t('用户名')" min-width="110" show-overflow-tooltip />
-      <el-table-column
-        prop="address"
-        :label="t('来源地址')"
-        min-width="130"
-        show-overflow-tooltip
-      />
-    </el-table>
-    <el-collapse v-if="eventError || eventWarnings.length" class="wt-actions--mt">
-      <el-collapse-item :title="t('日志说明')" name="event-details">
-        <p v-if="eventError" role="alert">{{ eventError }}</p>
-        <p v-for="warning in eventWarnings" :key="warning">{{ warning }}</p>
       </el-collapse-item>
     </el-collapse>
   </el-card>

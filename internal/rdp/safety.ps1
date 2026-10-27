@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('Status','Apply','Confirm','Rollback','Recover','Activate','Guard','Events')][string]$Action,
+  [ValidateSet('Status','Apply','Confirm','Rollback','Recover','Activate','Guard')][string]$Action,
   [string]$Kind = '', [string]$Value = '', [string]$Transaction = '',
   [uint32]$SessionID = 0, [string]$RemoteSession = 'false'
 )
@@ -51,7 +51,11 @@ function Get-Candidates([int]$port, [string]$store) {
     # Service-specific rules for other Windows services cannot authorize RDP.
     if ([string]$service.Service -notin @('Any','TermService','')) { continue }
     $program = [Environment]::ExpandEnvironmentVariables([string]$app.Program)
-    if ($program -notin @('Any','System','') -and [IO.Path]::GetFileName($program) -ne 'svchost.exe') { continue }
+    # System is the kernel process, not the TermService svchost listener.
+    # In particular, NETDIS-UPnPHost-In-TCP-Teredo has Program=System and
+    # LocalPort=Any; it must not be narrowed or treated as an RDP bypass.
+    if ($program -eq 'System') { continue }
+    if ($program -notin @('Any','') -and [IO.Path]::GetFileName($program) -ne 'svchost.exe') { continue }
     [pscustomobject]@{
       Rule = $rule; Filter = $filter; Addresses = @($address.RemoteAddress)
       Service = [string]$service.Service; Program = [string]$app.Program
@@ -255,39 +259,6 @@ function Get-Health($state) {
     rules=@($rules); warnings=@($warnings); canConfirm=$canConfirm
   }
 }
-function Read-Events {
-  $items = @(); $warnings = @()
-  $sources = @(
-    @{Name='Microsoft-Windows-TerminalServices-LocalSessionManager/Operational'; IDs=@(21,22,23,24,25,39,40)},
-    @{Name='Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational'; IDs=@(1149)},
-    @{Name='Security'; IDs=@(4624,4625,4634,4778,4779)}
-  )
-  foreach ($source in $sources) {
-    try {
-      $log = Get-WinEvent -ListLog $source.Name
-      if (!$log.IsEnabled) { $warnings += ('Log disabled: ' + $source.Name); continue }
-      $errors = @()
-      $events = @(Get-WinEvent -FilterHashtable @{LogName=$source.Name; Id=$source.IDs; StartTime=(Get-Date).AddDays(-7)} -MaxEvents 150 -ErrorAction SilentlyContinue -ErrorVariable errors)
-      foreach ($errorItem in $errors) { if ($errorItem.FullyQualifiedErrorId -notlike 'NoMatchingEventsFound*') { $warnings += ($source.Name + ': ' + $errorItem.Exception.Message) } }
-      foreach ($event in $events) {
-        $xml = [xml]$event.ToXml(); $data = @{}
-        foreach ($node in @($xml.SelectNodes('/*[local-name()="Event"]/*[local-name()="EventData"]/*[local-name()="Data"]'))) { $data[[string]$node.Name] = [string]$node.InnerText }
-        foreach ($node in @($xml.SelectNodes('/*[local-name()="Event"]/*[local-name()="UserData"]/*/*'))) { $data[$node.LocalName] = [string]$node.InnerText }
-        if ($source.Name -eq 'Security' -and $event.Id -in @(4624,4625,4634) -and $data['LogonType'] -notin @('10','3')) { continue }
-        $user = @($data['TargetUserName'],$data['User'],$data['Param1'],$data['AccountName']) | Where-Object { $_ } | Select-Object -First 1
-        $address = @($data['IpAddress'],$data['Address'],$data['Param3'],$data['ClientAddress']) | Where-Object { $_ } | Select-Object -First 1
-        $items += [pscustomobject]@{
-          time=$event.TimeCreated.ToUniversalTime().ToString('o'); id=[int]$event.Id; channel=$source.Name
-          user=[string]$user; address=[string]$address; session=[string]$data['SessionID']
-          detail=[string]$event.Message
-        }
-      }
-    } catch { $warnings += ($source.Name + ': ' + $_.Exception.Message) }
-  }
-  [pscustomobject]@{ events=@($items | Sort-Object time -Descending | Select-Object -First 250); warnings=@($warnings + '1149 means authentication, not a completed desktop logon. Security type 3 can include non-RDP network logons. Missing events do not prove no activity.') } | ConvertTo-Json -Depth 5 -Compress
-}
-
-if ($Action -eq 'Events') { Read-Events; return }
 # Global serialization includes recovery and confirmation in separate processes.
 $mutex = New-Object Threading.Mutex($false, 'Global\WinToolBox-RdpSafety-v1')
 $locked = $false

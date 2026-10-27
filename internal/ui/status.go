@@ -163,7 +163,11 @@ func loadStatus(parent context.Context, module string, invalidateOverview bool) 
 	launch("account", func() {
 		sendProbe(ctx, "password", chPwd, func() pwdRes { return pwdRes{account.GetPasswordPolicy()} })
 	})
-	launch("harden", func() { sendProbe(ctx, "harden", chHarden, func() hardenRes { return hardenRes{harden.GetStatus()} }) })
+	launch("harden", func() {
+		sendContextProbe(ctx, "harden", chHarden, func(shared context.Context) hardenRes {
+			return hardenRes{harden.GetStatusContext(shared)}
+		})
+	})
 	received := 0
 	for received < moduleCount {
 		select {

@@ -15,7 +15,7 @@ Keep VPS console access available. Recovery covers saved host settings only, not
 
 Changing ports alone does not replace access controls or NLA. Confirm that the old port is no longer exposed where appropriate.
 
-**Access restrictions** shows the allowlist and local listener status. Raw rules and output are collapsed under **Diagnostics**. **Sign-in records** loads server events on request; rows expand to show technical details. **Client history** retains search, type filters, single-record deletion, clearing a selected type and clearing all records, including saved credentials and bitmap cache. Records load when this tab is opened; cleanup does not change the Remote Desktop service or port.
+**Access restrictions** shows the allowlist and local listener status. Raw rules and output are collapsed under **Diagnostics**. **Sign-in records** supports a 1–90 day range, source summaries, failure reasons, repeated-failure hints, search, event details/XML and full JSON export. Network authentication failures are distinguished from confirmed remote interactive logons; incomplete channel coverage is reported. **Clear results** resets this view without deleting Windows event logs. **Client history** retains search, type filters, single-record deletion, clearing a selected type and clearing all records, including saved credentials and bitmap cache. Records load when this tab is opened; cleanup does not change the Remote Desktop service or port.
 
 ![Remote Desktop](images/03-remote-desktop.png)
 

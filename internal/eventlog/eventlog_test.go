@@ -5,6 +5,16 @@ import (
 	"testing"
 )
 
+func TestTimelineOrdersActualInstants(t *testing.T) {
+	r := Analyze(Report{Events: []Event{
+		{RecordID: "old", Time: "2026-10-27T01:00:00Z"},
+		{RecordID: "new", Time: "2026-10-27T09:00:00.1+08:00"},
+	}})
+	if r.Events[0].RecordID != "new" {
+		t.Fatal("timeline sorted textual offsets instead of actual instants")
+	}
+}
+
 func TestRepeatedClockAndLogClearNoticesKeepAllEvidence(t *testing.T) {
 	r := Analyze(Report{Warnings: []string{"Collector notice", "Collector notice"}, Events: []Event{
 		{RecordID: "1", Provider: "Microsoft-Windows-Kernel-General", ID: 1},

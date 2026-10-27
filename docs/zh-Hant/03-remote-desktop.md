@@ -34,6 +34,8 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 新增來源 IP/CIDR 白名單、TermService 真實監聽檢查、有效策略規則列表，以及伺服器登入與斷線事件。NLA 和啟用全部防火牆也使用保護流程；既有連線不能確認保留。網域控制站、未知會話或受管 RDP 策略會保守拒絕修改。
 
+**登入記錄** 可選 1–90 天，支援來源彙總、失敗原因、重複失敗線索、搜尋、原文/XML 詳情及完整 JSON 匯出。網路驗證失敗與已確認的遠端互動式登入分開統計，通道不可讀時提示資料可能不完整。**清空結果** 僅重設目前顯示，不刪除 Windows 原始日誌。
+
 請先保留 VPS 控制臺通道。本機還原無法修復雲端安全組、NAT 或系統故障；仍需在各 Windows Server Desktop Experience 版本實機驗收。完整流程、限制與復原方式見[簡體中文保護指南](../zh-Hans/03-remote-desktop.md#vps-防失联保护)。
 
 ## 注意

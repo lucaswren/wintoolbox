@@ -28,6 +28,7 @@ export const api = {
   confirmRdpSafety: (transaction) => wailsCall('ConfirmRdpSafety', transaction),
   rollbackRdpSafety: (transaction) => wailsCall('RollbackRdpSafety', transaction),
   getRdpServerEvents: () => wailsCall('GetRdpServerEvents'),
+  getRdpLoginReport: (days, limit) => wailsCall('GetRdpLoginReport', days, limit),
   getSystemEventReport: (days, limit) => wailsCall('GetSystemEventReport', days, limit),
   clearRdpHistory: () => wailsCall('ClearRdpHistory'),
   clearRdpHistoryByKind: (kind) => wailsCall('ClearRdpHistoryByKind', kind),

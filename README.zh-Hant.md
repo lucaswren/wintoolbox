@@ -4,7 +4,7 @@
 
 WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本機帳戶、遠端桌面、防火牆規則、Microsoft Defender、時間同步、電源及更新。使用 Go、Wails、Vue 與 Element Plus 開發。
 
-版本：v1.1.0
+版本：v1.1.1
 
 ## 文件
 
@@ -20,15 +20,16 @@ WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本
 - [09 · 系統更新](./docs/zh-Hant/09-windows-update.md)
 - [全部功能文件](./docs/zh-Hant/README.md)
 
-## v1.1.0 發布說明
+## v1.1.1 發布說明
 
-- 新增 RDP 來源 IP 白名單、逾時自動回復、重新連線確認、監聽與有效防火牆規則檢查、登入和中斷連線記錄。
-- 新增系統日誌分析，檢視開關機、重新啟動、異常重啟與藍屏線索，支援原文、XML 和 JSON 匯出。
-- 支援修改使用者名稱，保留用戶端歷程、認證和快取清理；簡化選單、頂部結果提示及預設收起的活動日誌。
-- 改善小視窗下的表格、按鈕、彈窗、下拉選單和日誌詳情，使用預設元件尺寸。
-- 自動化驗證通過；缺少 Windows Server/VPS 測試機，實機斷線重連、回復工作和重啟驗收尚未執行。遠端變更前請保留獨立主控台入口。
+- 修復 Windows 11 修改 RDP 連接埠時的 Teredo/System 防火牆規則誤判，以及安全加固狀態讀取逾時。
+- 防止 WinRM 加固封鎖自訂 RDP 連接埠 5985/5986。
+- 增強遠端登入分析：來源彙總、失敗原因、重複失敗線索、搜尋分類、原文/XML 詳情和 JSON 匯出。
+- 兩個日誌頁面新增「清空結果」，保留 Windows 原始日誌；用戶端歷程、認證和快取清理功能保留。
+- 修復日誌時間排序、部分讀取和匯出採集範圍問題。Go/前端檢查、11 頁回歸和 366 組排版檢查通過。
+- Windows Server/VPS 實機驗收尚未執行；遠端變更保留獨立主控台，更新前先確認或還原待處理的 RDP 保護變更。
 
-[發布下載](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.0) · [詳細驗證報告](docs/zh-Hans/validation-vps-2026-10-23.md)
+[發布下載](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.1) · [詳細驗證報告](docs/zh-Hans/validation-vps-2026-10-23.md)
 
 舊版 v1.2.0 使用者仍需手動安裝，自動更新不會降級。
 
@@ -139,7 +140,7 @@ wails dev
 2. 用 Release / `*.sha256` 中的哈希校驗後再執行
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.1.0-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.1.1-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## 技術棧

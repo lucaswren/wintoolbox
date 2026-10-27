@@ -63,7 +63,11 @@ function Get-NetFirewallRule {
 }
 function Get-NetFirewallAddressFilter { param([Parameter(ValueFromPipeline=$true)]$InputObject) process { [pscustomobject]@{RemoteAddress=@($InputObject.RemoteAddress)} } }
 function Get-NetFirewallServiceFilter { param([Parameter(ValueFromPipeline=$true)]$InputObject) process { [pscustomobject]@{Service=$InputObject.Service} } }
-function Get-NetFirewallApplicationFilter { param([Parameter(ValueFromPipeline=$true)]$InputObject) process { [pscustomobject]@{Program='Any'} } }
+function Get-NetFirewallApplicationFilter { param([Parameter(ValueFromPipeline=$true)]$InputObject) process {
+  $program='Any'
+  if ($InputObject.PSObject.Properties['Program']) { $program=$InputObject.Program }
+  [pscustomobject]@{Program=$program}
+} }
 function Set-NetFirewallRule {
   param([Parameter(ValueFromPipeline=$true)]$InputObject,$PolicyStore,$Name,$RemoteAddress)
   process {
@@ -116,6 +120,46 @@ Reset-Fixture
 $global:fake.Rules['Existing-RDP'].Service='Any'; $global:fake.Rules['Existing-RDP'].LocalPort='Any'
 Expect-Failure { Apply 'whitelist' '192.0.2.1/32' } '*Broad/ambiguous*'
 Assert ($global:fake.Writes -eq 0) 'Broad rules fail closed'
+
+# Windows 11's enabled System-only Teredo discovery rule is not RDP access.
+foreach ($kind in @('port','whitelist')) {
+  Reset-Fixture
+  $global:fake.Rules['NETDIS-UPnPHost-In-TCP-Teredo'] = [pscustomobject]@{
+    Name='NETDIS-UPnPHost-In-TCP-Teredo'; Direction='Inbound'; Enabled='True'; Action='Allow'
+    PolicyStoreSourceType='Local'; Profile='Public'; RemoteAddress=@('LocalSubnet')
+    LocalPort='Any'; Protocol='TCP'; Service='Any'; Program='System'
+  }
+  $value='192.0.2.1/32'
+  if ($kind -eq 'port') {
+    $global:fake.Port=11139; $global:fake.Listening=11139
+    $global:fake.Rules['Existing-RDP'].LocalPort='11139'
+    $value='47821'
+  }
+  Apply $kind $value
+  $s=State
+  if ($kind -eq 'port') { & $Script -Action Activate -Transaction $s.ID }
+  $global:fake.Reconnected=$true
+  & $Script -Action Confirm -Transaction $s.ID -SessionID 22 -RemoteSession true
+  Assert ((State).Phase -eq 'confirmed') ('System-only discovery rule does not prevent confirmation: ' + $kind)
+  Assert ($global:fake.Rules['NETDIS-UPnPHost-In-TCP-Teredo'].RemoteAddress[0] -eq 'LocalSubnet') 'Unrelated System rule is unchanged'
+}
+
+Reset-Fixture
+$global:fake.Rules['Existing-RDP'].Service='Any'; $global:fake.Rules['Existing-RDP'].LocalPort='Any'
+$renamed=$global:fake.Rules['Existing-RDP']
+$global:fake.Rules.Remove('Existing-RDP')
+$renamed.Name='NETDIS-UPnPHost-In-TCP-Teredo'
+$global:fake.Rules[$renamed.Name]=$renamed
+Expect-Failure { Apply 'port' '3399' } '*Broad/ambiguous*'
+Assert ($global:fake.Writes -eq 0) 'Rule names alone never exempt a broad application rule'
+
+foreach ($program in @('Any', '%SystemRoot%\System32\svchost.exe')) {
+  Reset-Fixture
+  $global:fake.Rules['Existing-RDP'].Service='Any'; $global:fake.Rules['Existing-RDP'].LocalPort='Any'
+  $global:fake.Rules['Existing-RDP'] | Add-Member NoteProperty Program $program
+  Expect-Failure { Apply 'port' '3399' } '*Broad/ambiguous*'
+  Assert ($global:fake.Writes -eq 0) 'Genuinely broad RDP application rules remain fail closed'
+}
 
 Reset-Fixture
 $global:fake.Rules['Existing-RDP'].PolicyStoreSourceType='GroupPolicy'
@@ -197,12 +241,7 @@ Assert $global:fake.Firewall 'Firewall change submitted'
 & $Script -Action Rollback -Transaction $s.ID
 Assert (!$global:fake.Firewall) 'Firewall rollback restores original profile states'
 
-Reset-Fixture
-$event=[pscustomobject]@{TimeCreated=(Get-Date);Id=24;Message='Disconnected';}
-$event | Add-Member ScriptMethod ToXml { return '<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event"><UserData><EventXML><User>Administrator</User><SessionID>22</SessionID><Address>192.0.2.1</Address></EventXML></UserData></Event>' }
-$global:fake.Events=@($event)
-$logs=(& $Script -Action Events | ConvertFrom-Json)
-Assert (@($logs.events).Count -gt 0 -and $logs.events[0].address -eq '192.0.2.1') 'Namespaced event XML is parsed without translated-message matching'
+# Event XML parsing is covered by the independent events.ps1 collector tests.
 Write-Output 'RDP transaction scenarios passed'
 
 Reset-Fixture

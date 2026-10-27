@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { FORM_LABEL_WIDTH } from '../constants.js'
 import RdpSafetyPanel from '../components/RdpSafetyPanel.vue'
 import RdpClientHistory from '../components/RdpClientHistory.vue'
+import RdpLoginLogs from '../components/RdpLoginLogs.vue'
 import { useRdpSafety } from '../composables/useRdpSafety.js'
 
 const { status: safety } = useRdpSafety()
@@ -159,7 +160,7 @@ defineEmits([
         <RdpSafetyPanel :busy="busy" section="access" />
       </el-tab-pane>
       <el-tab-pane :label="t('登录记录')" name="events">
-        <RdpSafetyPanel :busy="busy" section="events" />
+        <RdpLoginLogs :busy="busy" />
       </el-tab-pane>
       <el-tab-pane :label="t('客户端记录')" name="client" lazy>
         <RdpClientHistory
