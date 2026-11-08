@@ -70,8 +70,8 @@ with sync_playwright() as p:
         print('Log-page locale:',lang,flush=True)
         for width,height in ([(800,500)] if quick else [(800,500),(960,600),(1120,720),(1320,840)]):
             page.set_viewport_size({'width':width,'height':height})
-            for key,index in [('system',8),('remote',2)]:
-                page.locator('.side-menu .el-menu-item').nth(index).click()
+            for key,menu in [('system','systemlogs'),('remote','rdp')]:
+                page.locator(f'[data-menu="{menu}"]').click()
                 if key=='remote':page.get_by_role('tab',name=tr('登录记录'),exact=True).click()
                 panel=page.locator('[data-view="systemlogs"]') if key=='system' else page.get_by_test_id('remote-login-logs')
                 read=panel.get_by_role('button',name=tr('读取并分析' if key=='system' else '读取记录'),exact=True)

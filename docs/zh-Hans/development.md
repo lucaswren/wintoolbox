@@ -82,3 +82,14 @@ python scripts/ui-smoke.py
 ```
 
 脚本复用文档模拟后端，检查十个页面、960×600/1120×720窗口与草稿保留；截图输出到 artifacts/ui，所有系统写操作均为模拟函数。
+
+## 重新生成截图
+
+截图使用当前应用的简体中文界面和示例数据。图中的编号对应操作说明。
+
+```powershell
+npm --prefix frontend run build
+python -m pip install -r docs/requirements.txt
+python -m playwright install chromium
+python docs/capture_screens.py
+```

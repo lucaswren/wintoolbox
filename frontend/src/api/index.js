@@ -2,10 +2,16 @@ import { wailsCall } from './wails.js'
 
 /** Bridge facade checked against the generated Go contract in wails.d.ts */
 export const api = {
+  openDocumentation: (language) => wailsCall('OpenDocumentation', language),
   getAppInfo: () => wailsCall('GetAppInfo'),
   getStatus: (refresh = false) => wailsCall('GetStatus', refresh),
   getModuleStatus: (module, refresh = false) => wailsCall('GetModuleStatus', module, refresh),
   cancelAppUpdateDownload: () => wailsCall('CancelAppUpdateDownload'),
+  checkNetwork: (target, port) => wailsCall('CheckNetwork', target, port),
+  checkLocalListener: (port) => wailsCall('CheckLocalListener', port),
+  traceNetwork: (target) => wailsCall('TraceNetwork', target),
+  getSystemHealth: () => wailsCall('GetSystemHealth'),
+  copyHealthSummary: (text) => wailsCall('CopyHealthSummary', text),
   getOverviewDetail: () => wailsCall('GetOverviewDetail'),
   getTimeZones: () => wailsCall('GetTimeZones'),
   getFirewallRules: () => wailsCall('GetFirewallRules'),
@@ -27,7 +33,6 @@ export const api = {
   applyRdpWhitelist: (addresses) => wailsCall('ApplyRdpWhitelist', addresses),
   confirmRdpSafety: (transaction) => wailsCall('ConfirmRdpSafety', transaction),
   rollbackRdpSafety: (transaction) => wailsCall('RollbackRdpSafety', transaction),
-  getRdpServerEvents: () => wailsCall('GetRdpServerEvents'),
   getRdpLoginReport: (days, limit) => wailsCall('GetRdpLoginReport', days, limit),
   getSystemEventReport: (days, limit) => wailsCall('GetSystemEventReport', days, limit),
   clearRdpHistory: () => wailsCall('ClearRdpHistory'),

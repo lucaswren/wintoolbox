@@ -3,8 +3,11 @@ package ui
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
+
+	"golang.org/x/sys/windows"
 
 	"wintoolbox/internal/account"
 	"wintoolbox/internal/defender"
@@ -505,15 +508,22 @@ func accountsFrom(accs []account.Info) []AccountView {
 
 func overviewFrom(ov sysinfo.Overview) OverviewView {
 	diskTexts := make([]string, 0, len(ov.Disks))
+	diskSpace := make([]DiskSpace, 0, len(ov.Disks))
+	windowsDir, _ := windows.GetSystemWindowsDirectory()
+	systemDrive := filepath.VolumeName(windowsDir)
 	for _, d := range ov.Disks {
 		diskTexts = append(diskTexts, fmt.Sprintf("%s %.0f/%.0f GiB", d.Root, d.FreeGB, d.TotalGB))
+		diskSpace = append(diskSpace, DiskSpace{
+			Drive: d.Root, TotalGiB: d.TotalGB, FreeGiB: d.FreeGB,
+			System: strings.EqualFold(d.Root, systemDrive),
+		})
 	}
 	return OverviewView{
 		Hostname: ov.Hostname, OSName: ov.OSName, OSBuild: ov.OSBuild, Arch: ov.Arch,
 		Manufacturer: ov.Manufacturer, Model: ov.Model, Board: ov.Board, BIOS: ov.BIOS,
 		CPU: ov.CPU, CPUCores: ov.CPUCores, MemoryTotalGB: ov.MemoryTotalGB, MemoryAvailGB: ov.MemoryAvailGB,
 		MemoryModules: ov.MemoryModules, Resolution: ov.Resolution, IPs: ov.IPs,
-		Disks: diskTexts, PhysicalDisks: formatPhysicalDisks(ov.PhysicalDisks), GPUs: ov.GPUs,
+		Disks: diskTexts, DiskSpace: diskSpace, PhysicalDisks: formatPhysicalDisks(ov.PhysicalDisks), GPUs: ov.GPUs,
 		Activated: ov.Activated, ActivationStatus: ov.ActivationStatus,
 	}
 }

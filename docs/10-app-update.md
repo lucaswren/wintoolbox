@@ -14,10 +14,8 @@ The updater verifies the file before and after copying, retains the previous exe
 
 Version 1.0.0 reset the earlier 1.2.0 version number. Users on 1.2.0 must download and install 1.0.0 manually because it is not considered a newer version.
 
-![App update](images/10-app-update.png)
+![App update](images/en/10-app-update.png)
 
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
-
-Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
 
 [Operation feedback and audit](operation-audit-2026-10-12.md)

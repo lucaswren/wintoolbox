@@ -1,6 +1,5 @@
 import { t } from './i18n/index.js'
-export const APP_NAME = 'WinToolBox' // synced from version.json
-export const APP_VERSION = 'v1.1.2' // synced from version.json
+export const APP_VERSION = 'v1.2.0' // synced from version.json
 
 export const MENUS = [
   {
@@ -11,6 +10,26 @@ export const MENUS = [
     icon: 'Monitor',
     get desc() {
       return t('系统与硬件')
+    },
+  },
+  {
+    key: 'network',
+    get title() {
+      return t('网络检查')
+    },
+    icon: 'Connection',
+    get desc() {
+      return t('检查域名、延迟和端口连接')
+    },
+  },
+  {
+    key: 'systemlogs',
+    get title() {
+      return t('系统日志')
+    },
+    icon: 'Clock',
+    get desc() {
+      return t('查看重启原因和系统异常')
     },
   },
   {
@@ -44,16 +63,6 @@ export const MENUS = [
     },
   },
   {
-    key: 'harden',
-    get title() {
-      return t('安全设置')
-    },
-    icon: 'Key',
-    get desc() {
-      return t('SMBv1、WinRM 与匿名限制')
-    },
-  },
-  {
     key: 'defender',
     get title() {
       return t('防病毒')
@@ -61,6 +70,16 @@ export const MENUS = [
     icon: 'FirstAidKit',
     get desc() {
       return t('Defender 实时防护')
+    },
+  },
+  {
+    key: 'harden',
+    get title() {
+      return t('安全设置')
+    },
+    icon: 'Key',
+    get desc() {
+      return t('SMBv1、WinRM 与匿名限制')
     },
   },
   {
@@ -81,16 +100,6 @@ export const MENUS = [
     icon: 'SwitchButton',
     get desc() {
       return t('锁定 / 重启 / 关机')
-    },
-  },
-  {
-    key: 'systemlogs',
-    get title() {
-      return t('系统日志')
-    },
-    icon: 'Clock',
-    get desc() {
-      return t('查看重启原因和系统异常')
     },
   },
   {

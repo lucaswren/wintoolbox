@@ -38,7 +38,24 @@ with sync_playwright() as p:
                 route.fulfill(status=404, body="Not found")
         page.route("http://wintoolbox.test/**", serve)
         url = "http://wintoolbox.test/"
-    page.goto(url, wait_until="networkidle")
+    page.goto(url + "?first-run", wait_until="networkidle")
+    help_dialog = page.get_by_role("dialog", name="新手指引")
+    expect(help_dialog).to_be_visible()
+    help_dialog.get_by_role("button", name="知道了").click()
+    page.reload(wait_until="networkidle")
+    expect(help_dialog).not_to_be_visible()
+    help_button = page.get_by_role("button", name="帮助", exact=True)
+    help_button.click()
+    help_dialog.get_by_role("button", name="在浏览器打开文档").click()
+    assert page.evaluate("window.__documentationLanguage") == "zh-Hans"
+    help_dialog.get_by_role("button", name="网络检查", exact=True).click()
+    expect(page.locator('[data-view="network"]')).to_be_visible()
+    expect(help_dialog).not_to_be_visible()
+    page.get_by_role("menuitem", name="系统信息", exact=True).click()
+    assert page.locator("[data-menu]").evaluate_all("(items) => items.map((item) => item.dataset.menu)") == [
+        "overview", "network", "systemlogs", "account", "rdp", "firewall",
+        "defender", "harden", "time", "power", "update", "selfupdate",
+    ]
     expect(page.locator('.op-log__body')).to_have_count(0)
     assert page.locator('.op-log').bounding_box()['height'] <= 48, 'Collapsed log must occupy only its toolbar'
     page.locator('.op-log').get_by_role('button',name='展开',exact=True).click()
@@ -64,7 +81,7 @@ with sync_playwright() as p:
     assert page.locator(".el-tab-pane:visible .el-input-number input").first.input_value() == "12"
     page.screenshot(path=str(out / "account-960.png"))
     page.get_by_role("tab", name="用户管理").click()
-    for title, key in [("系统信息", "overview"), ("账户管理", "account"), ("远程桌面", "rdp"), ("防火墙", "firewall"), ("安全设置", "harden"), ("Microsoft Defender", "defender"), ("日期和时间", "time"), ("关机重启", "power"), ("系统日志", "systemlogs"), ("Windows 更新", "update"), ("软件更新", "selfupdate")]:
+    for title, key in [("系统信息", "overview"), ("账户管理", "account"), ("远程桌面", "rdp"), ("防火墙", "firewall"), ("安全设置", "harden"), ("Microsoft Defender", "defender"), ("日期和时间", "time"), ("关机重启", "power"), ("系统日志", "systemlogs"), ("Windows 更新", "update"), ("软件更新", "selfupdate"), ("网络检查", "network")]:
         item = page.get_by_role("menuitem", name=title, exact=True)
         item.scroll_into_view_if_needed()
         item.click()
@@ -305,12 +322,65 @@ with sync_playwright() as p:
     page.screenshot(path=str(out/'remote-login-detail-800.png'))
     page.keyboard.press('Escape')
     page.get_by_text('登录事件详情',exact=True).wait_for(state='hidden')
+    page.get_by_role('menuitem', name='网络检查', exact=True).click()
+    net = page.locator('[data-view="network"]')
+    start = net.get_by_role('button', name='开始检查', exact=True)
+    start.click()
+    expect(net.get_by_text('请输入有效域名或 IP 地址。')).to_be_visible()
+    net.get_by_role('textbox', name='目标地址').fill('example.com')
+    port = net.get_by_role('textbox', name='TCP 端口（选填）')
+    port.fill('65536')
+    start.click()
+    expect(net.get_by_text('请输入 1 到 65535 之间的端口号。')).to_be_visible()
+    port.fill('443')
+    start.click()
+    expect(net.get_by_text('未收到 Ping 回应，但 TCP 端口可连通。目标可能关闭了 Ping 回应。')).to_be_visible()
+    expect(net.get_by_role('button', name='运行 MTR')).not_to_be_visible()
+    net.get_by_role('button', name='高级诊断').click()
+    net.get_by_role('button', name='运行 MTR').click()
+    expect(net.get_by_text('目标已回应。', exact=True)).to_be_visible()
+    expect(net.get_by_text('中间节点可能限制探测回应，仍可正常转发数据。')).to_be_visible()
+    expect(net.get_by_text('192.0.2.1')).to_be_visible()
+    net.get_by_role('button', name='查看本机监听').click()
+    net.get_by_role('button', name='检查本机端口').click()
+    expect(net.get_by_text('该端口只监听本机回环地址，其他电脑无法直接连接。', exact=False)).to_be_visible()
+    page.get_by_role('menuitem', name='系统信息', exact=True).click()
+    overview = page.locator('[data-view="overview"]')
+    expect(overview.get_by_text('空间偏低')).to_be_visible()
+    overview.get_by_role('button', name='预览故障摘要').click()
+    preview = page.get_by_role('dialog', name='故障摘要')
+    summary = preview.get_by_role('textbox').input_value()
+    assert 'TCP 可连通' in summary and '事件 41' in summary
+    assert not any(secret in summary for secret in ('WIN-SERVER01', '10.0.0.12', '203.0.113.2', 'example.com'))
+    preview.get_by_role('button', name='复制故障摘要').click()
+    expect(preview.get_by_text('已复制故障摘要。')).to_be_visible()
+    assert page.evaluate('window.__copiedSummary') == summary
+    preview.get_by_role('button', name='取消').click()
+    overview.get_by_role('button', name='打开系统日志').click()
+    expect(page.locator('[data-view="systemlogs"]')).to_be_visible()
+    page.get_by_role('menuitem', name='网络检查', exact=True).click()
+    page.evaluate("""() => {
+      const app = window.go.ui.App
+      app.CheckNetwork = async (target, port) => ({
+        dns: 'literal', addresses: [target], address: target, port,
+        ping: 'unavailable', tcp: 'unreachable', sent: 1, received: 0, averageMs: 0,
+      })
+      app.TraceNetwork = async (target) => ({
+        status: 'probe-unavailable', address: target, hops: [], reached: false,
+      })
+    }""")
+    net.get_by_role('textbox', name='目标地址').fill('2606:4700:4700::1111')
+    start.click()
+    expect(net.get_by_text('当前电脑无法到达此地址。若目标是 IPv6，请确认本机有 IPv6 网络连接。')).to_be_visible()
+    net.get_by_role('button', name='运行 MTR').click()
+    expect(net.get_by_text('无法开始 MTR。请检查当前电脑能否访问该地址。')).to_be_visible()
+    expect(net.locator('.el-table')).to_have_count(0)
     if os.environ.get('WINTOOLBOX_LAYOUT_AUDIT') in ('1', 'stress'):
         import json
         issues = []
         normal_cases = 0
         stress_cases = 0
-        menus = [('overview', 1), ('account', 2), ('rdp', 4), ('firewall', 1), ('harden', 1), ('defender', 1), ('time', 1), ('power', 1), ('systemlogs', 1), ('update', 1), ('selfupdate', 1)]
+        menus = [('overview', 1), ('account', 2), ('rdp', 4), ('firewall', 1), ('harden', 1), ('defender', 1), ('time', 1), ('power', 1), ('systemlogs', 1), ('update', 1), ('selfupdate', 1), ('network', 1)]
         inspector = r"""async () => {
           const issues=[];
           const main=document.querySelector('.app-main'), log=document.querySelector('.op-log');
@@ -351,14 +421,25 @@ with sync_playwright() as p:
             print('Layout audit language:',language,flush=True)
             page.locator('.app-aside .el-select').click()
             page.get_by_role('option',name=language,exact=True).click()
+            page.set_viewport_size({'width':800,'height':500})
+            locale_id = page.locator('html').get_attribute('lang')
+            catalog = json.loads((ROOT / f'frontend/src/i18n/{locale_id}.json').read_text(encoding='utf-8'))
+            page.get_by_role('button', name=catalog['帮助'], exact=True).click()
+            dialog = page.get_by_role('dialog', name=catalog['新手指引'])
+            docs_button = dialog.get_by_role('button', name=catalog['在浏览器打开文档'])
+            expect(docs_button).to_be_in_viewport()
+            docs_button.click()
+            assert page.evaluate('window.__documentationLanguage') == locale_id
+            dialog.get_by_role('button', name=catalog['知道了']).click()
+            expect(dialog).not_to_be_visible()
             for width,height in [(800,500),(960,600),(1120,720),(1320,840)]:
                 page.set_viewport_size({'width':width,'height':height})
                 for expanded in [False, True]:
                     body=page.locator('.op-log__body')
                     if bool(body.count()) != expanded:
                         page.locator('.op-log__head button').first.click()
-                    for index,(key,tabs) in enumerate(menus):
-                        page.locator('.side-menu .el-menu-item').nth(index).click()
+                    for key,tabs in menus:
+                        page.locator(f'[data-menu="{key}"]').click()
                         page.locator(f'[data-view="{key}"]').wait_for(state='visible')
                         for tab_index in range(tabs):
                             if tabs>1:
@@ -382,7 +463,7 @@ with sync_playwright() as p:
         page.locator('.app-aside .el-select').click()
         page.get_by_role('option',name='简体中文',exact=True).click()
         page.set_viewport_size({'width':960,'height':600})
-        page.locator('.side-menu .el-menu-item').nth(2).click()
+        page.locator('[data-menu="rdp"]').click()
         page.get_by_role('tab',name='客户端记录',exact=True).click()
         page.evaluate("() => {window.go.ui.App.ClearRdpHistory=()=>Promise.reject('Layout stress failure');}")
         page.get_by_role('button',name='清理全部记录',exact=True).click()
@@ -413,4 +494,4 @@ with sync_playwright() as p:
         assert not issues, json.dumps(issues[:8],ensure_ascii=False)
     assert not errors, errors
     browser.close()
-print("UI smoke passed: 11 pages, three sizes, RDP tabs, collapsed diagnostics, collapsed log toolbar/expand/export, success auto-hide, persistent failure, compact result banner, log details, client cleanup and rename layout, cancel/failure/unknown session/expired confirmation/manual recovery, system event timeline/detail/export/read failure")
+print("UI smoke passed: 12 pages, network and system checks, three sizes, RDP tabs, collapsed diagnostics, collapsed log toolbar/expand/export, success auto-hide, persistent failure, compact result banner, log details, client cleanup and rename layout, cancel/failure/unknown session/expired confirmation/manual recovery, system event timeline/detail/export/read failure")

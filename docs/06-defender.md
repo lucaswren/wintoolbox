@@ -1,6 +1,6 @@
 [English](06-defender.md) · [繁體中文](zh-Hant/06-defender.md) · [简体中文](zh-Hans/06-defender.md)
 
-# 06 · Antivirus
+# 06 · Microsoft Defender
 
 Use **Disable real-time protection** or **Enable real-time protection** to control Windows Defender scanning.
 
@@ -8,10 +8,8 @@ Disabling real-time protection temporarily removes real-time scanning protection
 
 **Enable real-time protection** explicitly turns protection on; it does not restore a previously disabled state. Configuration backups are marked valid only after their required fields have been written successfully.
 
-![Defender](images/06-defender.png)
+![Defender](images/en/06-defender.png)
 
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
-
-Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
 
 [Operation feedback and audit](operation-audit-2026-10-12.md)

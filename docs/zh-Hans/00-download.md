@@ -2,37 +2,16 @@
 
 # 00 · 下载 WinToolBox
 
-所有操作文档的**第一步**。
+## 下载与运行
 
-## 下载链接
-
-- 最新版：https://github.com/lucaswren/wintoolbox/releases/latest
-- 全部版本：https://github.com/lucaswren/wintoolbox/releases
-
-下载 **`WinToolBox-v*.exe`**（可选同名 `.sha256`）。
-
-## 拦截时点「保留 / 保持」
-
-未签名 exe **常被拦截**，不等于一定有毒。
-
-**Edge / Chrome**：已阻止 → **…** → **保留 / 保持**（Keep）→ 必要时 **仍要保留**。
-
-**SmartScreen**：更多信息 → **仍要运行**。
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
-## 校验（可选）
+1. 从 [GitHub 发布页](https://github.com/lucaswren/wintoolbox/releases/latest)下载 Windows amd64 程序及同名 SHA256 校验文件。
+2. 在 PowerShell 中运行下方命令，把示例文件名换成实际下载的文件名。确认结果与发布页提供的校验值一致。
+3. 双击程序，在 Windows 权限提示中确认。遇到 SmartScreen 时，先确认下载来源和校验值，再选择 **更多信息 → 仍要运行**。
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.1.2-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.2.0-windows-amd64.exe -Algorithm SHA256
 ```
 
-与 Release / `.sha256` 对比。
-
-## 运行
-
-**以管理员身份运行**（或双击后在 UAC 允许）。
-
-返回：[文档首页](./README.md)
+首次启动时，如果电脑缺少 Microsoft WebView2，工具会联网下载并安装。进入界面后，可在左上角切换语言，工具会记住你的选择。
 
 [操作反馈与功能审查](operation-audit-2026-10-12.md)

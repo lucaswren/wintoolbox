@@ -4,7 +4,7 @@
 
 WinToolBox 是 Windows 本地管理工具箱，用于查看系统信息，管理本地账户、远程桌面、防火墙规则、Microsoft Defender、时间同步、电源和更新。基于 Go、Wails、Vue 和 Element Plus 开发。
 
-版本：v1.1.2
+版本：v1.2.0
 
 ## 文档
 
@@ -20,6 +20,12 @@ WinToolBox 是 Windows 本地管理工具箱，用于查看系统信息，管理
 - [09 · 系统更新](./docs/zh-Hans/09-windows-update.md)
 - [全部功能文档](./docs/zh-Hans/README.md)
 
+## 1.2.0
+
+新增网络检查、系统检查和新手指引。已安装历史 1.2.0 的用户需手动下载本次发布。
+
+[1.2.0 下载](https://github.com/lucaswren/wintoolbox/releases/tag/v1.2.0)
+
 ## v1.1.2 发布说明
 
 - 精简远程登录和系统日志页面，默认显示操作按钮、简短统计与关键记录。
@@ -30,21 +36,21 @@ WinToolBox 是 Windows 本地管理工具箱，用于查看系统信息，管理
 
 [发布下载](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.2) · [详细验证报告](docs/zh-Hans/validation-vps-2026-10-23.md)
 
-旧版 v1.2.0 用户仍需手动安装，自动更新不会降级。
-
 ## 功能
 
 | 模块     | 能力 |
 |----------|------|
-| 本机概览 | 主机名、系统+Build、激活、分辨率、IP、磁盘与硬件信息 |
-| 本地账户 | 改密码、启用/禁用、管理员；来宾/自动登录；锁定与密码策略 |
+| 系统信息 | 主机名、系统+Build、激活、分辨率、IP、磁盘与硬件信息 |
+| [网络检查](docs/zh-Hans/12-network-check.md) | DNS、Ping、TCP 端口、本机监听和 MTR |
+| [系统日志](docs/zh-Hans/11-system-logs.md) | 查看关机、重启和异常记录 |
+| 账户管理 | 改密码、启用/禁用、管理员；来宾/自动登录；锁定与密码策略 |
 | 远程桌面 | 开关、改端口并同步防火墙、强制 NLA；清理 mstsc 连接记录 |
-| 防火墙   | 一键开/关配置文件；禁 ping；高危端口预设；TCP 放行规则 |
-| 安全加固 | SMBv1、WinRM、匿名枚举一键加固 |
-| 防病毒   | 关闭/恢复 Defender 实时防护（含策略回退与复查） |
-| 时间同步 | 时区、NTP 预设、立即同步、测试 NTP |
-| 电源     | 锁定、延时重启/关机、取消计划 |
-| 系统更新 | 关闭/恢复 Windows Update（按关闭前的配置备份还原，非云主机磁盘快照） |
+| 防火墙 | 一键开/关配置文件；禁 ping；高危端口预设；TCP 放行规则 |
+| Microsoft Defender | 关闭/恢复 Defender 实时防护（含策略回退与复查） |
+| 安全设置 | SMBv1、WinRM、匿名枚举一键加固 |
+| 日期和时间 | 时区、NTP 预设、立即同步、测试 NTP |
+| 关机重启 | 锁定、延时重启/关机、取消计划 |
+| Windows 更新 | 关闭/恢复 Windows Update（按关闭前的配置备份还原，非云主机磁盘快照） |
 | 软件更新 | GitHub Release 检测、SHA256 校验下载与安装 |
 
 ## 支持系统
@@ -100,15 +106,17 @@ wintoolbox/
 
 | 侧栏     | 视图           | 后端包     |
 |----------|----------------|------------|
-| 本机概览 | OverviewView   | sysinfo    |
-| 本地账户 | AccountView    | account    |
-| 远程桌面 | RdpView        | rdp        |
-| 防火墙   | FirewallView   | firewall   |
-| 安全加固 | HardenView     | harden     |
-| 防病毒   | DefenderView   | defender   |
-| 时间同步 | TimeView       | wintime    |
-| 电源     | PowerView      | power      |
-| 系统更新 | UpdateView     | update     |
+| 系统信息 | OverviewView | sysinfo |
+| 网络检查 | NetworkView | netcheck |
+| 系统日志 | SystemLogsView | eventlog |
+| 账户管理 | AccountView | account |
+| 远程桌面 | RdpView | rdp |
+| 防火墙 | FirewallView | firewall |
+| Microsoft Defender | DefenderView | defender |
+| 安全设置 | HardenView | harden |
+| 日期和时间 | TimeView | wintime |
+| 关机重启 | PowerView | power |
+| Windows 更新 | UpdateView | update |
 | 软件更新 | SelfUpdateView | selfupdate |
 
 ## 构建
@@ -139,7 +147,7 @@ wails dev
 2. 用 Release / `*.sha256` 中的哈希校验后再运行
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.1.2-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.2.0-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## 技术栈

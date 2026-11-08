@@ -65,8 +65,8 @@ with sync_playwright() as p:
             issues.append({'locale':lang,'size':page.viewport_size,'kind':kind,'issues':found})
             page.screenshot(path=str(out/f'issue-{len(issues)}.png'))
         return not found
-    def menu(index):
-        page.locator('.side-menu .el-menu-item').nth(index).click()
+    def menu(key):
+        page.locator(f'[data-menu="{key}"]').click()
     def dialog(open_dialog,kind):
         for action in ['cancel','close','escape','confirm']:
             before=page.evaluate('window.__overlayWrites.length')
@@ -116,14 +116,14 @@ with sync_playwright() as p:
             language_pop=page.locator('.el-select__popper:visible').last
             check_panel(language_pop,'language dropdown')
             page.keyboard.press('Escape');language_pop.wait_for(state='hidden')
-            menu(1)
+            menu('account')
             dropdown(page.locator('[data-view="account"] .el-select'),'account dropdown')
-            menu(6)
+            menu('time')
             dropdown(page.locator('[data-view="time"] .el-select'),'virtual timezone dropdown')
             field=page.get_by_placeholder('time.windows.com')
             field.fill(('time.example.net '*100).strip())
             dialog(lambda:page.get_by_role('button',name=tr('保存 NTP'),exact=True).click(),'long NTP confirmation')
-            menu(2)
+            menu('rdp')
             page.get_by_role('tab',name=tr('客户端记录'),exact=True).click()
             page.wait_for_function("[...document.querySelectorAll('.app-main .el-loading-mask')].every(el=>!el.getClientRects().length)")
             dropdown(page.locator('[data-view="rdp"] .el-tab-pane:visible .el-select'),'client history dropdown')
@@ -131,9 +131,9 @@ with sync_playwright() as p:
             page.get_by_role('tab',name=tr('访问限制'),exact=True).click()
             page.locator('[data-view="rdp"] textarea').fill('192.0.2.1')
             dialog(lambda:page.get_by_role('button',name=tr('保存访问限制'),exact=True).click(),'RDP whitelist confirmation')
-            menu(10)
+            menu('selfupdate')
             dialog(lambda:page.get_by_role('button',name=tr('安装并重启'),exact=True).click(),'software update confirmation')
-            menu(8)
+            menu('systemlogs')
             toggle=page.locator('button[aria-controls="system-log-options"]')
             if toggle.get_attribute('aria-expanded')!='true':toggle.click()
             for index in range(3):dropdown(page.locator('[data-view="systemlogs"] .el-select').nth(index),'system log dropdown '+str(index))

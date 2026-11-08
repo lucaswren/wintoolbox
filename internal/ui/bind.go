@@ -213,7 +213,6 @@ func (a *App) GetRdpSafetyStatus() (rdp.SafetyStatus, error) { return rdp.GetSaf
 func (a *App) GetSystemEventReport(days, limit int) (eventlog.Report, error) {
 	return eventlog.Read(a.context(), days, limit)
 }
-func (a *App) GetRdpServerEvents() (rdp.ServerEvents, error) { return rdp.GetServerEvents() }
 func (a *App) GetRdpLoginReport(days, limit int) (rdp.ServerEvents, error) {
 	return rdp.ReadLoginReport(a.context(), days, limit)
 }

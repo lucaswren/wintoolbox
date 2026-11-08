@@ -1,20 +1,12 @@
 [English](../07-time-sync.md) · [繁體中文](../zh-Hant/07-time-sync.md) · [简体中文](../zh-Hans/07-time-sync.md)
 
-# 07 · 时间同步
+# 07 · 日期和时间
 
 设置时区、NTP 源，立即对时与连通性测试。
 
-## 第一步：下载
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
 ## 界面标注
 
-![时间同步（真实界面）](../images/07-time-sync.png)
+![时间同步](../images/zh-Hans/07-time-sync.png)
 
 | # | 按钮 | 说明 |
 |---|------|------|

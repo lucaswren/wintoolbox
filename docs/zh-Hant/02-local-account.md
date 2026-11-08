@@ -1,20 +1,12 @@
 [English](../02-local-account.md) · [繁體中文](../zh-Hant/02-local-account.md) · [简体中文](../zh-Hans/02-local-account.md)
 
-# 02 · 本地帳戶
+# 02 · 帳戶管理
 
 停用來賓與自動登錄、加強密碼/鎖定策略，以及修改本地使用者密碼與權限。
 
-## 第一步：下載
+## 安全策略
 
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-攔截點 **保留 / 保持**。詳：[00 · 下載](./00-download.md)
-
-![下載攔截示意（模擬）](../images/00-download.png)
-
-## 策略與加固入口
-
-![本地帳戶策略（真實介面）](../images/02-local-account.png)
+![本地帳戶策略](../images/zh-Hant/02-local-account.png)
 
 | # | 按鈕 | 說明 |
 |---|------|------|
@@ -27,9 +19,9 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 修改密碼與權限
 
-向下滾動到 **帳戶操作**：
+開啟 **使用者管理**，找到 **帳戶操作**。
 
-![修改密碼（真實介面）](../images/02-local-account-password.png)
+![修改密碼](../images/zh-Hant/02-local-account-password.png)
 
 | # | 選項 | 說明 |
 |---|------|------|
@@ -41,7 +33,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 建議步驟
 
-1. 系統管理員打開 WinToolBox → **本地帳戶**
+1. 系統管理員打開 WinToolBox → **帳戶管理**
 2. ①②③④ 按需加固
 3. 選使用者 → 填兩次密碼 → **修改密碼**
 4. 用新密碼登錄驗證一次

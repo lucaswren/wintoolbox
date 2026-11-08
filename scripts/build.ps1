@@ -70,8 +70,6 @@ $hash = (Get-FileHash -LiteralPath $versionedExe -Algorithm SHA256).Hash.ToLower
 $sha256File = "$versionedExe.sha256"
 # Common checksum format: "<hash> *<filename>"
 Set-Content -LiteralPath $sha256File -Value ("{0} *{1}" -f $hash, $versionedName) -Encoding ascii -NoNewline
-# Also keep a plain hash-only file for quick copy/paste.
-Set-Content -LiteralPath (Join-Path $releaseDir 'SHA256.txt') -Value $hash -Encoding ascii -NoNewline
 
 $notesPath = Join-Path $releaseDir 'RELEASE_NOTES.generated.md'
 $templatePath = Join-Path $PSScriptRoot 'release-notes.template.md'
@@ -91,5 +89,5 @@ $notes = $notes.Replace('{{SHA256_FILE}}', (Split-Path $sha256File -Leaf))
 
 Write-Host ("Done: WinToolBox.exe + {0} ({1:N0} bytes / {2:N2} MB)" -f $versionedExe, $size, ($size / 1MB)) -ForegroundColor Green
 Write-Host ("SHA256: {0}" -f $hash) -ForegroundColor Green
-Write-Host ("Wrote: {0}, SHA256.txt, {1}" -f $sha256File, $notesPath) -ForegroundColor DarkGray
+Write-Host ("Wrote: {0}, {1}" -f $sha256File, $notesPath) -ForegroundColor DarkGray
 Write-Host 'Publish tip: upload the versioned exe (+ .sha256) and paste RELEASE_NOTES.generated.md as the GitHub Release body.' -ForegroundColor Cyan

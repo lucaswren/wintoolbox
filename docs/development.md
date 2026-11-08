@@ -37,7 +37,7 @@ English is the default/fallback. Catalogs in `frontend/src/i18n` contain matchin
 
 On native startup, GetAppInfo reports the Windows user display language. The UI uses it unless `wintoolbox.language` contains a supported manual preference. Browser development falls back to navigator.languages. Normalize OS language tags to the region-neutral identifiers en, zh-Hans and zh-Hant. Existing stored regional identifiers migrate without losing the manual preference. Unsupported languages use English. Native setup uses `internal/locale` before WebView2 exists. OS command output, device/user names and release notes remain in their source language.
 
-Keep English user guides under docs/, with corresponding files under docs/zh-Hans/ and docs/zh-Hant/. Add language navigation and preserve shared image links. Existing screenshots depict the earlier Simplified Chinese interface.
+Keep English user guides under docs/, with corresponding files under docs/zh-Hans/ and docs/zh-Hant/. Add language navigation and link to screenshots for the matching language.
 
 ## Self-update
 
@@ -65,6 +65,17 @@ python -m playwright install chromium
 python scripts/ui-smoke.py
 ```
 
-For multilingual mock UI checks, install the Node Playwright package in your tooling environment, start Vite on port 5173 and run `node scripts/ui-i18n-smoke.cjs`. Set `PLAYWRIGHT_MODULE` to an absolute package path if Playwright is installed outside this repository. The check covers all ten views in each language, startup detection, switching, confirmations, draft retention and preference persistence.
+For multilingual mock UI checks, install the Node Playwright package in your tooling environment, start Vite on port 5173 and run `node scripts/ui-i18n-smoke.cjs`. Set `PLAYWRIGHT_MODULE` to an absolute package path if Playwright is installed outside this repository. The check covers all 12 views in each language, startup detection, switching, confirmations, draft retention and preference persistence.
 
 The scripts use a mocked Wails backend and write screenshots to artifacts/ui. Automated tests use mocks and temporary directories; they do not replace real Windows VM acceptance or change real account/firewall/update settings.
+
+## Regenerate screenshots
+
+The screenshots use the current English app interface with sample data. Numbered markers match the controls in the guides.
+
+```powershell
+npm --prefix frontend run build
+python -m pip install -r docs/requirements.txt
+python -m playwright install chromium
+python docs/capture_screens.py
+```

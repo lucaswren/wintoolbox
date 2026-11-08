@@ -14,10 +14,8 @@ Use the following order to review common exposure points. Administrator privileg
 
 Refresh after each change and verify the actual state. Unknown or partially applied states require investigation. File sharing and remote administration can depend on the ports/services being blocked; preserve a recovery path when changing remote access.
 
-![Sidebar navigation](images/90-hardening-nav.png)
+![Sidebar navigation](images/en/90-hardening-nav.png)
 
 Other modules: [Overview](01-overview.md) · [Defender](06-defender.md) · [Time](07-time-sync.md) · [Power](08-power.md) · [App update](10-app-update.md)
 
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
-
-Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.

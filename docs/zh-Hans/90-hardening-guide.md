@@ -4,39 +4,30 @@
 
 用 WinToolBox 按推荐顺序做常见暴露面加固。红点数字与界面标注对应。
 
-## 第一步：下载
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-下载 `WinToolBox-v*.exe` → 拦截点 **保留 / 保持** → SmartScreen 选 **仍要运行** → **管理员**打开。
-详：[00 · 下载](./00-download.md)
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
 ## 推荐顺序（侧栏）
 
-![侧栏入口（真实界面）](../images/90-hardening-nav.png)
+![侧栏入口](../images/zh-Hans/90-hardening-nav.png)
 
 | # | 侧栏 | 做什么 | 详文 |
 |---|------|--------|------|
-| ① | 本地账户 | 禁用来宾、关自动登录、密码/锁定、改强密码 | [02 · 本地账户](./02-local-account.md) |
-| ② | 远程桌面 | 改非常用端口、开启、强制 NLA | [03 · 远程桌面](./03-remote-desktop.md) |
+| ① | 账户管理 | 禁用来宾、关自动登录、密码/锁定、改强密码 | [02 · 本地账户](./02-local-account.md) |
+| ② | 远程桌面 | 按需开启，检查来源限制和 NLA | [03 · 远程桌面](./03-remote-desktop.md) |
 | ③ | 防火墙 | 全部开启、禁 ping、拦高危端口 | [04 · 防火墙](./04-firewall.md) |
-| ④ | 安全加固 | 禁用 SMBv1、关 WinRM、禁匿名枚举 | [05 · 安全加固](./05-security-harden.md) |
-| ⑤ | 系统更新 | 仅临时运维窗口可关；常态建议开 | [09 · 系统更新](./09-windows-update.md) |
+| ④ | 安全设置 | 禁用 SMBv1、关 WinRM、禁匿名枚举 | [05 · 安全加固](./05-security-harden.md) |
+| ⑤ | Windows 更新 | 仅临时运维窗口可关；常态建议开 | [09 · 系统更新](./09-windows-update.md) |
 
 ---
 
 ## 1. 本地账户
 
-![本地账户（真实界面）](../images/02-local-account.png)
+![本地账户](../images/zh-Hans/02-local-account.png)
 
 | # | 按钮 | 作用 |
 |---|------|------|
 | ① | **禁用来宾账户** | 关 Guest |
 | ② | **关闭自动登录** | 关 AutoAdminLogon，清 DefaultPassword |
 | ③ | **应用密码策略** | 最短长度 + 复杂度 |
-| ④ | **一键开启锁定** | 降低密碼猜測風險 |
+| ④ | **一键开启锁定** | 降低密码猜测风险 |
 
 改密见：[02 · 本地账户](./02-local-account.md)
 
@@ -44,20 +35,20 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 2. 远程桌面
 
-![远程桌面（真实界面）](../images/03-remote-desktop.png)
+![远程桌面](../images/zh-Hans/03-remote-desktop.png)
 
 | # | 选项 | 作用 |
 |---|------|------|
-| ① | **端口** | 勿长期用 3389 |
+| ① | **端口** | 更改端口前确认新端口可用 |
 | ② | **保存端口** | 写注册表并同步防火墙放行 |
 | ③ | **开启 / 关闭** | 开关 RDP |
-| ④ | **强制 NLA** | 认证前拒绝连接 |
+| ④ | **强制 NLA** | 连接到桌面前验证身份 |
 
 ---
 
 ## 3. 防火墙
 
-![防火墙（真实界面）](../images/04-firewall.png)
+![防火墙](../images/zh-Hans/04-firewall.png)
 
 | # | 按钮 | 作用 |
 |---|------|------|
@@ -70,7 +61,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 4. 安全加固
 
-![安全加固（真实界面）](../images/05-security-harden.png)
+![安全加固](../images/zh-Hans/05-security-harden.png)
 
 | # | 按钮 | 作用 |
 |---|------|------|
@@ -84,17 +75,17 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 5. 系统更新
 
-![系统更新（真实界面）](../images/09-windows-update.png)
+![系统更新](../images/zh-Hans/09-windows-update.png)
 
 | # | 按钮 | 作用 |
 |---|------|------|
 | ① | **关闭更新** | 仅临时运维窗口 |
-| ② | **恢复更新** | 用完务必恢复 |
+| ② | **还原关闭前配置** | 用完务必恢复 |
 
 ---
 
 ## 说明
 
 - 需**管理员权限**；域环境可能被组策略覆盖
-- 配图中软件页为**真实界面**；下载图为**模拟示意**
+- 截图使用当前应用的简体中文界面和示例数据。图中的编号对应操作说明。
 - 其它功能：[01 · 概览](./01-overview.md) · [06 · 防病毒](./06-defender.md) · [07 · 时间](./07-time-sync.md) · [08 · 电源](./08-power.md) · [10 · 软件更新](./10-app-update.md)

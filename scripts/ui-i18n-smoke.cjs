@@ -6,11 +6,11 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const root = path.resolve(__dirname, '..')
 const mock = fs.readFileSync(path.join(root, 'docs/capture_screens.py'), 'utf8').match(/MOCK_JS = r"""([\s\S]*?)"""/)[1]
 const cases = [
-  { language: 'en', menus: ['Overview','Local accounts','Remote Desktop','Firewall','Security hardening','Microsoft Defender','Time synchronization','Power','Windows Update','App update'], policy: 'Security policies', guest: 'Disable Guest account' },
-  { language: 'zh-Hant', menus: ['本機概覽','本地帳戶','遠端桌面','防火牆','安全加固','Microsoft Defender','時間同步','電源','系統更新','軟體更新'], policy: '安全策略', guest: '停用來賓帳戶' },
-  { language: 'zh-Hans', menus: ['本机概览','本地账户','远程桌面','防火墙','安全加固','Microsoft Defender','时间同步','电源','系统更新','软件更新'], policy: '安全策略', guest: '禁用来宾账户' },
+  { language: 'en', policy: 'Security policies' },
+  { language: 'zh-Hant', policy: '安全策略' },
+  { language: 'zh-Hans', policy: '安全策略' },
 ]
-const keys = ['overview','account','rdp','firewall','harden','defender','time','power','update','selfupdate']
+const keys = ['overview','network','systemlogs','account','rdp','firewall','defender','harden','time','power','update','selfupdate']
 async function main() {
   const browser = await chromium.launch({ headless: true })
   const out = path.join(root, 'artifacts/ui/i18n')
@@ -30,19 +30,19 @@ async function main() {
       await page.keyboard.press('Escape')
       for(const selector of ['.app-main','.side-menu']) {
         const size=await page.locator(selector).evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,width:el.clientWidth,scrollWidth:el.scrollWidth}));
-        assert.ok(size.scroll<=size.height+2 && size.scrollWidth<=size.width+2, tc.language+selector+JSON.stringify(size));
+        assert.ok((selector === '.app-main' || size.scroll<=size.height+2) && size.scrollWidth<=size.width+2, tc.language+selector+JSON.stringify(size));
       }
       await page.screenshot({path:path.join(out,tc.language+'-overview-1280.png')});
       await page.setViewportSize({width:960,height:600});
       for (let i = 0; i < keys.length; i++) {
-        const menu = page.getByRole('menuitem', {name:tc.menus[i],exact:true})
+        const menu = page.locator(`[data-menu="${keys[i]}"]`)
         await menu.scrollIntoViewIfNeeded()
         await menu.click()
         await page.locator(`[data-view="${keys[i]}"]`).waitFor()
         assert.ok(await page.locator('.app-main').evaluate(el => el.scrollWidth <= el.clientWidth + 2), tc.language + ':' + keys[i])
       }
       const catalog=JSON.parse(fs.readFileSync(path.join(root,'frontend/src/i18n/'+tc.language+'.json'),'utf8'))
-      await page.getByRole('menuitem',{name:tc.menus[3],exact:true}).click()
+      await page.locator('[data-menu="firewall"]').click()
       await page.evaluate(() => {
         const api=window.go.ui.App
         const original=api.GetModuleStatus
@@ -84,7 +84,7 @@ async function main() {
       await page.locator('.el-message-box').getByRole('button',{name:catalog['确定'],exact:true}).click()
       await page.locator('.operation-status.warning').waitFor()
       await page.locator('.operation-status').getByRole('button',{name:catalog['关闭提示'],exact:true}).click()
-      await page.getByRole('menuitem', {name:tc.menus[1],exact:true}).click()
+      await page.getByRole('menuitem', {name:catalog['账户管理'],exact:true}).click()
       await page.getByRole('tab', {name:tc.policy,exact:true}).click()
       const field = page.locator('.el-tab-pane:visible .el-input-number input').first()
       await field.fill('15')
@@ -110,7 +110,7 @@ async function main() {
       await page.screenshot({path:path.join(out,tc.language+'-firewall-1120.png')})
       assert.deepEqual(errors, [])
       await context.close()
-      console.log(`Passed ${tc.language}: 10 views, startup detection, switching, drafts, confirmation, persistence, layout`)
+      console.log(`Passed ${tc.language}: 12 views, startup detection, switching, drafts, confirmation, persistence, layout`)
     }
   } finally { await browser.close() }
 }

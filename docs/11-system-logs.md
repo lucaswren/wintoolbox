@@ -1,6 +1,10 @@
-# 11 · System log analysis
+[English](11-system-logs.md) · [繁體中文](zh-Hant/11-system-logs.md) · [简体中文](zh-Hans/11-system-logs.md)
 
-Open **System log analysis** to read selected Windows System events from the last 1–90 days. Choose a limit of 100, 300 or 1000 records, filter/search the timeline, and open a record for its message, XML, structured fields and nearby evidence. **Export diagnostic report** exports the entire loaded report as JSON, including host/account details where present; review it before sharing.
+# 11 · System logs
+
+![System logs](images/en/11-system-logs.png)
+
+Open **System logs** and select **Read and analyze** to see recent startup, shutdown and error events. Use **Filters and range** to change the time range or record limit, and **View details** to see what an event means. **Export diagnostic report** exports the entire loaded report as JSON, including host/account details where present; review it before sharing.
 
 The page covers startup, shutdown requests and sequences, unclean shutdowns, bugchecks, hardware/storage reports, dump failures, service failures, updates, log clearing and clock changes. Classification matches both provider and ID. Counts refer to events, not the number of reboots; related records within ten minutes are clues rather than established causes. Reads are bounded, and disabled logs, permission failures and truncation are reported. Audit and system settings are not changed.
 

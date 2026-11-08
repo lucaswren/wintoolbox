@@ -1,20 +1,12 @@
 [English](../05-security-harden.md) · [繁體中文](../zh-Hant/05-security-harden.md) · [简体中文](../zh-Hans/05-security-harden.md)
 
-# 05 · 安全加固
+# 05 · 安全設定
 
 針對常見暴露面：停用 SMBv1、關閉並攔截 WinRM、限制匿名枚舉。
 
-## 第一步：下載
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-攔截點 **保留 / 保持**。詳：[00 · 下載](./00-download.md)
-
-![下載攔截示意（模擬）](../images/00-download.png)
-
 ## 介面標注
 
-![安全加固（真實介面）](../images/05-security-harden.png)
+![安全加固](../images/zh-Hant/05-security-harden.png)
 
 | # | 按鈕 | 說明 |
 |---|------|------|

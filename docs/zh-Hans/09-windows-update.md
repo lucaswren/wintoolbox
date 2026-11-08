@@ -1,25 +1,17 @@
 [English](../09-windows-update.md) · [繁體中文](../zh-Hant/09-windows-update.md) · [简体中文](../zh-Hans/09-windows-update.md)
 
-# 09 · 系统更新
+# 09 · Windows 更新
 
 一键暂停或恢复 Windows Update（恢复时优先还原关闭前的策略与服务配置，非整机快照）。
 
-## 第一步：下载
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
 ## 界面标注
 
-![系统更新（真实界面）](../images/09-windows-update.png)
+![系统更新](../images/zh-Hans/09-windows-update.png)
 
 | # | 按钮 | 说明 |
 |---|------|------|
 | ① | **关闭更新** | 暂停 Windows Update 相关策略/服务 |
-| ② | **恢复更新** | 尽量还原关闭前配置 |
+| ② | **还原关闭前配置** | 尽量还原关闭前配置 |
 
 ## 建议
 

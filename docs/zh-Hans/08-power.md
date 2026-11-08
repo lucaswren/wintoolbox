@@ -1,20 +1,12 @@
 [English](../08-power.md) · [繁體中文](../zh-Hant/08-power.md) · [简体中文](../zh-Hans/08-power.md)
 
-# 08 · 电源
+# 08 · 关机重启
 
 锁定会话，或按延迟计划重启 / 关机，并可取消已计划的关机与重启。
 
-## 第一步：下载
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
 ## 界面标注
 
-![电源（真实界面）](../images/08-power.png)
+![电源](../images/zh-Hans/08-power.png)
 
 | # | 按钮 | 说明 |
 |---|------|------|

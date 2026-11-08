@@ -1,7 +1,8 @@
 <script setup>
 import { t } from '../i18n/index.js'
 
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import SystemHealthPanel from '../components/SystemHealthPanel.vue'
 
 const descLabelStyle = {
   width: '112px',
@@ -13,7 +14,12 @@ const descLabelStyle = {
 const props = defineProps({
   overview: { type: Object, default: null },
   detailLoading: { type: Boolean, default: false },
+  networkSummary: { type: Object, default: null },
 })
+
+defineEmits(['open-logs'])
+const healthPanel = ref(null)
+defineExpose({ refreshHealth: () => healthPanel.value?.refresh() })
 
 const actType = computed(() => {
   const s = props.overview?.activationStatus
@@ -38,6 +44,13 @@ function memText() {
   <div data-view="overview" class="overview-page">
     <p class="page-desc">{{ t('快速查看这台计算机的系统与硬件信息') }}</p>
 
+    <SystemHealthPanel
+      ref="healthPanel"
+      :overview="overview"
+      :network-summary="networkSummary"
+      @open-logs="$emit('open-logs')"
+    />
+
     <div class="overview-grid">
       <el-card shadow="never" :header="t('系统')" class="wt-card">
         <el-descriptions :column="1" border class="wt-desc" :label-style="descLabelStyle">
@@ -60,7 +73,7 @@ function memText() {
           <el-descriptions-item :label="t('IP 地址')">{{
             (overview?.ips || []).join(', ') || '—'
           }}</el-descriptions-item>
-          <el-descriptions-item :label="t('磁盘')">{{
+          <el-descriptions-item v-if="!overview?.diskSpace?.length" :label="t('磁盘')">{{
             (overview?.disks || []).join('  ·  ') || '—'
           }}</el-descriptions-item>
         </el-descriptions>

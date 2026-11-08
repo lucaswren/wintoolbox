@@ -551,7 +551,7 @@ func fixedDisks() []Disk {
 
 func disksViaAPI() []Disk {
 	var disks []Disk
-	for _, letter := range "CDEFGHIJKLMNOPQRSTUVWXYZ" {
+	for _, letter := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		root := string(letter) + `:\`
 		rootPtr, err := windows.UTF16PtrFromString(root)
 		if err != nil {
@@ -569,9 +569,9 @@ func disksViaAPI() []Disk {
 		d := Disk{
 			Root:    string(letter) + ":",
 			TotalGB: float64(totalBytes) / (1024 * 1024 * 1024),
-			FreeGB:  float64(totalFreeBytes) / (1024 * 1024 * 1024),
+			FreeGB:  float64(freeBytesAvailable) / (1024 * 1024 * 1024),
 		}
-		d.FreeRatio = float64(totalFreeBytes) / float64(totalBytes)
+		d.FreeRatio = float64(freeBytesAvailable) / float64(totalBytes)
 		disks = append(disks, d)
 	}
 	return disks

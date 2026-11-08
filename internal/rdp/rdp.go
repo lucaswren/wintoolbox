@@ -220,78 +220,6 @@ func syncBuiltinRDPGroup(enabled bool) {
 	wg.Wait()
 }
 
-func scheduleBuiltinRDPGroupPort(portStr string) {
-	go func() {
-		var wg sync.WaitGroup
-		wg.Add(2)
-		go func() {
-			defer wg.Done()
-			_, _ = syscmd.RunQuick("netsh", "advfirewall", "firewall", "set", "rule",
-				"group=远程桌面", "new", "localport="+portStr)
-		}()
-		go func() {
-			defer wg.Done()
-			_, _ = syscmd.RunQuick("netsh", "advfirewall", "firewall", "set", "rule",
-				"group=Remote Desktop", "new", "localport="+portStr)
-		}()
-		wg.Wait()
-	}()
-}
-
-// SetPort changes the RDP listening port, syncs firewall rules, and restarts TermService.
-// When RDP is disabled, the custom rule is updated but kept disabled (does not reopen inbound).
-func SetPort(port uint32) error {
-	if err := ValidatePort(port); err != nil {
-		return err
-	}
-
-	oldPort, err := GetPort()
-	if err != nil {
-		return err
-	}
-	if oldPort == port {
-		return fmt.Errorf("当前端口已是 %d，无需修改", port)
-	}
-
-	rdpOn, err := IsEnabled()
-	if err != nil {
-		return fmt.Errorf("读取远程桌面状态失败: %w", err)
-	}
-
-	if err := syncPortFirewall(port, rdpOn); err != nil {
-		_ = syncPortFirewall(oldPort, rdpOn)
-		return fmt.Errorf("防火墙同步失败，未修改端口（仍为 %d）: %w", oldPort, err)
-	}
-
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, rdpKeyPath, registry.SET_VALUE)
-	if err != nil {
-		_ = syncPortFirewall(oldPort, rdpOn)
-		return fmt.Errorf("打开 RDP 注册表失败: %w", err)
-	}
-	defer k.Close()
-
-	if err := k.SetDWordValue("PortNumber", port); err != nil {
-		_ = syncPortFirewall(oldPort, rdpOn)
-		return fmt.Errorf("写入 PortNumber 失败，已尝试回滚防火墙到 %d: %w", oldPort, err)
-	}
-
-	if err := restartTermService(); err != nil {
-		return fmt.Errorf("端口与防火墙已更新，但重启远程桌面服务失败: %w（可稍后手动重启 TermService 或重启电脑）", err)
-	}
-	actual, verifyErr := GetPort()
-	if verifyErr != nil || actual != port {
-		return fmt.Errorf("已提交远程桌面端口修改，但复查不一致: %v", verifyErr)
-	}
-	return nil
-}
-
-func syncPortFirewall(port uint32, rdpOn bool) error {
-	if rdpOn {
-		return SyncFirewall(port)
-	}
-	return ensureCustomRuleState(port, false)
-}
-
 // ValidatePort checks whether a port is usable for RDP.
 func ValidatePort(p uint32) error {
 	if err := port.ValidTCP(p); err != nil {
@@ -317,85 +245,6 @@ func ValidatePort(p uint32) error {
 	}
 	if name, ok := reserved[p]; ok {
 		return fmt.Errorf("端口 %d 常被 %s 占用，建议换一个", p, name)
-	}
-	return nil
-}
-
-// SyncFirewall ensures the WinToolbox-RDP allow rule matches port and is enabled,
-// then best-effort updates built-in Remote Desktop group rules in the background.
-func SyncFirewall(port uint32) error {
-	if err := ValidatePort(port); err != nil {
-		return err
-	}
-	portStr := strconv.FormatUint(uint64(port), 10)
-
-	if err := ensureCustomRule(portStr); err != nil {
-		return err
-	}
-	if !firewallAllowsPort(portStr) {
-		return fmt.Errorf("防火墙规则校验失败，未确认端口 %s 已放行", portStr)
-	}
-
-	scheduleBuiltinRDPGroupPort(portStr)
-	return nil
-}
-
-func ensureCustomRule(portStr string) error {
-	for _, name := range []string{"Toolbox-RDP", "WindowsOpsTool-RDP"} {
-		_, _ = syscmd.Run("netsh", "advfirewall", "firewall", "delete", "rule", "name="+name)
-	}
-	_, _ = syscmd.RunPS(`Get-NetFirewallRule -DisplayName 'Toolbox-RDP','WindowsOpsTool-RDP' -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue`)
-
-	psUpsert := fmt.Sprintf(`
-$ErrorActionPreference='Stop'
-$name='%s'
-$port=%s
-$r = Get-NetFirewallRule -Name $name -ErrorAction SilentlyContinue
-if ($r) {
-  Set-NetFirewallRule -Name $name -Direction Inbound -Action Allow -Enabled True -Profile Any -ErrorAction Stop | Out-Null
-  $r | Get-NetFirewallPortFilter | Set-NetFirewallPortFilter -Protocol TCP -LocalPort $port -ErrorAction Stop | Out-Null
-} else {
-  New-NetFirewallRule -DisplayName $name -Name $name -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port -Profile Any -Enabled True -Description 'WinToolbox RDP custom port firewall rule' | Out-Null
-}
-$check = Get-NetFirewallRule -Name $name -ErrorAction Stop
-$p = $check | Get-NetFirewallPortFilter
-$local = [string]$p.LocalPort
-if ($local -ne $port) { throw ("port mismatch: " + $local) }
-Write-Output 'OK'
-`, fwRuleName, portStr)
-	if out, err := syscmd.RunPS(psUpsert); err == nil && strings.Contains(out, "OK") {
-		return nil
-	}
-
-	// Prefer in-place set; only add when missing. Never delete-first (avoids open window).
-	_, setErr := syscmd.Run("netsh", "advfirewall", "firewall", "set", "rule",
-		"name="+fwRuleName, "new",
-		"enable=yes",
-		"dir=in",
-		"action=allow",
-		"protocol=TCP",
-		"localport="+portStr,
-		"profile=any",
-	)
-	if setErr == nil {
-		return nil
-	}
-	out, err := syscmd.Run("netsh", "advfirewall", "firewall", "add", "rule",
-		"name="+fwRuleName,
-		"dir=in",
-		"action=allow",
-		"protocol=TCP",
-		"localport="+portStr,
-		"profile=any",
-		"enable=yes",
-		"description=WinToolbox RDP custom port firewall rule",
-	)
-	if err != nil {
-		msg := strings.TrimSpace(out)
-		if msg == "" {
-			msg = err.Error()
-		}
-		return fmt.Errorf("创建防火墙规则失败: %s", msg)
 	}
 	return nil
 }
@@ -468,17 +317,4 @@ func netshRuleEnabled(out string) bool {
 	}
 	// Missing enabled line: do not treat as active.
 	return false
-}
-
-func restartTermService() error {
-	_, _ = syscmd.Run("net", "stop", "TermService", "/y")
-	out, err := syscmd.Run("net", "start", "TermService")
-	if err != nil {
-		lower := strings.ToLower(out)
-		if strings.Contains(out, "已经启动") || strings.Contains(lower, "already") {
-			return nil
-		}
-		return fmt.Errorf("%s", strings.TrimSpace(out))
-	}
-	return nil
 }

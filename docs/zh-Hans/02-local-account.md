@@ -1,20 +1,12 @@
 [English](../02-local-account.md) · [繁體中文](../zh-Hant/02-local-account.md) · [简体中文](../zh-Hans/02-local-account.md)
 
-# 02 · 本地账户
+# 02 · 账户管理
 
 禁用来宾与自动登录、加强密码/锁定策略，以及修改本地用户密码与权限。
 
-## 第一步：下载
+## 安全策略
 
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
-## 策略与加固入口
-
-![本地账户策略（真实界面）](../images/02-local-account.png)
+![本地账户策略](../images/zh-Hans/02-local-account.png)
 
 | # | 按钮 | 说明 |
 |---|------|------|
@@ -27,9 +19,9 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 修改密码与权限
 
-向下滚动到 **账户操作**：
+打开 **用户管理**，找到 **账户操作**。
 
-![修改密码（真实界面）](../images/02-local-account-password.png)
+![修改密码](../images/zh-Hans/02-local-account-password.png)
 
 | # | 选项 | 说明 |
 |---|------|------|
@@ -41,7 +33,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 建议步骤
 
-1. 管理员打开 WinToolBox → **本地账户**
+1. 管理员打开 WinToolBox → **账户管理**
 2. ①②③④ 按需加固
 3. 选用户 → 填两次密码 → **修改密码**
 4. 用新密码登录验证一次

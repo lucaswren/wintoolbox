@@ -26,7 +26,6 @@ Set-FileUtf8 $dtoPath $dto
 # frontend/src/constants.js
 $constPath = Join-Path $Root 'frontend\src\constants.js'
 $const = Get-Content $constPath -Raw -Encoding UTF8
-$const = [regex]::Replace($const, "export const APP_NAME = '[^']*'", "export const APP_NAME = '$name'")
 $const = [regex]::Replace($const, "export const APP_VERSION = '[^']*'", "export const APP_VERSION = '$display'")
 Set-FileUtf8 $constPath $const
 

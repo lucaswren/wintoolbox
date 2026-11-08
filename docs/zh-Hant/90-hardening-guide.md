@@ -4,32 +4,23 @@
 
 用 WinToolBox 按推薦順序做常見暴露面加固。紅點數字與介面標注對應。
 
-## 第一步：下載
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-下載 `WinToolBox-v*.exe` → 攔截點 **保留 / 保持** → SmartScreen 選 **仍要執行** → **系統管理員**打開。
-詳：[00 · 下載](./00-download.md)
-
-![下載攔截示意（模擬）](../images/00-download.png)
-
 ## 推薦順序（側欄）
 
-![側欄入口（真實介面）](../images/90-hardening-nav.png)
+![側欄入口](../images/zh-Hant/90-hardening-nav.png)
 
 | # | 側欄 | 做什么 | 詳文 |
 |---|------|--------|------|
-| ① | 本地帳戶 | 停用來賓、關自動登錄、密碼/鎖定、改強密碼 | [02 · 本地帳戶](./02-local-account.md) |
+| ① | 帳戶管理 | 停用來賓、關自動登錄、密碼/鎖定、改強密碼 | [02 · 本地帳戶](./02-local-account.md) |
 | ② | 遠端桌面 | 改非常用連接埠、開啟、強制 NLA | [03 · 遠端桌面](./03-remote-desktop.md) |
 | ③ | 防火牆 | 全部開啟、禁 ping、攔高危連接埠 | [04 · 防火牆](./04-firewall.md) |
-| ④ | 安全加固 | 停用 SMBv1、關 WinRM、禁匿名枚舉 | [05 · 安全加固](./05-security-harden.md) |
-| ⑤ | 系統更新 | 僅臨時運維窗口可關；常態建議開 | [09 · 系統更新](./09-windows-update.md) |
+| ④ | 安全設定 | 停用 SMBv1、關 WinRM、禁匿名枚舉 | [05 · 安全加固](./05-security-harden.md) |
+| ⑤ | Windows 更新 | 僅臨時運維窗口可關；常態建議開 | [09 · 系統更新](./09-windows-update.md) |
 
 ---
 
 ## 1. 本地帳戶
 
-![本地帳戶（真實介面）](../images/02-local-account.png)
+![本地帳戶](../images/zh-Hant/02-local-account.png)
 
 | # | 按鈕 | 作用 |
 |---|------|------|
@@ -44,11 +35,11 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 2. 遠端桌面
 
-![遠端桌面（真實介面）](../images/03-remote-desktop.png)
+![遠端桌面](../images/zh-Hant/03-remote-desktop.png)
 
 | # | 選項 | 作用 |
 |---|------|------|
-| ① | **連接埠** | 勿長期用 3389 |
+| ① | **連接埠** | 變更連接埠前確認新連接埠可用 |
 | ② | **保存連接埠** | 寫注冊表並同步防火牆放行 |
 | ③ | **開啟 / 關閉** | 開關 RDP |
 | ④ | **強制 NLA** | 認證前拒絕連線 |
@@ -57,7 +48,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 3. 防火牆
 
-![防火牆（真實介面）](../images/04-firewall.png)
+![防火牆](../images/zh-Hant/04-firewall.png)
 
 | # | 按鈕 | 作用 |
 |---|------|------|
@@ -70,7 +61,7 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 4. 安全加固
 
-![安全加固（真實介面）](../images/05-security-harden.png)
+![安全加固](../images/zh-Hant/05-security-harden.png)
 
 | # | 按鈕 | 作用 |
 |---|------|------|
@@ -84,17 +75,17 @@ https://github.com/lucaswren/wintoolbox/releases/latest
 
 ## 5. 系統更新
 
-![系統更新（真實介面）](../images/09-windows-update.png)
+![系統更新](../images/zh-Hant/09-windows-update.png)
 
 | # | 按鈕 | 作用 |
 |---|------|------|
 | ① | **關閉更新** | 僅臨時運維窗口 |
-| ② | **恢復更新** | 用完務必恢復 |
+| ② | **還原關閉前設定** | 用完務必恢復 |
 
 ---
 
 ## 說明
 
 - 需**系統管理員權限**；域環境可能被組策略覆蓋
-- 配圖中軟體畫面為**真實介面**；下載圖為**模擬示意**
+- 截圖使用目前的繁體中文介面和範例資料。
 - 其它功能：[01 · 概覽](./01-overview.md) · [06 · 防病毒](./06-defender.md) · [07 · 時間](./07-time-sync.md) · [08 · 電源](./08-power.md) · [10 · 軟體更新](./10-app-update.md)

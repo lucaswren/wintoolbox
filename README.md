@@ -3,7 +3,7 @@
 # WinToolBox
 
 WinToolBox is a Windows administration toolkit for inspecting system information and managing local accounts, Remote Desktop, firewall rules, Microsoft Defender, time synchronization, power, and updates. Built with Go, Wails, Vue and Element Plus.
-Version: v1.1.2
+Version: v1.2.0
 
 ## Languages and documentation
 
@@ -23,14 +23,16 @@ WinToolBox runs directly as an EXE. If WebView2 is missing, its automatic instal
 
 | Module | Capabilities |
 |---|---|
-| Overview | Hostname, Windows/build, activation, resolution, IPs, volumes and hardware |
-| Local accounts | Passwords, enabled state, administrator rights, Guest, automatic logon, lockout and password policies |
+| System information | Hostname, Windows/build, activation, resolution, IPs, volumes and hardware |
+| [Network check](docs/12-network-check.md) | DNS, Ping, TCP connectivity, local listeners and MTR |
+| [System logs](docs/11-system-logs.md) | Recent shutdown, restart and error events |
+| Accounts | Passwords, enabled state, administrator rights, Guest, automatic logon, lockout and password policies |
 | Remote Desktop | Service, port with firewall synchronization, NLA and mstsc history cleanup |
 | Firewall | Profiles, ping blocking, high-risk ports and inbound TCP allow rules |
-| Security hardening | SMBv1, WinRM and anonymous enumeration |
 | Microsoft Defender | Disable/enable Defender real-time protection with fallback and verification |
-| Time synchronization | Time zones, NTP presets, synchronization and NTP testing |
-| Power | Lock, delayed restart/shutdown and schedule cancellation |
+| Security settings | SMBv1, WinRM and anonymous enumeration |
+| Date and time | Time zones, NTP presets, synchronization and NTP testing |
+| Shut down and restart | Lock, delayed restart/shutdown and schedule cancellation |
 | Windows Update | Disable and restore configuration saved before disabling |
 | App update | GitHub releases, SHA256 verification, download progress/cancellation and installation |
 
@@ -59,7 +61,7 @@ Run `WinToolBox.exe` and accept UAC elevation, or select **Run as administrator*
 Download from [GitHub Releases](https://github.com/lucaswren/wintoolbox/releases/latest). The executable currently has no Authenticode signature, so the browser or SmartScreen may block it. Confirm its source and compare the release SHA256 before selecting **Keep**, or **More info → Run anyway**.
 
 ```powershell
-Get-FileHash .\WinToolBox-v1.1.2-windows-amd64.exe -Algorithm SHA256
+Get-FileHash .\WinToolBox-v1.2.0-windows-amd64.exe -Algorithm SHA256
 ```
 
 ## Architecture
@@ -88,6 +90,12 @@ go test ./...
 go vet ./...
 ```
 
+## 1.2.0
+
+Network checks, system health and the first-run Help guide. Users with the historical 1.2.0 build need to download the new package manually.
+
+[Release 1.2.0](https://github.com/lucaswren/wintoolbox/releases/tag/v1.2.0)
+
 ## v1.1.2 release notes
 
 - Simplified both log pages: actions, compact counts and key records are shown by default.
@@ -97,8 +105,6 @@ go vet ./...
 - Windows Server/VPS live acceptance remains unperformed. Retain an independent recovery console and finish pending RDP changes before updating.
 
 [Download release](https://github.com/lucaswren/wintoolbox/releases/tag/v1.1.2) · [Validation report (Simplified Chinese)](docs/zh-Hans/validation-vps-2026-10-23.md)
-
-Users running the older v1.2.0 build must still install manually; automatic updates do not downgrade versions.
 
 [Product review and license recommendations](docs/product-review-2026-10-11.md)
 

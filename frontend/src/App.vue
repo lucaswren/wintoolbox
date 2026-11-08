@@ -32,6 +32,7 @@ import { api } from './api/index.js'
 import { useAppState } from './composables/useAppState.js'
 import { useSystemActions } from './composables/useSystemActions.js'
 import { appendBoundedLog } from './composables/logBuffer.js'
+import HelpDialog from './components/HelpDialog.vue'
 import OpLog from './components/OpLog.vue'
 import OperationStatus from './components/OperationStatus.vue'
 import RdpSafetyBanner from './components/RdpSafetyBanner.vue'
@@ -47,7 +48,10 @@ const PowerView = defineAsyncComponent(() => import('./views/PowerView.vue'))
 const UpdateView = defineAsyncComponent(() => import('./views/UpdateView.vue'))
 const SelfUpdateView = defineAsyncComponent(() => import('./views/SelfUpdateView.vue'))
 const SystemLogsView = defineAsyncComponent(() => import('./views/SystemLogsView.vue'))
+const NetworkView = defineAsyncComponent(() => import('./views/NetworkView.vue'))
 const systemLogsView = ref(null)
+const overviewView = ref(null)
+const networkSummary = ref(null)
 
 const ICONS = {
   Monitor,
@@ -63,6 +67,7 @@ const ICONS = {
 }
 
 const active = ref('overview')
+const helpOpen = ref(false)
 const elementLocale = computed(() => ({ en, 'zh-Hans': zhCn, 'zh-Hant': zhTw })[locale.value])
 const busy = ref(false)
 const operation = reactive({ phase: 'idle', title: '', detail: '', elapsed: 0, module: '' })
@@ -295,6 +300,15 @@ async function backgroundAppUpdate() {
 onMounted(async () => {
   appendLog(t('就绪'))
   try {
+    const key = 'wintoolbox.helpSeen'
+    if (localStorage.getItem(key) !== '1') {
+      helpOpen.value = true
+      localStorage.setItem(key, '1')
+    }
+  } catch {
+    // Help remains available from the toolbar when storage is unavailable.
+  }
+  try {
     const info = await api.getAppInfo()
     if (info?.version) APP_VERSION.value = info.version
   } catch {
@@ -316,7 +330,8 @@ async function onRefresh() {
   }
   try {
     const queueDetail = active.value === 'overview'
-    await refreshActive(true, true, queueDetail)
+    const healthRefresh = queueDetail ? overviewView.value?.refreshHealth() : undefined
+    await Promise.all([refreshActive(true, true, queueDetail), healthRefresh])
     if (active.value === 'time') await ensureTimeZones()
     if (active.value === 'selfupdate') await onCheckAppUpdate(false)
   } catch {
@@ -394,7 +409,7 @@ async function cancelUpdateDownload() {
           active-text-color="#ffffff"
           @select="(k) => (active = k)"
         >
-          <el-menu-item v-for="m in MENUS" :key="m.key" :index="m.key">
+          <el-menu-item v-for="m in MENUS" :key="m.key" :index="m.key" :data-menu="m.key">
             <el-icon>
               <component :is="ICONS[m.icon]" />
             </el-icon>
@@ -413,14 +428,23 @@ async function cancelUpdateDownload() {
             <div class="header-title">{{ activeMenu?.title }}</div>
             <div class="header-desc">
               {{ activeMenu?.desc
-              }}<span v-if="updatedAt[active] || updatedAt.all"
+              }}<span v-if="active !== 'network' && (updatedAt[active] || updatedAt.all)"
                 >{{ t('· 状态采集') }} {{ updatedAt[active] || updatedAt.all }}</span
               >
             </div>
           </div>
-          <el-button type="primary" round :loading="loading" :disabled="busy" @click="onRefresh">{{
-            t('刷新')
-          }}</el-button>
+          <div class="header-actions">
+            <el-button round @click="helpOpen = true">{{ t('帮助') }}</el-button>
+            <el-button
+              v-if="active !== 'network'"
+              type="primary"
+              round
+              :loading="loading"
+              :disabled="busy"
+              @click="onRefresh"
+              >{{ t('刷新') }}</el-button
+            >
+          </div>
         </el-header>
 
         <OperationStatus
@@ -429,12 +453,17 @@ async function cancelUpdateDownload() {
           @show-log="opLog?.expand()"
         />
         <RdpSafetyBanner />
+        <HelpDialog v-model="helpOpen" @navigate="active = $event" />
         <el-main class="app-main" :aria-busy="loading || busy">
-          <KeepAlive :max="11">
+          <KeepAlive :max="MENUS.length">
             <SystemLogsView v-if="active === 'systemlogs'" ref="systemLogsView" />
+            <NetworkView v-else-if="active === 'network'" @checked="networkSummary = $event" />
             <OverviewView
               v-else-if="active === 'overview'"
+              ref="overviewView"
               :overview="state.overview"
+              :network-summary="networkSummary"
+              @open-logs="active = 'systemlogs'"
               :detail-loading="overviewDetailLoading"
             />
             <AccountView
@@ -679,6 +708,12 @@ async function cancelUpdateDownload() {
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--wt-border);
+}
+
+.header-actions {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 .header-left {

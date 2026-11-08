@@ -7,13 +7,13 @@ import (
 
 const (
 	AppName    = "WinToolBox" // synced from version.json via scripts/sync-version.ps1
-	AppVersion = "v1.1.2"     // synced from version.json via scripts/sync-version.ps1
+	AppVersion = "v1.2.0"     // synced from version.json via scripts/sync-version.ps1
 )
 
 // AppInfo is version metadata for the UI.
 type AppInfo struct {
 	Name     string `json:"name"`     // WinToolBox
-	Version  string `json:"version"`  // v1.1.2
+	Version  string `json:"version"`  // v1.2.0
 	Language string `json:"language"` // User's Windows display language, normalized to a supported locale.
 }
 
@@ -87,28 +87,37 @@ type Status struct {
 	AnonymousDetail  string `json:"anonymousDetail"`
 }
 
+// DiskSpace contains capacity available to the current Windows account.
+type DiskSpace struct {
+	Drive    string  `json:"drive"`
+	TotalGiB float64 `json:"totalGiB"`
+	FreeGiB  float64 `json:"freeGiB"`
+	System   bool    `json:"system"`
+}
+
 // OverviewView is display-ready overview data.
 type OverviewView struct {
-	Hostname         string   `json:"hostname"`
-	OSName           string   `json:"osName"`
-	OSBuild          string   `json:"osBuild"`
-	Arch             string   `json:"arch"`
-	Manufacturer     string   `json:"manufacturer"`
-	Model            string   `json:"model"`
-	Board            string   `json:"board"`
-	BIOS             string   `json:"bios"`
-	CPU              string   `json:"cpu"`
-	CPUCores         int      `json:"cpuCores"`
-	MemoryTotalGB    float64  `json:"memoryTotalGB"`
-	MemoryAvailGB    float64  `json:"memoryAvailGB"`
-	MemoryModules    string   `json:"memoryModules"`
-	Resolution       string   `json:"resolution"`
-	IPs              []string `json:"ips"`
-	Disks            []string `json:"disks"`
-	PhysicalDisks    []string `json:"physicalDisks"`
-	GPUs             []string `json:"gpus"`
-	Activated        bool     `json:"activated"`
-	ActivationStatus string   `json:"activationStatus"`
+	Hostname         string      `json:"hostname"`
+	OSName           string      `json:"osName"`
+	OSBuild          string      `json:"osBuild"`
+	Arch             string      `json:"arch"`
+	Manufacturer     string      `json:"manufacturer"`
+	Model            string      `json:"model"`
+	Board            string      `json:"board"`
+	BIOS             string      `json:"bios"`
+	CPU              string      `json:"cpu"`
+	CPUCores         int         `json:"cpuCores"`
+	MemoryTotalGB    float64     `json:"memoryTotalGB"`
+	MemoryAvailGB    float64     `json:"memoryAvailGB"`
+	MemoryModules    string      `json:"memoryModules"`
+	Resolution       string      `json:"resolution"`
+	IPs              []string    `json:"ips"`
+	Disks            []string    `json:"disks"`
+	DiskSpace        []DiskSpace `json:"diskSpace"`
+	PhysicalDisks    []string    `json:"physicalDisks"`
+	GPUs             []string    `json:"gpus"`
+	Activated        bool        `json:"activated"`
+	ActivationStatus string      `json:"activationStatus"`
 }
 
 // AccountView is a local account row for UI.

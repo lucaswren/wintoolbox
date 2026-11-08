@@ -120,8 +120,8 @@ export function useSystemActions({
       }),
     onRdpPort: () => {
       const port = normalizePort(form.rdpPort, 0)
-      if (!port) {
-        ElMessage.warning(t('请输入有效端口（1-65535）'))
+      if (!Number.isInteger(form.rdpPort) || port < 1024) {
+        ElMessage.warning(t('请输入 1024 到 65535 之间的整数端口号。'))
         return
       }
       form.rdpPort = port

@@ -4,17 +4,9 @@
 
 一键开关配置文件、禁 ping、拦高危入站端口，以及按端口放行/删除规则。
 
-## 第一步：下载
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-拦截点 **保留 / 保持**。详：[00 · 下载](./00-download.md)
-
-![下载拦截示意（模拟）](../images/00-download.png)
-
 ## 界面标注
 
-![防火墙（真实界面）](../images/04-firewall.png)
+![防火墙](../images/zh-Hans/04-firewall.png)
 
 | # | 按钮 | 说明 |
 |---|------|------|

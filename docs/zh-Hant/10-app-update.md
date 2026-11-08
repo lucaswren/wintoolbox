@@ -4,18 +4,9 @@
 
 檢測 GitHub 倉庫最新 Release，下載並校驗後安裝重新啟動 WinToolBox 自身。
 
-## 第一步：下載
-
-若尚未安裝，請先從 Release 獲取安裝包：
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-攔截點 **保留 / 保持**。詳：[00 · 下載](./00-download.md)
-
-![下載攔截示意（模擬）](../images/00-download.png)
-
 ## 介面標注
 
-![軟體更新（真實介面）](../images/10-app-update.png)
+![軟體更新](../images/zh-Hant/10-app-update.png)
 
 | # | 按鈕 | 說明 |
 |---|------|------|

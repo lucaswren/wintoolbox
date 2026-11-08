@@ -79,8 +79,6 @@ type ServerEvents struct {
 	StartTime   string         `json:"startTime"`
 }
 
-func GetServerEvents() (ServerEvents, error) { return ReadLoginReport(context.Background(), 7, 300) }
-
 func ReadLoginReport(ctx context.Context, days, limit int) (ServerEvents, error) {
 	if days < 1 || days > 90 || limit < 50 || limit > 1000 {
 		return ServerEvents{}, fmt.Errorf("日志范围须为 1–90 天，条数须为 50–1000")

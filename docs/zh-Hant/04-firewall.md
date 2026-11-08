@@ -4,17 +4,9 @@
 
 一鍵開關設定檔案、禁 ping、攔高危入站連接埠，以及按連接埠放行/刪除規則。
 
-## 第一步：下載
-
-https://github.com/lucaswren/wintoolbox/releases/latest
-
-攔截點 **保留 / 保持**。詳：[00 · 下載](./00-download.md)
-
-![下載攔截示意（模擬）](../images/00-download.png)
-
 ## 介面標注
 
-![防火牆（真實介面）](../images/04-firewall.png)
+![防火牆](../images/zh-Hant/04-firewall.png)
 
 | # | 按鈕 | 說明 |
 |---|------|------|

@@ -8,10 +8,8 @@
 
 All required backup writes must succeed before the backup is marked valid. Corrupt backups are rejected before restoration. Refresh and verify the resulting status after either action; Group Policy can override local settings.
 
-![Windows Update](images/09-windows-update.png)
+![Windows Update](images/en/09-windows-update.png)
 
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
-
-Screenshots show the earlier Simplified Chinese interface; the labels above describe the English interface. Download prompts are illustrations.
 
 [Operation feedback and audit](operation-audit-2026-10-12.md)
