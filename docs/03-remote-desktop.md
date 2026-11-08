@@ -19,6 +19,16 @@ Changing ports alone does not replace access controls or NLA. Confirm that the o
 
 **Access restrictions** shows the allowlist and local listener status. Raw rules and output are collapsed under **Diagnostics**. **Sign-in records** supports a 1–90 day range, source summaries, failure reasons, repeated-failure hints, search, event details/XML and full JSON export. Network authentication failures are distinguished from confirmed remote interactive logons; incomplete channel coverage is reported. **Clear results** resets this view without deleting Windows event logs. **Client history** retains search, type filters, single-record deletion, clearing a selected type and clearing all records, including saved credentials and bitmap cache. Records load when this tab is opened; cleanup does not change the Remote Desktop service or port.
 
+## Protected settings and recovery
+
+- In **Connection settings**, **Disable NLA** allows older clients without NLA support to reach the Windows sign-in screen. Use it only when necessary. It also requires reconnecting and confirming within five minutes.
+- In **Access restrictions**, enter one IPv4 address, IPv6 address or CIDR range per line (up to 64) and select **Save access restrictions**. Use the source address the server sees. An empty list is rejected. Expand **Diagnostics** to inspect the listener and effective rules.
+- To undo a pending change, select **Restore previous configuration** in the top banner. If the connection is lost, wait for automatic recovery and use the provider's console if needed.
+
+## Client history and connection checks
+
+Select **Check connection status** under **Access restrictions** to refresh the local listener and rule status. For saved client connections, open **Client history** and select **Refresh list** after changes. Search or filter by type, then choose **Delete** for one entry, **Clear selected type** for the selected type, or **Clear all history** for every type. Clearing saved credentials can require re-entering them next time.
+
 ![Remote Desktop](images/en/03-remote-desktop.png)
 
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.

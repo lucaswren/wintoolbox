@@ -24,7 +24,7 @@ WinToolBox runs directly as an EXE. If WebView2 is missing, its automatic instal
 | Module | Capabilities |
 |---|---|
 | System information | Hostname, Windows/build, activation, resolution, IPs, volumes and hardware |
-| [Network check](docs/12-network-check.md) | DNS, Ping, TCP connectivity, local listeners and MTR |
+| [Network check](docs/12-network-check.md) | DNS, Ping, TCPing, local listeners, public IPs and MTR |
 | [System logs](docs/11-system-logs.md) | Recent shutdown, restart and error events |
 | Accounts | Passwords, enabled state, administrator rights, Guest, automatic logon, lockout and password policies |
 | Remote Desktop | Service, port with firewall synchronization, NLA and mstsc history cleanup |
@@ -92,7 +92,7 @@ go vet ./...
 
 ## 1.2.0
 
-Network checks, system health and the first-run Help guide. Users with the historical 1.2.0 build need to download the new package manually.
+Network checks include TCPing, stoppable MTR and IPv4/IPv6 public egress lookup with optional source selection. Users with an earlier 1.2.0 build need to replace the executable manually.
 
 [Release 1.2.0](https://github.com/lucaswren/wintoolbox/releases/tag/v1.2.0)
 

@@ -6,6 +6,7 @@ import (
 	"net/netip"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestTargetAddress(t *testing.T) {
@@ -37,12 +38,16 @@ func TestCheckAndTraceLoopback(t *testing.T) {
 			}
 			defer listener.Close()
 			port := listener.Addr().(*net.TCPAddr).Port
-			basic, err := Check(context.Background(), address, port)
-			if err != nil || basic.DNS != "literal" || basic.TCP != "connected" || basic.Ping != "reply" || basic.Received != basicProbes {
+			source, err := ParseSource(address)
+			if err != nil {
+				t.Fatal(err)
+			}
+			basic, err := Check(context.Background(), address, port, 3, source)
+			if err != nil || basic.DNS != "literal" || basic.TCP != "connected" || basic.Ping != "reply" || basic.Received != basicProbes || basic.TCPStats.Attempts != 3 || basic.TCPStats.Successes != 3 {
 				t.Fatalf("check: %+v, %v", basic, err)
 			}
-			route, err := Trace(context.Background(), address)
-			if err != nil || !route.Reached || len(route.Hops) != 1 || route.Hops[0].Received != routeRounds ||
+			route, err := Trace(context.Background(), address, 3, source)
+			if err != nil || !route.Reached || len(route.Hops) != 1 || route.Hops[0].Received != 3 || route.RoundsCompleted != 3 ||
 				len(route.Hops[0].Addresses) != 1 || route.Hops[0].Addresses[0] != address {
 				t.Fatalf("trace: %+v, %v", route, err)
 			}
@@ -50,8 +55,8 @@ func TestCheckAndTraceLoopback(t *testing.T) {
 				t.Fatalf("local listener: %s, %v", status, err)
 			}
 			_ = listener.Close()
-			if result := checkTCP(context.Background(), netip.MustParseAddr(address), port); result != "refused" {
-				t.Fatalf("closed loopback port: %s", result)
+			if result := sampleTCP(context.Background(), netip.MustParseAddr(address), port, 2, source); result.status != "refused" || result.stats.Attempts != 2 {
+				t.Fatalf("closed loopback port: %+v", result)
 			}
 		})
 	}
@@ -84,5 +89,30 @@ func TestRouteDoesNotCountLocalProbeFailure(t *testing.T) {
 	}
 	if route.record(1, echoReply{status: ipExpired}) || route.Hops[0].Sent != 1 {
 		t.Fatalf("missing router address changed statistics: %+v", route)
+	}
+}
+
+func TestTraceStopsBeforeProbing(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	result, err := Trace(ctx, "127.0.0.1", 10, netip.Addr{})
+	if err != nil || result.Status != "stopped" || len(result.Hops) != 0 {
+		t.Fatalf("unexpected cancelled trace: %+v %v", result, err)
+	}
+}
+
+func TestTraceStopKeepsPartialResult(t *testing.T) {
+	if os.Getenv("WINTOOLBOX_NETWORK_INTEGRATION") != "1" {
+		t.Skip("requires Windows ICMP")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	stop := time.AfterFunc(700*time.Millisecond, cancel)
+	defer stop.Stop()
+	result, err := Trace(ctx, "127.0.0.1", 10, netip.Addr{})
+	if err != nil || result.Status != "stopped" || !result.Reached || len(result.Hops) != 1 ||
+		result.RoundsCompleted == 0 || result.RoundsCompleted >= result.Rounds ||
+		result.Hops[0].Received < result.RoundsCompleted {
+		t.Fatalf("trace did not retain partial results: %+v %v", result, err)
 	}
 }

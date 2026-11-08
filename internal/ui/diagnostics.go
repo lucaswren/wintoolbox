@@ -12,28 +12,74 @@ import (
 
 var networkProbeSlot = make(chan struct{}, 1)
 
-func (a *App) CheckNetwork(target string, port int) (netcheck.Basic, error) {
+func (a *App) CheckNetwork(target string, port, count int, sourceIP string) (netcheck.Basic, error) {
 	select {
 	case networkProbeSlot <- struct{}{}:
 		defer func() { <-networkProbeSlot }()
 	default:
 		return netcheck.Basic{}, errors.New("已有网络检查正在运行。")
 	}
-	ctx, cancel := context.WithTimeout(a.context(), 10*time.Second)
+	source, err := netcheck.ParseSource(sourceIP)
+	if err != nil {
+		return netcheck.Basic{}, err
+	}
+	ctx, cancel := context.WithTimeout(a.context(), 40*time.Second)
 	defer cancel()
-	return netcheck.Check(ctx, target, port)
+	return netcheck.Check(ctx, target, port, count, source)
 }
 
-func (a *App) TraceNetwork(target string) (netcheck.Route, error) {
+func (a *App) TraceNetwork(target string, rounds int, sourceIP string) (netcheck.Route, error) {
 	select {
 	case networkProbeSlot <- struct{}{}:
 		defer func() { <-networkProbeSlot }()
 	default:
 		return netcheck.Route{}, errors.New("已有网络检查正在运行。")
 	}
-	ctx, cancel := context.WithTimeout(a.context(), 50*time.Second)
+	ctx, cancel := context.WithTimeout(a.context(), 120*time.Second)
+	a.traceMu.Lock()
+	a.traceCancel = cancel
+	a.traceMu.Unlock()
+	defer func() {
+		cancel()
+		a.traceMu.Lock()
+		a.traceCancel = nil
+		a.traceMu.Unlock()
+	}()
+	source, err := netcheck.ParseSource(sourceIP)
+	if err != nil {
+		return netcheck.Route{}, err
+	}
+	return netcheck.Trace(ctx, target, rounds, source)
+}
+
+func (a *App) StopNetworkTrace() bool {
+	a.traceMu.Lock()
+	defer a.traceMu.Unlock()
+	if a.traceCancel == nil {
+		return false
+	}
+	a.traceCancel()
+	return true
+}
+
+func (a *App) GetNetworkSources() ([]netcheck.LocalSource, error) {
+	return netcheck.LocalSources()
+}
+
+func (a *App) CheckPublicEgress(sourceIP string) ([]netcheck.Egress, error) {
+	select {
+	case networkProbeSlot <- struct{}{}:
+		defer func() { <-networkProbeSlot }()
+	default:
+		return nil, errors.New("已有网络检查正在运行。")
+	}
+	source, err := netcheck.ParseSource(sourceIP)
+	if err != nil {
+		return nil, err
+	}
+	ctx, cancel := context.WithTimeout(a.context(), 10*time.Second)
 	defer cancel()
-	return netcheck.Trace(ctx, target)
+	return netcheck.LookupEgress(ctx, source), nil
 }
 
 func (a *App) CheckLocalListener(port int) (string, error) {

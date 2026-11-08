@@ -22,7 +22,7 @@ WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本
 
 ## 1.2.0
 
-新增網路檢查、系統檢查和新手指引。已安裝歷史 1.2.0 的使用者需手動下載此次發行版本。
+網路檢查支援 TCPing、可停止的 MTR 和 IPv4/IPv6 公網出口查詢，可指定本機來源 IP。已安裝較早 1.2.0 版本的使用者需手動替換 EXE。
 
 [1.2.0 下載](https://github.com/lucaswren/wintoolbox/releases/tag/v1.2.0)
 
@@ -41,7 +41,7 @@ WinToolBox 是 Windows 本機管理工具箱，可檢視系統資訊，管理本
 | 模塊     | 能力 |
 |----------|------|
 | 系統資訊 | 主機名、系統+Build、激活、分辨率、IP、磁盤與硬體資訊 |
-| [網路檢查](docs/zh-Hant/12-network-check.md) | DNS、Ping、TCP 連接埠、本機監聽和 MTR |
+| [網路檢查](docs/zh-Hant/12-network-check.md) | DNS、Ping、TCPing、本機監聽、公網出口和 MTR |
 | [系統日誌](docs/zh-Hant/11-system-logs.md) | 查看關機、重新啟動和異常記錄 |
 | 帳戶管理 | 改密碼、啟用/停用、系統管理員；來賓/自動登錄；鎖定與密碼策略 |
 | 遠端桌面 | 開關、改連接埠並同步防火牆、強制 NLA；清理 mstsc 連線記錄 |

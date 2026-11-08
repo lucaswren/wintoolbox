@@ -12,11 +12,18 @@ Start with [Download and first launch](00-download.md). Administrator privileges
 
 See [Language selection](localization.md) for automatic detection and saved preferences.
 
+## Controls available across the app
+
+- Use the language selector at the top left to switch between English, Simplified Chinese and Traditional Chinese. The choice is saved. **Help** reopens the first-run guide and links to the selected language's online documentation.
+- **Refresh** rereads the current page. In **System logs** it rereads the log report. In **App update** it also checks for a newer version. In **Network check**, select **Start check** to run a new test.
+- After confirming a change, wait for the result. **View log** opens the activity log. **Dismiss** closes the result banner. If verification is incomplete or the operation fails, check the log and current state before retrying.
+- At the bottom, **Activity log** can be expanded or collapsed. **Export** saves the current WinToolBox activity as `wintoolbox-log.txt`. Review it before sharing. **Clear** empties the activity panel. Windows event records remain available in **System logs**.
+
 | Guide | Topic |
 |---|---|
 | [Download and first launch](00-download.md) | Download, checksum, UAC, WebView2 and language selection |
 | [System information](01-overview.md) | Overview |
-| [Network check](12-network-check.md) | DNS, Ping, TCP connectivity and MTR |
+| [Network check](12-network-check.md) | DNS, Ping, TCPing, local listeners, public IPs and MTR |
 | [System logs](11-system-logs.md) | Startup, shutdown, reboot evidence and diagnostic export |
 | [Accounts](02-local-account.md) | Local accounts |
 | [Remote Desktop](03-remote-desktop.md) | Remote Desktop |

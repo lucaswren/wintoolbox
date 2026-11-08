@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	basicProbes = 4
-	routeRounds = 4
-	maxHops     = 24
+	basicProbes  = 4
+	MaxRounds    = 10
+	MaxTCPProbes = 10
+	maxHops      = 24
 )
 
 type Basic struct {
@@ -29,6 +30,16 @@ type Basic struct {
 	AverageMS int      `json:"averageMs"`
 	TCP       string   `json:"tcp"`
 	Port      int      `json:"port"`
+	Source    string   `json:"source"`
+	TCPStats  TCPStats `json:"tcpStats"`
+}
+
+type TCPStats struct {
+	Attempts  int     `json:"attempts"`
+	Successes int     `json:"successes"`
+	MinMS     float64 `json:"minMs"`
+	AverageMS float64 `json:"averageMs"`
+	MaxMS     float64 `json:"maxMs"`
 }
 
 type Hop struct {
@@ -41,10 +52,13 @@ type Hop struct {
 }
 
 type Route struct {
-	Status  string `json:"status"`
-	Address string `json:"address"`
-	Hops    []Hop  `json:"hops"`
-	Reached bool   `json:"reached"`
+	Status          string `json:"status"`
+	Address         string `json:"address"`
+	Hops            []Hop  `json:"hops"`
+	Reached         bool   `json:"reached"`
+	Source          string `json:"source"`
+	RoundsCompleted int    `json:"roundsCompleted"`
+	Rounds          int    `json:"rounds"`
 }
 
 func targetAddress(value string) (netip.Addr, string, error) {
@@ -118,9 +132,6 @@ func resolve(ctx context.Context, target string) ([]netip.Addr, string, error) {
 		address = address.Unmap()
 		if !address.IsUnspecified() && !address.IsMulticast() && !slices.Contains(usable, address) {
 			usable = append(usable, address)
-			if len(usable) == 16 {
-				break
-			}
 		}
 	}
 	if len(usable) == 0 {
@@ -129,40 +140,83 @@ func resolve(ctx context.Context, target string) ([]netip.Addr, string, error) {
 	return usable, "resolved", nil
 }
 
-func Check(ctx context.Context, target string, port int) (Basic, error) {
+func Check(ctx context.Context, target string, port, count int, source netip.Addr) (Basic, error) {
 	if port < 0 || port > 65535 {
 		return Basic{}, errors.New("请输入 1 到 65535 之间的端口号。")
+	}
+	if count < 1 || count > MaxTCPProbes {
+		return Basic{}, errors.New("TCPing 次数须为 1 到 10。")
 	}
 	addresses, dns, err := resolve(ctx, target)
 	result := Basic{DNS: dns, Port: port, Ping: "skipped", TCP: "skipped"}
 	if err != nil || len(addresses) == 0 {
 		return result, err
 	}
-	for _, address := range addresses {
+	for _, address := range addresses[:min(16, len(addresses))] {
 		result.Addresses = append(result.Addresses, address.String())
 	}
-	address := addresses[0]
+	address := pickDestination(addresses, source)
+	if !address.IsValid() {
+		return result, errAddressFamily
+	}
 	result.Address = address.String()
+	if source.IsValid() {
+		result.Source = source.String()
+	}
 
 	// TCP and Ping test the same address and neither depends on the other.
-	tcp := make(chan string, 1)
+	var tcp <-chan tcpResult
 	if port != 0 {
-		go func() { tcp <- checkTCP(ctx, address, port) }()
+		done := make(chan tcpResult, 1)
+		tcp = done
+		go func() { done <- sampleTCP(ctx, address, port, count, source) }()
 	}
-	checkPing(ctx, address, &result)
-	if port != 0 {
-		result.TCP = <-tcp
+	checkPing(ctx, address, source, &result)
+	if tcp != nil {
+		outcome := <-tcp
+		result.TCP = outcome.status
+		result.TCPStats = outcome.stats
 	}
 	return result, nil
 }
 
-func checkTCP(ctx context.Context, address netip.Addr, port int) string {
-	dialer := net.Dialer{Timeout: 3 * time.Second}
-	conn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(address.String(), strconv.Itoa(port)))
-	if err == nil {
-		_ = conn.Close()
-		return "connected"
+type tcpResult struct {
+	status string
+	stats  TCPStats
+}
+
+func sampleTCP(ctx context.Context, address netip.Addr, port, count int, source netip.Addr) tcpResult {
+	result := tcpResult{status: "unavailable"}
+	dialer := sourceDialer(source, 3*time.Second)
+	endpoint := net.JoinHostPort(address.String(), strconv.Itoa(port))
+	var total float64
+	for i := 0; i < count && ctx.Err() == nil; i++ {
+		start := time.Now()
+		conn, err := dialer.DialContext(ctx, "tcp", endpoint)
+		elapsed := float64(time.Since(start).Microseconds()) / 1000
+		result.stats.Attempts++
+		if err == nil {
+			_ = conn.Close()
+			result.stats.Successes++
+			total += elapsed
+			if result.stats.Successes == 1 {
+				result.stats.MinMS = elapsed
+			}
+			result.stats.MinMS = min(result.stats.MinMS, elapsed)
+			result.stats.MaxMS = max(result.stats.MaxMS, elapsed)
+			result.stats.AverageMS = total / float64(result.stats.Successes)
+			result.status = "connected"
+		} else if result.stats.Successes == 0 {
+			result.status = tcpFailure(err)
+		}
+		if i < count-1 && !waitProbe(ctx, 250*time.Millisecond) {
+			break
+		}
 	}
+	return result
+}
+
+func tcpFailure(err error) string {
 	var netErr net.Error
 	switch {
 	case errors.Is(err, windows.WSAECONNREFUSED):
@@ -176,8 +230,8 @@ func checkTCP(ctx context.Context, address netip.Addr, port int) string {
 	}
 }
 
-func checkPing(ctx context.Context, address netip.Addr, result *Basic) {
-	handle, err := openEcho(address)
+func checkPing(ctx context.Context, address, source netip.Addr, result *Basic) {
+	handle, err := openEcho(address, source)
 	if err != nil {
 		result.Ping = "unavailable"
 		return
@@ -208,24 +262,38 @@ func checkPing(ctx context.Context, address netip.Addr, result *Basic) {
 	}
 }
 
-func Trace(ctx context.Context, target string) (Route, error) {
-	addresses, dns, err := resolve(ctx, target)
-	if err != nil || len(addresses) == 0 {
-		return Route{Status: dns}, err
+func Trace(ctx context.Context, target string, rounds int, source netip.Addr) (Route, error) {
+	if rounds < 1 || rounds > MaxRounds {
+		return Route{}, errors.New("MTR 轮数须为 1 到 10。")
 	}
-	address := addresses[0]
-	result := Route{Status: "complete", Address: address.String()}
-	handle, err := openEcho(address)
+	addresses, dns, err := resolve(ctx, target)
+	result := Route{Status: dns, Rounds: rounds}
+	if ctx.Err() != nil {
+		result.Status = traceStopStatus(ctx)
+		return result, nil
+	}
+	if err != nil || len(addresses) == 0 {
+		return result, err
+	}
+	address := pickDestination(addresses, source)
+	if !address.IsValid() {
+		return result, errAddressFamily
+	}
+	result.Address, result.Status = address.String(), "complete"
+	if source.IsValid() {
+		result.Source = source.String()
+	}
+	handle, err := openEcho(address, source)
 	if err != nil {
 		result.Status = "probe-unavailable"
 		return result, nil
 	}
 	defer handle.close()
 
-	for round := 0; round < routeRounds; round++ {
+	for round := 0; round < rounds; round++ {
 		for ttl := 1; ttl <= maxHops; ttl++ {
 			if ctx.Err() != nil {
-				result.Status = "interrupted"
+				result.Status = traceStopStatus(ctx)
 				return result, nil
 			}
 			started := time.Now()
@@ -242,11 +310,35 @@ func Trace(ctx context.Context, target string) (Route, error) {
 				break
 			}
 		}
-		if round < routeRounds-1 {
-			time.Sleep(200 * time.Millisecond)
+		result.RoundsCompleted++
+		if ctx.Err() != nil {
+			result.Status = traceStopStatus(ctx)
+			return result, nil
+		}
+		if round < rounds-1 && !waitProbe(ctx, 200*time.Millisecond) {
+			result.Status = traceStopStatus(ctx)
+			return result, nil
 		}
 	}
 	return result, nil
+}
+
+func traceStopStatus(ctx context.Context) string {
+	if errors.Is(ctx.Err(), context.Canceled) {
+		return "stopped"
+	}
+	return "interrupted"
+}
+
+func waitProbe(ctx context.Context, delay time.Duration) bool {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
 }
 
 func (r *Route) record(ttl int, reply echoReply) bool {

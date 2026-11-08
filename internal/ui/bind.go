@@ -22,7 +22,9 @@ import (
 
 // App exposes WinToolbox operations to the Wails frontend (window.go.ui.App).
 type App struct {
-	ctx context.Context
+	ctx         context.Context
+	traceMu     sync.Mutex
+	traceCancel context.CancelFunc
 }
 
 var resourceLocks sync.Map

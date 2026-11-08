@@ -21,17 +21,19 @@ const (
 )
 
 var (
-	ipHelper    = windows.NewLazySystemDLL("iphlpapi.dll")
-	createEcho4 = ipHelper.NewProc("IcmpCreateFile")
-	createEcho6 = ipHelper.NewProc("Icmp6CreateFile")
-	closeEcho   = ipHelper.NewProc("IcmpCloseHandle")
-	sendEcho4   = ipHelper.NewProc("IcmpSendEcho")
-	sendEcho6   = ipHelper.NewProc("Icmp6SendEcho2")
+	ipHelper      = windows.NewLazySystemDLL("iphlpapi.dll")
+	createEcho4   = ipHelper.NewProc("IcmpCreateFile")
+	createEcho6   = ipHelper.NewProc("Icmp6CreateFile")
+	closeEcho     = ipHelper.NewProc("IcmpCloseHandle")
+	sendEcho4From = ipHelper.NewProc("IcmpSendEcho2Ex")
+	sendEcho4     = ipHelper.NewProc("IcmpSendEcho")
+	sendEcho6     = ipHelper.NewProc("Icmp6SendEcho2")
 )
 
 type echoHandle struct {
 	handle  uintptr
 	address netip.Addr
+	source  netip.Addr
 }
 
 type echoReply struct {
@@ -46,7 +48,7 @@ type echoOptions struct {
 	optionsData                  uint32
 }
 
-func openEcho(address netip.Addr) (echoHandle, error) {
+func openEcho(address, source netip.Addr) (echoHandle, error) {
 	create := createEcho4
 	if address.Is6() {
 		create = createEcho6
@@ -58,7 +60,7 @@ func openEcho(address netip.Addr) (echoHandle, error) {
 	if handle == uintptr(windows.InvalidHandle) {
 		return echoHandle{}, err
 	}
-	return echoHandle{handle: handle, address: address}, nil
+	return echoHandle{handle: handle, address: address, source: source}, nil
 }
 
 func (h echoHandle) close() { closeEcho.Call(h.handle) }
@@ -69,9 +71,19 @@ func (h echoHandle) probe(ttl uint8, timeout uint32) echoReply {
 	buffer := [256]byte{}
 	if h.address.Is4() {
 		dest := h.address.As4()
-		n, _, err := sendEcho4.Call(h.handle, uintptr(binary.LittleEndian.Uint32(dest[:])),
-			uintptr(unsafe.Pointer(&payload[0])), uintptr(len(payload)), uintptr(unsafe.Pointer(&options)),
-			uintptr(unsafe.Pointer(&buffer[0])), uintptr(len(buffer)), uintptr(timeout))
+		var n uintptr
+		var err error
+		if h.source.IsValid() {
+			source := h.source.As4()
+			n, _, err = sendEcho4From.Call(h.handle, 0, 0, 0,
+				uintptr(binary.LittleEndian.Uint32(source[:])), uintptr(binary.LittleEndian.Uint32(dest[:])),
+				uintptr(unsafe.Pointer(&payload[0])), uintptr(len(payload)), uintptr(unsafe.Pointer(&options)),
+				uintptr(unsafe.Pointer(&buffer[0])), uintptr(len(buffer)), uintptr(timeout))
+		} else {
+			n, _, err = sendEcho4.Call(h.handle, uintptr(binary.LittleEndian.Uint32(dest[:])),
+				uintptr(unsafe.Pointer(&payload[0])), uintptr(len(payload)), uintptr(unsafe.Pointer(&options)),
+				uintptr(unsafe.Pointer(&buffer[0])), uintptr(len(buffer)), uintptr(timeout))
+		}
 		if n == 0 {
 			return echoReply{status: uint32(err.(syscall.Errno))}
 		}
@@ -84,6 +96,11 @@ func (h echoHandle) probe(ttl uint8, timeout uint32) echoReply {
 
 	scope, _ := strconv.ParseUint(h.address.Zone(), 10, 32)
 	source := windows.RawSockaddrInet6{Family: windows.AF_INET6}
+	if h.source.IsValid() {
+		scope, _ := strconv.ParseUint(h.source.Zone(), 10, 32)
+		source.Addr = h.source.As16()
+		source.Scope_id = uint32(scope)
+	}
 	dest := windows.RawSockaddrInet6{Family: windows.AF_INET6, Addr: h.address.As16(), Scope_id: uint32(scope)}
 	n, _, err := sendEcho6.Call(h.handle, 0, 0, 0,
 		uintptr(unsafe.Pointer(&source)), uintptr(unsafe.Pointer(&dest)),

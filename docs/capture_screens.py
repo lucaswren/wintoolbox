@@ -65,8 +65,16 @@ MOCK_JS = r"""
     OpenDocumentation: (language) => { window.__documentationLanguage = language; return noop(); },
     GetSystemHealth: () => ok({bootTime:'2026-10-22T00:00:00Z', services:[{name:'TermService',state:'running'},{name:'W32Time',state:'stopped'},{name:'Spooler',state:'missing'}], recentEvents:[{id:41,time:'2026-10-23T01:00:00Z'}], eventsPartial:false}),
     CopyHealthSummary: (text) => { window.__copiedSummary = text; return noop(); },
-    CheckNetwork: (target, port) => ok({dns:'resolved', addresses:['203.0.113.2'], address:'203.0.113.2', ping:'no-reply', sent:4, received:0, averageMs:0, tcp:port ? 'connected' : 'skipped', port}),
-    TraceNetwork: () => ok({status:'complete', address:'203.0.113.2', reached:true, hops:[{number:1, addresses:['192.0.2.1'], sent:4, received:3, averageMs:2}, {number:2, addresses:[], sent:4, received:0, averageMs:0}, {number:3, addresses:['203.0.113.2'], sent:4, received:4, averageMs:14}]}),
+    CheckNetwork: (target, port, count, source) => ok({dns:'resolved', addresses:['203.0.113.2'], address:'203.0.113.2', ping:'no-reply', sent:4, received:0, averageMs:0, tcp:port ? 'connected' : 'skipped', port, source, tcpStats:{attempts:count, successes:count, minMs:12, averageMs:15, maxMs:18}}),
+    TraceNetwork: (target, rounds, source) => ok({status:'complete', address:'203.0.113.2', reached:true, source, rounds, roundsCompleted:rounds, hops:[{number:1, addresses:['192.0.2.1'], sent:4, received:3, averageMs:2}, {number:2, addresses:[], sent:4, received:0, averageMs:0}, {number:3, addresses:['203.0.113.2'], sent:4, received:4, averageMs:14}]}),
+    GetNetworkSources: () => ok([{address:'192.0.2.20',interface:'Ethernet'}, {address:'2001:db8::20',interface:'Ethernet'}]),
+    CheckPublicEgress: (source) => {
+      window.__egressSource = source;
+      return ok([
+        {family:4, endpoint:'api.ipify.org', source:'192.0.2.20', publicIp:'203.0.113.20', status:'ok'},
+        {family:6, endpoint:'api6.ipify.org', source:source ? '' : '2001:db8::20', publicIp:source ? '' : '2001:db8::20', status:source ? 'skipped-family' : 'ok'}
+      ]);
+    },
     CheckLocalListener: () => ok('loopback-only'),
     GetAppInfo: () => ok(appInfo), GetStatus: () => ok(status), GetModuleStatus: () => ok(status), CancelAppUpdateDownload: noop,
     GetOverviewDetail: () => ok({ memoryModules: status.overview.memoryModules, physicalDisks: status.overview.physicalDisks, gpus: status.overview.gpus, activated: true, activationStatus: '已激活' }),
@@ -110,6 +118,7 @@ PAGES = [
     ("10-app-update", "软件更新", ["检查更新", "下载更新", "安装并重启"]),
     ("11-system-logs", "系统日志", []),
     ("12-network-check", "网络检查", []),
+    ("12-network-advanced", "网络检查", []),
     ("90-hardening-nav", "系统信息", []),
 ]
 
@@ -169,7 +178,8 @@ def capture(browser, language):
             "02-local-account-password": 800,
             "04-firewall": 1280,
             "05-security-harden": 920,
-            "12-network-check": 830,
+            "12-network-check": 1100,
+            "12-network-advanced": 930,
             "90-hardening-nav": 1140,
         }.get(filename, 680)
         page.set_viewport_size({"width": 1280, "height": height})
@@ -190,6 +200,16 @@ def capture(browser, language):
             main.get_by_role("textbox", name=catalog["TCP 端口（选填）"]).fill("443")
             button("开始检查").click()
             expect(main.get_by_text(catalog["未收到 Ping 回应，但 TCP 端口可连通。目标可能关闭了 Ping 回应。"])).to_be_visible()
+            button("查询公网出口").click()
+            expect(main.get_by_text("203.0.113.20", exact=True)).to_be_visible()
+        elif filename == "12-network-advanced":
+            button("高级诊断").click()
+            main.locator(".source-select .el-select__wrapper").click()
+            page.get_by_role("option", name="192.0.2.20 · Ethernet").click()
+            button("运行 MTR").click()
+            expect(main.get_by_text(catalog["目标已回应。"], exact=True)).to_be_visible()
+            main.evaluate("el => el.scrollTop = el.scrollHeight")
+            expect(button("运行 MTR")).to_be_in_viewport()
         elif filename in ("01-overview", "90-hardening-nav"):
             expect(button("预览故障摘要")).to_be_enabled()
             expect(main.get_by_text(catalog["空间偏低"])).to_be_visible()
@@ -207,7 +227,10 @@ def capture(browser, language):
         elif filename == "90-hardening-nav":
             targets = [menu(key) for key in ("账户管理", "远程桌面", "防火墙", "安全设置", "Windows 更新")]
         page.mouse.move(235, 0)
-        screenshot(page, output / f"{filename}.png", targets)
+        if filename == "12-network-advanced":
+            main.locator(".el-collapse").screenshot(path=str(output / f"{filename}.png"), animations="disabled")
+        else:
+            screenshot(page, output / f"{filename}.png", targets)
         if filename == "00-help":
             page.get_by_role("button", name=catalog["知道了"], exact=True).click()
             expect(page.get_by_role("dialog", name=catalog["新手指引"])).not_to_be_visible()

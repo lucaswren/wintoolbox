@@ -340,6 +340,38 @@ with sync_playwright() as p:
     net.get_by_role('button', name='运行 MTR').click()
     expect(net.get_by_text('目标已回应。', exact=True)).to_be_visible()
     expect(net.get_by_text('中间节点可能限制探测回应，仍可正常转发数据。')).to_be_visible()
+    expect(net.get_by_text('连接成功 4/4 次，成功率 100%。')).to_be_visible()
+    expect(net.get_by_text('成功连接耗时', exact=False)).to_be_visible()
+    source = net.locator('.source-select .el-select__wrapper')
+    assert source.bounding_box()['width'] >= 200, 'Source IP must fit in its selector'
+    source.click()
+    page.get_by_role('option', name='192.0.2.20 · Ethernet', exact=True).click()
+    net.get_by_role('button', name='查询公网出口').click()
+    expect(net.get_by_role('cell', name='192.0.2.20', exact=True)).to_be_visible()
+    expect(net.get_by_text('203.0.113.20', exact=True)).to_be_visible()
+    expect(net.get_by_text('所选源 IP 属于另一协议，已跳过。')).to_be_visible()
+    assert page.evaluate('window.__egressSource') == '192.0.2.20'
+    rounds = net.get_by_role('spinbutton', name='MTR 轮数')
+    rounds.fill('6')
+    rounds.press('Tab')
+    page.evaluate("""() => {
+      const app = window.go.ui.App
+      const original = app.TraceNetwork
+      app.TraceNetwork = (target, rounds, source) => new Promise(resolve => {
+        window.__traceArgs = [rounds, source]
+        window.__finishTrace = () => original(target, rounds, source).then(value =>
+          resolve({...value, status:'stopped', roundsCompleted:1}))
+      })
+      app.StopNetworkTrace = async () => { window.__finishTrace(); app.TraceNetwork = original; return true }
+    }""")
+    net.get_by_role('button', name='运行 MTR').click()
+    net.get_by_role('button', name='停止 MTR').click()
+    expect(net.get_by_text('已停止 MTR，保留已取得的结果。')).to_be_visible()
+    expect(net.get_by_text('已完成 1/6 轮。')).to_be_visible()
+    expect(net.get_by_text('192.0.2.1')).to_be_visible()
+    assert page.evaluate('window.__traceArgs') == [6, '192.0.2.20']
+    source.click()
+    page.get_by_role('option', name='自动选择', exact=True).click()
     expect(net.get_by_text('192.0.2.1')).to_be_visible()
     net.get_by_role('button', name='查看本机监听').click()
     net.get_by_role('button', name='检查本机端口').click()

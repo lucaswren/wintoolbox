@@ -11,7 +11,8 @@ export interface App {
   ChangeRdpPort(arg1: number): Promise<void>
   CheckAppUpdate(): Promise<{ currentVersion: string; latestVersion: string; hasUpdate: boolean; assetName: string; assetURL: string; assetSize: number; assetSHA256: string; notes: string; downloaded: boolean; downloadPath: string; verified: boolean; downloading: boolean; downloadedBytes: number; bytesPerSecond: number; error?: string }>
   CheckLocalListener(arg1: number): Promise<string>
-  CheckNetwork(arg1: string, arg2: number): Promise<{ dns: string; addresses: Array<string>; address: string; ping: string; sent: number; received: number; averageMs: number; tcp: string; port: number }>
+  CheckNetwork(arg1: string, arg2: number, arg3: number, arg4: string): Promise<{ dns: string; addresses: Array<string>; address: string; ping: string; sent: number; received: number; averageMs: number; tcp: string; port: number; source: string; tcpStats: { attempts: number; successes: number; minMs: number; averageMs: number; maxMs: number } }>
+  CheckPublicEgress(arg1: string): Promise<Array<{ family: number; endpoint: string; source: string; publicIp: string; status: string }>>
   ClearFirewallAllowRules(): Promise<void>
   ClearRdpHistory(): Promise<string>
   ClearRdpHistoryByKind(arg1: string): Promise<string>
@@ -35,6 +36,7 @@ export interface App {
   GetAppUpdateInfo(): Promise<{ currentVersion: string; latestVersion: string; hasUpdate: boolean; assetName: string; assetURL: string; assetSize: number; assetSHA256: string; notes: string; downloaded: boolean; downloadPath: string; verified: boolean; downloading: boolean; downloadedBytes: number; bytesPerSecond: number; error?: string }>
   GetFirewallRules(): Promise<Array<{ name: string; port: string; enabled: boolean }>>
   GetModuleStatus(arg1: string, arg2: boolean): Promise<{ overview: { hostname: string; osName: string; osBuild: string; arch: string; manufacturer: string; model: string; board: string; bios: string; cpu: string; cpuCores: number; memoryTotalGB: number; memoryAvailGB: number; memoryModules: string; resolution: string; ips: Array<string>; disks: Array<string>; diskSpace: Array<{ drive: string; totalGiB: number; freeGiB: number; system: boolean }>; physicalDisks: Array<string>; gpus: Array<string>; activated: boolean; activationStatus: string }; accounts: Array<{ name: string; enabled: boolean; enabledUnknown: boolean; admin: boolean; adminUnknown: boolean; current: boolean }>; rdpEnabled: boolean; rdpPort: number; rdpAvailable: boolean; rdpNLA: boolean; rdpNLAUnknown: boolean; updateDisabled: boolean; updateHasBackup: boolean; updateUnknown: boolean; updateDetail: string; firewallSummary: string; firewallDomain: string; firewallPrivate: string; firewallPublic: string; firewallAllOn: boolean; firewallAllOff: boolean; pingBlocked: boolean; pingIPv4Blocked: boolean; pingIPv6Blocked: boolean; pingState: string; riskPortsBlocked: boolean; riskPortsPartial: boolean; riskPortsUnknown: boolean; riskPortsDetail: string; riskPorts: Array<{ port: number; blocked: boolean; name: string }>; defenderDisabled: boolean; defenderUnknown: boolean; defenderDetail: string; timeText: string; timeZone: string; timeUnknown: boolean; timeZones: Array<{ id: string; label: string; offset: string }>; ntpServer: string; warnings?: Array<string>; lockoutDisabled: boolean; lockoutUnknown: boolean; lockoutDetail: string; lockoutThreshold: number; lockoutDuration: number; lockoutWindow: number; guestExists: boolean; guestEnabled: boolean; guestUnknown: boolean; guestDetail: string; autoLogonEnabled: boolean; autoLogonUnknown: boolean; autoLogonDetail: string; passwordMinLength: number; passwordComplexity: boolean; passwordComplexityUnknown: boolean; passwordUnknown: boolean; passwordPolicyDetail: string; smb1Disabled: boolean; smb1Unknown: boolean; smb1Detail: string; winrmHardened: boolean; winrmUnknown: boolean; winrmDetail: string; anonymousOK: boolean; anonymousUnknown: boolean; anonymousDetail: string }>
+  GetNetworkSources(): Promise<Array<{ address: string; interface: string }>>
   GetOverviewDetail(): Promise<{ memoryModules: string; physicalDisks: Array<string>; gpus: Array<string>; activated: boolean; activationStatus: string }>
   GetRdpHistory(): Promise<Array<{ kind: string; host: string; username: string; source: string; detail: string; sid: string }>>
   GetRdpLoginReport(arg1: number, arg2: number): Promise<{ events: Array<{ time: string; id: number; recordId: string; provider: string; channel: string; user: string; address: string; session: string; logonType: string; status: string; subStatus: string; detail: string; xml: string; data: Array<{ name: string; value: string }>; limited: boolean; category: string; meaning: string; reason: string }>; warnings: Array<string>; summary: { total: number; logins: number; failures: number; networkFailures: number; disconnects: number; reconnects: number }; sources: Array<{ address: string; logins: number; failures: number; networkFailures: number; lastSeen: string }>; findings: Array<{ kind: string; address: string; user: string; count: number; start: string; end: string; meaning: string }>; truncated: boolean; partial: boolean; collectedAt: string; startTime: string }>
@@ -58,10 +60,11 @@ export interface App {
   SetFirewallEnabled(arg1: boolean): Promise<void>
   SetRdpNLA(arg1: boolean): Promise<void>
   ShutdownPC(arg1: number): Promise<void>
+  StopNetworkTrace(): Promise<boolean>
   SyncNTP(): Promise<void>
   TestNTPServer(arg1: string): Promise<string>
   ToggleRdp(): Promise<void>
-  TraceNetwork(arg1: string): Promise<{ status: string; address: string; hops: Array<{ number: number; addresses: Array<string>; sent: number; received: number; averageMs: number }>; reached: boolean }>
+  TraceNetwork(arg1: string, arg2: number, arg3: string): Promise<{ status: string; address: string; hops: Array<{ number: number; addresses: Array<string>; sent: number; received: number; averageMs: number }>; reached: boolean; source: string; roundsCompleted: number; rounds: number }>
   UnblockRiskPorts(): Promise<void>
 }
 export declare function wailsApp(): App | null

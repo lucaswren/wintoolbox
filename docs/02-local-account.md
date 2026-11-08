@@ -11,7 +11,7 @@ Rename local users, manage their passwords, enabled state and administrator memb
 3. Use **Enable / Disable**, **Grant administrator rights** or **Revoke administrator rights** as needed. The backend prevents disabling the current user or removing their administrator rights.
 4. Verify that the new credentials work.
 
-To rename an account, enter its new name under **User management** and select **Rename user**. Disable automatic logon first. The user profile folder keeps its existing name.
+To rename an account, enter its new name under **User management** and select **Rename user**. Disable automatic logon and refresh first. Choose a name of up to 20 characters that is not in use by a local user or group. The account keeps its SID, password, permissions and profile folder. After renaming the signed-in account, sign out and sign back in. Update any services, scheduled tasks or saved connections that refer to the old name.
 
 ![Password and permissions](images/en/02-local-account-password.png)
 

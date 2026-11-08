@@ -18,6 +18,8 @@ The high-risk preset excludes 3389. Custom Remote Desktop ports may overlap the 
 
 Profile and ping status may be partial or unknown. **No WinToolBox block detected** does not guarantee ping responses: other firewall rules and the network also affect them. Refresh unknown state before making changes. Cleanup of allow rules leaves Remote Desktop and ping rules unchanged.
 
+Under **Created rules**, select **Delete** next to one rule or use **Delete by port** with the TCP port entered above. **Delete all allow rules** removes only the app's ordinary allow rules with the `WinToolbox-Allow-` prefix. Use the local console for deletion or for turning all profiles off. On a remote server, turning all profiles on uses the protected reconnection flow and requires an existing RDP listener and allow rule. See [Remote Desktop recovery](03-remote-desktop.md#protected-settings-and-recovery).
+
 ![Firewall](images/en/04-firewall.png)
 
 Start by [downloading WinToolBox](00-download.md) and running it as administrator.
